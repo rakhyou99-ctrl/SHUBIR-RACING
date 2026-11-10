@@ -316,6 +316,22 @@ func _build_road_segment(parent: Node3D) -> void:
         speed_sign.outline_size = 8
         parent.add_child(speed_sign)
 
+    # Large overhead highway gantry appears periodically as a distant landmark.
+    if segment_index % 9 == 0:
+        for gantry_side in [-1.0, 1.0]:
+            _box(parent, Vector3(gantry_side * 5.72, 3.0, -9.0), Vector3(0.18, 6.0, 0.22), Color("#68737D"))
+        _box(parent, Vector3(0, 5.85, -9.0), Vector3(11.6, 0.24, 0.30), Color("#AEB8C2"))
+        _box(parent, Vector3(0, 5.55, -9.0), Vector3(5.8, 0.72, 0.16), Color("#12243A"))
+        _box(parent, Vector3(0, 5.94, -9.0), Vector3(5.8, 0.08, 0.19), Color("#FF7518"))
+        var gantry_label := Label3D.new()
+        gantry_label.text = "SHUBIR  •  DRIVE SAFE"
+        gantry_label.position = Vector3(0, 5.54, -8.88)
+        gantry_label.font_size = 34
+        gantry_label.pixel_size = 0.012
+        gantry_label.modulate = Color.WHITE
+        gantry_label.outline_size = 7
+        parent.add_child(gantry_label)
+
     # Tall reflective roadside lamps, repeated with each road segment.
     for lamp_side in [-1.0, 1.0]:
         var lamp := Node3D.new()
