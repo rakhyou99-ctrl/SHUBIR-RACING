@@ -39,10 +39,10 @@ func _process(delta: float) -> void:
     var right := Input.is_action_pressed("ui_right") or touch_right
     var boosting := touch_nitro and nitro_left > 0.0
 
-    if accel:
-        speed = move_toward(speed, 190.0 if boosting else 130.0, 65.0 * delta)
-    elif braking:
+    if braking:
         speed = move_toward(speed, 0.0, 150.0 * delta)
+    elif accel:
+        speed = move_toward(speed, 190.0 if boosting else 130.0, 65.0 * delta)
     else:
         speed = move_toward(speed, 55.0, 18.0 * delta)
 
@@ -54,6 +54,7 @@ func _process(delta: float) -> void:
 
     steer = (1.0 if right else 0.0) - (1.0 if left else 0.0)
     car.position.x = clampf(car.position.x + steer * delta * (3.4 + speed / 55.0), -4.0, 4.0)
+    car.rotation.z = lerpf(car.rotation.z, -steer * 0.075, minf(1.0, delta * 5.0))
     distance += speed * delta / 3600.0
 
     _move_road(delta)
@@ -174,6 +175,12 @@ func _make_traffic() -> void:
         var paint := [Color("#F2C230"), Color("#E84A5F"), Color("#36A889"), Color("#D7DCE2")][i % 4]
         _box(traffic, Vector3(0, 0.45, 0), Vector3(1.8, 0.55, 3.3), paint)
         _box(traffic, Vector3(0, 0.9, -0.2), Vector3(1.3, 0.5, 1.45), Color("#26384A"))
+        for wheel_x in [-0.95, 0.95]:
+            for wheel_z in [-1.05, 1.05]:
+                _box(traffic, Vector3(wheel_x, 0.2, wheel_z), Vector3(0.28, 0.55, 0.68), Color("#101010"))
+        for light_x in [-0.62, 0.62]:
+            _box(traffic, Vector3(light_x, 0.48, -1.68), Vector3(0.3, 0.12, 0.06), Color("#FFF1B8"))
+            _box(traffic, Vector3(light_x, 0.48, 1.68), Vector3(0.3, 0.12, 0.06), Color("#E53935"))
         traffic_cars.append(traffic)
 
 func _random_lane() -> float:
