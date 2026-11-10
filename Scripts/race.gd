@@ -1002,7 +1002,9 @@ func _load_best_distance() -> void:
         best_distance = float(save.get_value("score", "best_distance", 0.0))
 
 func _save_best_distance() -> void:
+    # Preserve player settings stored in the same config file when saving a new record.
     var save := ConfigFile.new()
+    save.load("user://shubir_racing.cfg")
     save.set_value("score", "best_distance", best_distance)
     save.save("user://shubir_racing.cfg")
 
