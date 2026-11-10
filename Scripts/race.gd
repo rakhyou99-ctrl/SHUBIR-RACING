@@ -392,10 +392,59 @@ func _make_car() -> void:
         _box(car, Vector3(side * 0.98, 0.93, -0.65), Vector3(0.30, 0.12, 0.22), Color("#171D25"))
         _box(car, Vector3(side * 1.08, 1.02, -0.65), Vector3(0.24, 0.10, 0.32), Color("#111820"))
 
-    for x in [-0.95, 0.95]:
+    # Hood vents and a low front grille add recognizable sports-car detailing.
+    for vent_x in [-0.48, 0.48]:
+        _box(car, Vector3(vent_x, 0.765, -1.12), Vector3(0.24, 0.018, 0.48), Color("#17212B"))
+        for vent_line in [-0.14, 0.0, 0.14]:
+            _box(car, Vector3(vent_x, 0.779, -1.12 + vent_line), Vector3(0.18, 0.012, 0.025), Color("#8795A2"))
+    _box(car, Vector3(0, 0.43, -1.755), Vector3(0.78, 0.18, 0.035), Color("#101820"))
+    _box(car, Vector3(0, 0.31, -1.79), Vector3(1.72, 0.055, 0.12), Color("#AEB9C3"))
+
+    # Rounded rubber tyres with metallic multi-layer alloy rims.
+    for x in [-0.96, 0.96]:
         for z in [-1.05, 1.05]:
-            _box(car, Vector3(x, 0.2, z), Vector3(0.28, 0.55, 0.72), Color("#111111"))
-            _box(car, Vector3(x * 1.012, 0.2, z), Vector3(0.035, 0.30, 0.34), Color("#B7C0C8"))
+            var tyre := MeshInstance3D.new()
+            var tyre_mesh := CylinderMesh.new()
+            tyre_mesh.top_radius = 0.37
+            tyre_mesh.bottom_radius = 0.37
+            tyre_mesh.height = 0.27
+            tyre.mesh = tyre_mesh
+            tyre.rotation.z = PI / 2.0
+            tyre.position = Vector3(x, 0.22, z)
+            var tyre_material := StandardMaterial3D.new()
+            tyre_material.albedo_color = Color("#101216")
+            tyre_material.roughness = 0.98
+            tyre.material_override = tyre_material
+            car.add_child(tyre)
+
+            var rim := MeshInstance3D.new()
+            var rim_mesh := CylinderMesh.new()
+            rim_mesh.top_radius = 0.235
+            rim_mesh.bottom_radius = 0.235
+            rim_mesh.height = 0.285
+            rim.mesh = rim_mesh
+            rim.rotation.z = PI / 2.0
+            rim.position = Vector3(x * 1.012, 0.22, z)
+            var rim_material := StandardMaterial3D.new()
+            rim_material.albedo_color = Color("#B8C4CE")
+            rim_material.metallic = 0.9
+            rim_material.roughness = 0.2
+            rim.material_override = rim_material
+            car.add_child(rim)
+
+            var hub := MeshInstance3D.new()
+            var hub_mesh := CylinderMesh.new()
+            hub_mesh.top_radius = 0.075
+            hub_mesh.bottom_radius = 0.075
+            hub_mesh.height = 0.30
+            hub.mesh = hub_mesh
+            hub.rotation.z = PI / 2.0
+            hub.position = Vector3(x * 1.02, 0.22, z)
+            var hub_material := StandardMaterial3D.new()
+            hub_material.albedo_color = Color("#FF7518")
+            hub_material.metallic = 0.75
+            hub.material_override = hub_material
+            car.add_child(hub)
 
     # Raised rear wing and supports, visible above the trunk from the chase camera.
     for wing_x in [-0.62, 0.62]:
