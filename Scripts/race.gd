@@ -1098,6 +1098,9 @@ func _make_ui() -> void:
     pause_button = Button.new()
     pause_button.text = "PAUSE"
     pause_button.size = Vector2(140, 48)
+    pause_button.focus_mode = Control.FOCUS_NONE
+    _style_overlay_button(pause_button, false)
+    pause_button.add_theme_font_size_override("font_size", 17)
     pause_button.pressed.connect(_show_pause_menu)
     ui_layer.add_child(pause_button)
     get_viewport().size_changed.connect(_layout_race_ui)
