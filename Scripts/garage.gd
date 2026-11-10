@@ -213,10 +213,48 @@ func _create_preview_car() -> Node3D:
             wheel.material_override = rubber
             root.add_child(wheel)
             _add_box(root, Vector3(side * 1.15, 0.36, z), Vector3(0.035, 0.24, 0.24), Color("#AEB9C3"))
+            # Metallic alloy rim, center cap and five visible lug details.
+            var rim := MeshInstance3D.new()
+            var rim_mesh := CylinderMesh.new()
+            rim_mesh.top_radius = 0.285
+            rim_mesh.bottom_radius = 0.285
+            rim_mesh.height = 0.055
+            rim.mesh = rim_mesh
+            rim.rotation_degrees.z = 90
+            rim.position = Vector3(side * 1.17, 0.36, z)
+            var rim_mat := StandardMaterial3D.new()
+            rim_mat.albedo_color = Color("#B9C5D0")
+            rim_mat.metallic = 0.92
+            rim_mat.roughness = 0.2
+            rim.material_override = rim_mat
+            root.add_child(rim)
+            var hub := MeshInstance3D.new()
+            var hub_mesh := CylinderMesh.new()
+            hub_mesh.top_radius = 0.105
+            hub_mesh.bottom_radius = 0.105
+            hub_mesh.height = 0.07
+            hub.mesh = hub_mesh
+            hub.rotation_degrees.z = 90
+            hub.position = Vector3(side * 1.215, 0.36, z)
+            hub.material_override = rim_mat
+            root.add_child(hub)
+            for lug_index in range(5):
+                var angle := TAU * float(lug_index) / 5.0
+                var lug := MeshInstance3D.new()
+                var lug_mesh := SphereMesh.new()
+                lug_mesh.radius = 0.027
+                lug_mesh.height = 0.054
+                lug.mesh = lug_mesh
+                lug.position = Vector3(side * 1.22, 0.36 + cos(angle) * 0.17, z + sin(angle) * 0.17)
+                lug.material_override = rim_mat
+                root.add_child(lug)
     for x in [-0.68, 0.68]:
         _add_box(root, Vector3(x, 0.62, -1.94), Vector3(0.42, 0.16, 0.07), Color("#FFF1B8"))
         _add_box(root, Vector3(x, 0.62, 1.94), Vector3(0.42, 0.15, 0.07), Color("#E53935"))
     _add_box(root, Vector3(0, 0.65, 1.96), Vector3(1.0, 0.08, 0.06), Color("#FF3344"))
+    _add_emissive_box(root, Vector3(-0.68, 0.62, -1.985), Vector3(0.42, 0.13, 0.045), Color("#FFF1B8"))
+    _add_emissive_box(root, Vector3(0.68, 0.62, -1.985), Vector3(0.42, 0.13, 0.045), Color("#FFF1B8"))
+    _add_emissive_box(root, Vector3(0, 0.65, 1.995), Vector3(1.35, 0.09, 0.045), Color("#FF263F"))
 
     # Glasshouse, sloped windscreens and side windows for a more finished showroom model.
     _add_box(root, Vector3(0, 1.08, -1.02), Vector3(1.34, 0.045, 0.62), Color("#7895AA"))
@@ -264,6 +302,21 @@ func thirty_two() -> int:
 
 func forty() -> int:
     return 40
+
+func _add_emissive_box(parent: Node3D, pos: Vector3, dimensions: Vector3, tint: Color) -> void:
+    var part := MeshInstance3D.new()
+    var mesh := BoxMesh.new()
+    mesh.size = dimensions
+    part.mesh = mesh
+    part.position = pos
+    var mat := StandardMaterial3D.new()
+    mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+    mat.albedo_color = tint
+    mat.emission_enabled = true
+    mat.emission = tint
+    mat.emission_energy_multiplier = 1.8
+    part.material_override = mat
+    parent.add_child(part)
 
 func _add_box(parent: Node3D, pos: Vector3, dimensions: Vector3, tint: Color) -> void:
     var part := MeshInstance3D.new()
