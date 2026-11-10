@@ -43,8 +43,6 @@ func _process(delta: float) -> void:
 
     var accel := Input.is_action_pressed("ui_up") or touch_accel
     var braking := Input.is_action_pressed("ui_down") or touch_brake
-    var left := Input.is_action_pressed("ui_left") or touch_left
-    var right := Input.is_action_pressed("ui_right") or touch_right
     var boosting := touch_nitro and nitro_left > 0.0
 
     # Landscape phone tilt steering. Ignore tiny sensor movement to prevent drift.
@@ -73,8 +71,7 @@ func _process(delta: float) -> void:
         nitro_left = minf(3.0, nitro_left + delta * 0.22)
     was_boosting = boosting
 
-    var touch_steer := (1.0 if right else 0.0) - (1.0 if left else 0.0)
-    steer = clampf(tilt_steer + touch_steer, -1.0, 1.0)
+    steer = tilt_steer
     car.position.x = clampf(car.position.x + steer * GameState.steering_sensitivity * delta * (3.4 + speed / 55.0), -4.0, 4.0)
     car.rotation.z = lerpf(car.rotation.z, -steer * 0.075, minf(1.0, delta * 5.0))
     distance += speed * delta / 3600.0
@@ -432,11 +429,10 @@ func _make_ui() -> void:
     nitro_label.add_theme_color_override("font_color", Color("#70D7FF"))
     ui_layer.add_child(nitro_label)
 
-    _add_hold_button("LEFT", Vector2(25, 560), Vector2(120, 90), "left")
-    _add_hold_button("RIGHT", Vector2(155, 560), Vector2(120, 90), "right")
-    _add_hold_button("BRAKE", Vector2(295, 560), Vector2(120, 90), "brake")
-    _add_hold_button("NITRO", Vector2(1000, 560), Vector2(120, 90), "nitro")
-    _add_hold_button("ACCEL", Vector2(1130, 560), Vector2(125, 90), "accel")
+    # Driving controls stay along the bottom edge; accelerator is on the far right.
+    _add_hold_button("BRAKE", Vector2(25, 560), Vector2(140, 100), "brake")
+    _add_hold_button("NITRO", Vector2(965, 560), Vector2(135, 100), "nitro")
+    _add_hold_button("ACCELERATOR", Vector2(1110, 560), Vector2(155, 100), "accel")
 
     var pause := Button.new()
     pause.text = "PAUSE"
@@ -457,8 +453,6 @@ func _add_hold_button(label_text: String, pos: Vector2, btn_size: Vector2, actio
 
 func _set_touch(action: String, value: bool) -> void:
     match action:
-        "left": touch_left = value
-        "right": touch_right = value
         "brake": touch_brake = value
         "nitro": touch_nitro = value
         "accel": touch_accel = value
