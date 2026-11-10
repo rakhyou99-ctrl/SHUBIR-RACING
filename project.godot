@@ -16,6 +16,7 @@ window/stretch/mode="canvas_items"
 window/handheld/orientation=1
 
 [rendering]
+textures/vram_compression/import_etc2_astc=true
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 environment/defaults/default_clear_color=Color(0.025, 0.035, 0.055, 1)
