@@ -8,6 +8,7 @@ on:
 jobs:
   android-apk:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -45,7 +46,7 @@ jobs:
       - name: Install Android build template
         shell: bash
         run: |
-          godot --headless --editor --path . --install-android-build-template
+          godot --headless --editor --path . --install-android-build-template --quit
           echo "Checking Android build template files..."
           if [ ! -d android/build ]; then
             echo "Android build template was not created. Project files:"
