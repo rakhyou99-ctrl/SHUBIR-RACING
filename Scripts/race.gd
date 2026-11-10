@@ -33,6 +33,7 @@ var nitro_player: AudioStreamPlayer
 var crash_player: AudioStreamPlayer
 var brake_player: AudioStreamPlayer
 var chase_camera: Camera3D
+var brake_lights: Array[MeshInstance3D] = []
 var was_boosting := false
 var boost_locked := false
 var was_braking := false
@@ -98,6 +99,13 @@ func _process(delta: float) -> void:
         nitro_left = minf(3.0, nitro_left + delta * 0.60)
     if braking and not was_braking and is_instance_valid(brake_player):
         brake_player.play()
+    # Rear brake lamps brighten while the brake pedal is held.
+    for brake_light in brake_lights:
+        if is_instance_valid(brake_light) and brake_light.material_override is StandardMaterial3D:
+            var brake_material := brake_light.material_override as StandardMaterial3D
+            brake_material.emission_energy_multiplier = 2.8 if braking else 1.0
+            brake_material.albedo_color = Color("#FF1728") if braking else Color("#E53935")
+            brake_material.emission = Color("#FF1728") if braking else Color("#E53935")
     was_braking = braking
     was_boosting = boosting
     if is_instance_valid(nitro_fx):
@@ -489,7 +497,8 @@ func _make_car() -> void:
     # Visible headlights and full-width rear light strip.
     for x in [-0.62, 0.62]:
         _glow_box(car, Vector3(x, 0.49, -1.73), Vector3(0.40, 0.14, 0.07), Color("#FFF1B8"), 1.4)
-        _glow_box(car, Vector3(x, 0.49, 1.73), Vector3(0.38, 0.14, 0.07), Color("#E53935"), 1.0)
+        var rear_brake_light := _glow_box(car, Vector3(x, 0.49, 1.73), Vector3(0.38, 0.14, 0.07), Color("#E53935"), 1.0)
+        brake_lights.append(rear_brake_light)
     _glow_box(car, Vector3(0, 0.49, 1.75), Vector3(0.72, 0.07, 0.06), Color("#FF3344"), 1.2)
 
     var brand_text := "SUBHOJIT" if GameState.selected_car == 0 else "BIRAJ"
@@ -557,7 +566,7 @@ func _make_car() -> void:
         nitro_fx.add_child(flame)
 
 
-func _glow_box(parent: Node3D, pos: Vector3, size: Vector3, glow_color: Color, energy: float) -> void:
+func _glow_box(parent: Node3D, pos: Vector3, size: Vector3, glow_color: Color, energy: float) -> MeshInstance3D:
     var light_mesh := MeshInstance3D.new()
     var box_mesh := BoxMesh.new()
     box_mesh.size = size
@@ -571,6 +580,7 @@ func _glow_box(parent: Node3D, pos: Vector3, size: Vector3, glow_color: Color, e
     light_mesh.material_override = material
     light_mesh.position = pos
     parent.add_child(light_mesh)
+    return light_mesh
 
 
 func _add_car_decal(parent: Node3D, decal_text: String, decal_position: Vector3, decal_rotation: Vector3) -> void:
