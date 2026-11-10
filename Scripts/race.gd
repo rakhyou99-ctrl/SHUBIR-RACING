@@ -53,7 +53,7 @@ func _process(delta: float) -> void:
         nitro_left = minf(3.0, nitro_left + delta * 0.22)
 
     steer = (1.0 if right else 0.0) - (1.0 if left else 0.0)
-    car.position.x = clampf(car.position.x + steer * delta * (3.4 + speed / 55.0), -4.0, 4.0)
+    car.position.x = clampf(car.position.x + steer * GameState.steering_sensitivity * delta * (3.4 + speed / 55.0), -4.0, 4.0)
     car.rotation.z = lerpf(car.rotation.z, -steer * 0.075, minf(1.0, delta * 5.0))
     distance += speed * delta / 3600.0
 
