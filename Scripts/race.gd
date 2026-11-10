@@ -275,15 +275,30 @@ func _make_traffic() -> void:
         var traffic := Node3D.new()
         traffic.position = Vector3(_random_lane(), 0.45, -45.0 - float(i) * 42.0)
         add_child(traffic)
-        var paint := [Color("#F2C230"), Color("#E84A5F"), Color("#36A889"), Color("#D7DCE2")][i % 4]
-        _box(traffic, Vector3(0, 0.45, 0), Vector3(1.8, 0.55, 3.3), paint)
-        _box(traffic, Vector3(0, 0.9, -0.2), Vector3(1.3, 0.5, 1.45), Color("#26384A"))
-        for wheel_x in [-0.95, 0.95]:
+        var paints := [Color("#F2C230"), Color("#E84A5F"), Color("#36A889"), Color("#D7DCE2")]
+        var paint: Color = paints[i % paints.size()]
+
+        # Sculpted-looking traffic body, cabin glass and front/rear bumpers.
+        _box(traffic, Vector3(0, 0.45, 0), Vector3(1.82, 0.56, 3.35), paint)
+        _box(traffic, Vector3(0, 0.79, -0.15), Vector3(1.48, 0.12, 2.25), paint.darkened(0.10))
+        _box(traffic, Vector3(0, 0.94, -0.18), Vector3(1.34, 0.48, 1.52), Color("#172B3D"))
+        _box(traffic, Vector3(0, 1.18, -0.18), Vector3(1.12, 0.035, 1.30), Color("#263F55"))
+        _box(traffic, Vector3(0, 0.30, -1.72), Vector3(1.72, 0.20, 0.16), Color("#343A42"))
+        _box(traffic, Vector3(0, 0.30, 1.72), Vector3(1.72, 0.20, 0.16), Color("#343A42"))
+
+        # Side windows and subtle body-color accent strips.
+        for side in [-1.0, 1.0]:
+            _box(traffic, Vector3(side * 0.76, 0.92, -0.18), Vector3(0.035, 0.28, 1.18), Color("#9CC9E2"))
+            _box(traffic, Vector3(side * 0.916, 0.55, 0.0), Vector3(0.025, 0.10, 1.65), paint.lightened(0.22))
+
+        for wheel_x in [-0.96, 0.96]:
             for wheel_z in [-1.05, 1.05]:
                 _box(traffic, Vector3(wheel_x, 0.2, wheel_z), Vector3(0.28, 0.55, 0.68), Color("#101010"))
+                _box(traffic, Vector3(wheel_x * 1.012, 0.2, wheel_z), Vector3(0.035, 0.27, 0.30), Color("#AEB7C0"))
+
         for light_x in [-0.62, 0.62]:
-            _box(traffic, Vector3(light_x, 0.48, -1.68), Vector3(0.3, 0.12, 0.06), Color("#FFF1B8"))
-            _box(traffic, Vector3(light_x, 0.48, 1.68), Vector3(0.3, 0.12, 0.06), Color("#E53935"))
+            _box(traffic, Vector3(light_x, 0.49, -1.70), Vector3(0.34, 0.14, 0.07), Color("#FFF1B8"))
+            _box(traffic, Vector3(light_x, 0.49, 1.70), Vector3(0.34, 0.14, 0.07), Color("#F32938"))
         traffic_cars.append(traffic)
 
 func _random_lane() -> float:
