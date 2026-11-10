@@ -453,9 +453,9 @@ func _make_car() -> void:
 
     # Visible headlights and full-width rear light strip.
     for x in [-0.62, 0.62]:
-        _box(car, Vector3(x, 0.49, -1.73), Vector3(0.40, 0.14, 0.07), Color("#FFF1B8"))
-        _box(car, Vector3(x, 0.49, 1.73), Vector3(0.38, 0.14, 0.07), Color("#E53935"))
-    _box(car, Vector3(0, 0.49, 1.75), Vector3(0.72, 0.07, 0.06), Color("#FF3344"))
+        _glow_box(car, Vector3(x, 0.49, -1.73), Vector3(0.40, 0.14, 0.07), Color("#FFF1B8"), 1.4)
+        _glow_box(car, Vector3(x, 0.49, 1.73), Vector3(0.38, 0.14, 0.07), Color("#E53935"), 1.0)
+    _glow_box(car, Vector3(0, 0.49, 1.75), Vector3(0.72, 0.07, 0.06), Color("#FF3344"), 1.2)
 
     var brand_text := "SUBHOJIT" if GameState.selected_car == 0 else "BIRAJ"
     _add_car_decal(car, brand_text, Vector3(-0.91, 0.62, 0.0), Vector3(0, 90, 0))
@@ -520,6 +520,22 @@ func _make_car() -> void:
         flame_material.emission_energy_multiplier = 2.2
         flame.material_override = flame_material
         nitro_fx.add_child(flame)
+
+
+func _glow_box(parent: Node3D, pos: Vector3, size: Vector3, glow_color: Color, energy: float) -> void:
+    var light_mesh := MeshInstance3D.new()
+    var box_mesh := BoxMesh.new()
+    box_mesh.size = size
+    light_mesh.mesh = box_mesh
+    var material := StandardMaterial3D.new()
+    material.albedo_color = glow_color
+    material.emission_enabled = true
+    material.emission = glow_color
+    material.emission_energy_multiplier = energy
+    material.roughness = 0.22
+    light_mesh.material_override = material
+    light_mesh.position = pos
+    parent.add_child(light_mesh)
 
 
 func _add_car_decal(parent: Node3D, decal_text: String, decal_position: Vector3, decal_rotation: Vector3) -> void:
