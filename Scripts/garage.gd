@@ -3,6 +3,8 @@ extends Control
 var preview_root: Node3D
 var preview_car: Node3D
 var drag_active := false
+var mouse_drag_active := false
+var preview_touch_index := -1
 var last_drag_x := 0.0
 var selected_label: Label
 var blue_card: Panel
@@ -466,16 +468,23 @@ func _add_box(parent: Node3D, pos: Vector3, dimensions: Vector3, tint: Color) ->
     parent.add_child(part)
 
 func _on_preview_input(event: InputEvent) -> void:
+    if not is_instance_valid(preview_car):
+        return
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-        drag_active = event.pressed
+        mouse_drag_active = event.pressed
+        drag_active = mouse_drag_active or preview_touch_index >= 0
         last_drag_x = event.position.x
-    elif event is InputEventScreenTouch:
-        drag_active = event.pressed
-        last_drag_x = event.position.x
-    elif event is InputEventMouseMotion and drag_active:
+    elif event is InputEventMouseMotion and mouse_drag_active:
         preview_car.rotation.y += (event.position.x - last_drag_x) * 0.012
         last_drag_x = event.position.x
-    elif event is InputEventScreenDrag:
+    elif event is InputEventScreenTouch:
+        if event.pressed and preview_touch_index < 0:
+            preview_touch_index = event.index
+            last_drag_x = event.position.x
+        elif not event.pressed and event.index == preview_touch_index:
+            preview_touch_index = -1
+        drag_active = mouse_drag_active or preview_touch_index >= 0
+    elif event is InputEventScreenDrag and event.index == preview_touch_index:
         preview_car.rotation.y += event.relative.x * 0.012
 
 func _show_selected_car() -> void:
