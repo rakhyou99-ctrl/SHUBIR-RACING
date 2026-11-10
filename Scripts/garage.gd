@@ -217,7 +217,53 @@ func _create_preview_car() -> Node3D:
         _add_box(root, Vector3(x, 0.62, -1.94), Vector3(0.42, 0.16, 0.07), Color("#FFF1B8"))
         _add_box(root, Vector3(x, 0.62, 1.94), Vector3(0.42, 0.15, 0.07), Color("#E53935"))
     _add_box(root, Vector3(0, 0.65, 1.96), Vector3(1.0, 0.08, 0.06), Color("#FF3344"))
+
+    # Glasshouse, sloped windscreens and side windows for a more finished showroom model.
+    _add_box(root, Vector3(0, 1.08, -1.02), Vector3(1.34, 0.045, 0.62), Color("#7895AA"))
+    _add_box(root, Vector3(0, 1.08, 0.58), Vector3(1.30, 0.045, 0.48), Color("#58748B"))
+    for side in [-1.0, 1.0]:
+        _add_box(root, Vector3(side * 0.755, 1.08, -0.28), Vector3(0.045, 0.34, 0.82), Color("#52738D"))
+        _add_box(root, Vector3(side * 0.82, 0.83, -0.12), Vector3(0.10, 0.09, 0.20), paint.darkened(0.18))
+        _add_box(root, Vector3(side * 0.92, 0.91, -0.12), Vector3(0.24, 0.10, 0.22), Color("#17212B"))
+        # Door handles and lower side accent.
+        _add_box(root, Vector3(side * 1.012, 0.70, 0.28), Vector3(0.025, 0.035, 0.30), Color("#D6E0E8"))
+        _add_box(root, Vector3(side * 1.015, 0.39, 0.0), Vector3(0.025, 0.055, 2.35), paint.lightened(0.22))
+
+    # Front grille, rear diffuser and a subtle raised rear wing.
+    _add_box(root, Vector3(0, 0.43, -1.965), Vector3(0.78, 0.22, 0.045), Color("#101820"))
+    _add_box(root, Vector3(0, 0.28, 1.98), Vector3(1.55, 0.12, 0.10), Color("#101820"))
+    for wing_x in [-0.58, 0.58]:
+        _add_box(root, Vector3(wing_x, 1.00, 1.42), Vector3(0.07, 0.32, 0.08), Color("#242B35"))
+    _add_box(root, Vector3(0, 1.17, 1.43), Vector3(1.95, 0.10, 0.34), Color("#171E29"))
+
+    # Custom owner decal on both doors and bonnet.
+    var brand_text := "SUBHOJIT" if GameState.selected_car == 0 else "BIRAJ"
+    for side in [-1.0, 1.0]:
+        var door_mark := Label3D.new()
+        door_mark.text = brand_text
+        door_mark.position = Vector3(side * 1.035, 0.66, 0.28)
+        door_mark.rotation_degrees = Vector3(0, 90.0 if side > 0.0 else -90.0, 0)
+        door_mark.font_size =  thirty_two()
+        door_mark.pixel_size = 0.004
+        door_mark.modulate = Color.WHITE
+        door_mark.outline_size = 6
+        root.add_child(door_mark)
+    var bonnet_mark := Label3D.new()
+    bonnet_mark.text = brand_text
+    bonnet_mark.position = Vector3(0, 0.945, -1.25)
+    bonnet_mark.rotation_degrees = Vector3(-90, 0, 0)
+    bonnet_mark.font_size =  forty()
+    bonnet_mark.pixel_size = 0.004
+    bonnet_mark.modulate = Color.WHITE
+    bonnet_mark.outline_size = 6
+    root.add_child(bonnet_mark)
     return root
+
+func thirty_two() -> int:
+    return 32
+
+func forty() -> int:
+    return 40
 
 func _add_box(parent: Node3D, pos: Vector3, dimensions: Vector3, tint: Color) -> void:
     var part := MeshInstance3D.new()
