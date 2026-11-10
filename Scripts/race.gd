@@ -8,6 +8,7 @@ var steer := 0.0
 var nitro_left := 3.0
 var road_segments: Array[Node3D] = []
 var traffic_cars: Array[Node3D] = []
+var road_obstacles: Array[Node3D] = []
 var ui_layer: CanvasLayer
 var speed_label: Label
 var distance_label: Label
@@ -42,6 +43,7 @@ func _ready() -> void:
     _make_world()
     _make_car()
     _make_traffic()
+    _make_obstacles()
     _make_ui()
     _make_engine_audio()
     _make_effect_audio()
@@ -103,7 +105,9 @@ func _process(delta: float) -> void:
 
     _move_road(delta)
     _move_traffic(delta)
+    _move_obstacles(delta)
     _check_traffic_collision()
+    _check_obstacle_collision()
 
     speed_label.text = "SPEED  %03d km/h" % int(speed)
     distance_label.text = "DISTANCE  %.2f km" % distance
@@ -474,6 +478,68 @@ func _make_traffic() -> void:
 func _random_lane() -> float:
     var lanes := [-3.5, 0.0, 3.5]
     return lanes[randi_range(0, lanes.size() - 1)]
+
+func _make_obstacles() -> void:
+    # Lightweight road cones add occasional hazards without requiring external assets.
+    for i in range(3):
+        var obstacle := Node3D.new()
+        obstacle.position = Vector3(_random_lane(), 0.0, -85.0 - float(i) * 105.0)
+        obstacle.set_meta("approach_speed", randf_range(72.0, 100.0))
+        add_child(obstacle)
+
+        var base := MeshInstance3D.new()
+        var base_mesh := CylinderMesh.new()
+        base_mesh.top_radius = 0.42
+        base_mesh.bottom_radius = 0.42
+        base_mesh.height = 0.12
+        base.mesh = base_mesh
+        var base_material := StandardMaterial3D.new()
+        base_material.albedo_color = Color("#292F36")
+        base.material_override = base_material
+        base.position.y = 0.06
+        obstacle.add_child(base)
+
+        var cone := MeshInstance3D.new()
+        var cone_mesh := CylinderMesh.new()
+        cone_mesh.top_radius = 0.045
+        cone_mesh.bottom_radius = 0.32
+        cone_mesh.height = 0.88
+        cone.mesh = cone_mesh
+        var cone_material := StandardMaterial3D.new()
+        cone_material.albedo_color = Color("#FF7518")
+        cone_material.roughness = 0.72
+        cone.material_override = cone_material
+        cone.position.y = 0.54
+        obstacle.add_child(cone)
+
+        var stripe := MeshInstance3D.new()
+        var stripe_mesh := CylinderMesh.new()
+        stripe_mesh.top_radius = 0.19
+        stripe_mesh.bottom_radius = 0.23
+        stripe_mesh.height = 0.14
+        stripe.mesh = stripe_mesh
+        var stripe_material := StandardMaterial3D.new()
+        stripe_material.albedo_color = Color.WHITE
+        stripe.material_override = stripe_material
+        stripe.position.y = 0.55
+        obstacle.add_child(stripe)
+        road_obstacles.append(obstacle)
+
+func _move_obstacles(delta: float) -> void:
+    for obstacle in road_obstacles:
+        var approach_speed := float(obstacle.get_meta("approach_speed", 86.0))
+        var closing_speed := maxf(16.0, speed - approach_speed)
+        obstacle.position.z += closing_speed * delta * 0.12
+        if obstacle.position.z > 16.0:
+            obstacle.position.z = -260.0 - randf_range(0.0, 100.0)
+            obstacle.position.x = _random_lane()
+            obstacle.set_meta("approach_speed", randf_range(72.0, 100.0))
+
+func _check_obstacle_collision() -> void:
+    for obstacle in road_obstacles:
+        if absf(obstacle.position.z - car.position.z) < 1.75 and absf(obstacle.position.x - car.position.x) < 1.15:
+            _finish_race()
+            return
 
 func _move_traffic(delta: float) -> void:
     for traffic in traffic_cars:
