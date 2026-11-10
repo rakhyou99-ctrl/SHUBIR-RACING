@@ -288,6 +288,22 @@ func _build_road_segment(parent: Node3D) -> void:
     _make_bush(parent, Vector3(-8.1, 0.0, -10.0), Color("#286F3A"))
     _make_bush(parent, Vector3(8.2, 0.0, 9.0), Color("#3A914B"))
 
+    # Occasional roadside speed boards; alternate sides to create a believable highway rhythm.
+    var segment_index := int(round(absf(parent.position.z) / 22.0))
+    if segment_index % 3 == 0:
+        var sign_side := -1.0 if segment_index % 2 == 0 else 1.0
+        _box(parent, Vector3(sign_side * 9.15, 1.95, 5.5), Vector3(0.14, 1.25, 1.55), Color("#12243A"))
+        _box(parent, Vector3(sign_side * 9.23, 2.48, 5.5), Vector3(0.035, 0.10, 1.42), Color("#FF7518"))
+        var speed_sign := Label3D.new()
+        speed_sign.text = "80\nKM/H"
+        speed_sign.position = Vector3(sign_side * 9.24, 1.94, 5.5)
+        speed_sign.rotation_degrees.y = -sign_side * 90.0
+        speed_sign.font_size = 42
+        speed_sign.pixel_size = 0.012
+        speed_sign.modulate = Color.WHITE
+        speed_sign.outline_size = 8
+        parent.add_child(speed_sign)
+
     # Tall reflective roadside lamps, repeated with each road segment.
     for lamp_side in [-1.0, 1.0]:
         var lamp := Node3D.new()
