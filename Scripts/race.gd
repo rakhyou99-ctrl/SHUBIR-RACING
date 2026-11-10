@@ -70,7 +70,7 @@ func _process(delta: float) -> void:
         if not was_boosting and is_instance_valid(nitro_player):
             nitro_player.play()
     else:
-        # Nitro slowly recharges while the player is not using the boost.
+        # Boost slowly recharges while the player is not using the boost.
         nitro_left = minf(3.0, nitro_left + delta * 0.22)
     if braking and not was_braking and is_instance_valid(brake_player):
         brake_player.play()
@@ -92,7 +92,7 @@ func _process(delta: float) -> void:
     speed_label.text = "SPEED  %03d km/h" % int(speed)
     distance_label.text = "DISTANCE  %.2f km" % distance
     best_label.text = "BEST  %.2f km" % best_distance
-    nitro_label.text = "NITRO  %.1f s" % nitro_left
+    nitro_label.text = "BOOST  %.1f s" % nitro_left
     if is_instance_valid(engine_player):
         engine_player.pitch_scale = 0.75 + (speed / 190.0) * 0.75
 
@@ -337,7 +337,7 @@ func _make_car() -> void:
         exhaust_inner.material_override = inner_material
         car.add_child(exhaust_inner)
 
-    # Twin blue Nitro flames originate at the silencer outlets, not underneath the car.
+    # Twin blue Boost flames originate at the silencer outlets, not underneath the car.
     nitro_fx = Node3D.new()
     nitro_fx.position = Vector3(0, 0.30, 2.045)
     nitro_fx.visible = false
@@ -573,7 +573,7 @@ func _make_ui() -> void:
 
     # Landscape layout: brake bottom-left, accelerator bottom-right, nitro above accelerator.
     _add_hold_button("BRAKE", Vector2(35, 535), Vector2(155, 145), "brake")
-    _add_hold_button("NITRO", Vector2(1100, 405), Vector2(145, 105), "nitro")
+    _add_hold_button("BOOST", Vector2(1100, 405), Vector2(145, 105), "nitro")
     _add_hold_button("ACCELERATOR", Vector2(1070, 535), Vector2(180, 145), "accel")
 
     var pause := Button.new()
