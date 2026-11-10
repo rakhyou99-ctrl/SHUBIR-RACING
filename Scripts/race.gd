@@ -20,6 +20,7 @@ var touch_nitro := false
 var game_over := false
 var game_paused := false
 var best_distance := 0.0
+var engine_player: AudioStreamPlayer
 
 func _ready() -> void:
     randomize()
@@ -28,6 +29,7 @@ func _ready() -> void:
     _make_car()
     _make_traffic()
     _make_ui()
+    _make_engine_audio()
 
 func _process(delta: float) -> void:
     if game_over or game_paused:
@@ -65,6 +67,37 @@ func _process(delta: float) -> void:
     distance_label.text = "DISTANCE  %.2f km" % distance
     best_label.text = "BEST  %.2f km" % best_distance
     nitro_label.text = "NITRO  %.1f s" % nitro_left
+    if is_instance_valid(engine_player):
+        engine_player.pitch_scale = 0.75 + (speed / 190.0) * 0.75
+
+
+func _make_engine_audio() -> void:
+    # Generate a small seamless engine hum locally so the game needs no network audio assets.
+    var sample_rate := 16000
+    var sample_count := 8000
+    var samples := PackedByteArray()
+    samples.resize(sample_count * 2)
+    for i in range(sample_count):
+        var t := float(i) / float(sample_rate)
+        var wave := sin(TAU * 72.0 * t) * 0.52 + sin(TAU * 144.0 * t) * 0.20 + sin(TAU * 216.0 * t) * 0.08
+        var envelope := 0.72 + 0.12 * sin(TAU * 2.0 * t)
+        var sample := int(clampf(wave * envelope, -1.0, 1.0) * 5200.0)
+        samples.encode_s16(i * 2, sample)
+
+    var engine_stream := AudioStreamWAV.new()
+    engine_stream.format = AudioStreamWAV.FORMAT_16_BITS
+    engine_stream.mix_rate = sample_rate
+    engine_stream.stereo = false
+    engine_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+    engine_stream.loop_begin = 0
+    engine_stream.loop_end = sample_count
+    engine_stream.data = samples
+
+    engine_player = AudioStreamPlayer.new()
+    engine_player.stream = engine_stream
+    engine_player.volume_db = -5.0
+    add_child(engine_player)
+    engine_player.play()
 
 func _make_world() -> void:
     var env := WorldEnvironment.new()
