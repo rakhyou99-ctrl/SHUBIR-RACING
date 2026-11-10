@@ -12,8 +12,6 @@ var speed_label: Label
 var distance_label: Label
 var best_label: Label
 var nitro_label: Label
-var touch_left := false
-var touch_right := false
 var touch_accel := false
 var touch_brake := false
 var touch_nitro := false
