@@ -26,7 +26,6 @@ jobs:
           SDKMANAGER="$(find "$ANDROID_HOME" -type f -name sdkmanager 2>/dev/null | head -n 1)"
           if [ -z "$SDKMANAGER" ]; then
             echo "sdkmanager was not found under ANDROID_HOME=$ANDROID_HOME"
-            find "$ANDROID_HOME" -maxdepth 4 -type d 2>/dev/null | head -n 80
             exit 1
           fi
           echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
@@ -43,11 +42,23 @@ jobs:
       - name: Import project
         run: godot --headless --editor --path . --quit
 
+      - name: Install Android build template
+        shell: bash
+        run: |
+          godot --headless --editor --path . --install-android-build-template
+          echo "Checking Android build template files..."
+          if [ ! -d android/build ]; then
+            echo "Android build template was not created. Project files:"
+            find . -maxdepth 3 -type d -print | sort | head -n 100
+            exit 1
+          fi
+          ls -la android/build
+
       - name: Export Android APK
         run: |
           mkdir -p build
-          godot --headless --path . --editor --install-android-build-template --quit
           godot --headless --path . --export-debug "Android" build/SHUBIR-RACING.apk
+          test -s build/SHUBIR-RACING.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
