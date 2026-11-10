@@ -455,10 +455,24 @@ func _add_hold_button(label_text: String, pos: Vector2, btn_size: Vector2, actio
     base_style.bg_color = Color("#25191B") if action == "brake" else (Color("#102B3C") if action == "nitro" else Color("#26351F"))
     base_style.border_color = Color("#FF4545") if action == "brake" else (Color("#19CFFF") if action == "nitro" else Color("#8DDB43"))
     base_style.set_border_width_all(4)
-    base_style.set_corner_radius_all(30)
+    # Brake and accelerator look like real rectangular metal foot pedals, not round touch pads.
+    base_style.set_corner_radius_all(8 if action != "nitro" else 28)
     base_style.shadow_color = Color(0, 0, 0, 0.55)
     base_style.shadow_size = 8
+    if action != "nitro":
+        base_style.set_content_margin_all(12)
+        base_style.content_margin_top = 48.0
+        base_style.content_margin_bottom = 8.0
     b.add_theme_stylebox_override("normal", base_style)
+    if action != "nitro":
+        # Raised grip ribs across the upper face make each control read as a foot pedal.
+        for rib_index in range(3):
+            var rib := ColorRect.new()
+            rib.position = Vector2(22, 18 + rib_index * 10)
+            rib.size = Vector2(btn_size.x - 44, 4)
+            rib.color = Color("#87919A") if action == "brake" else Color("#9BAA8C")
+            rib.mouse_filter = Control.MOUSE_FILTER_IGNORE
+            b.add_child(rib)
     var hover_style := base_style.duplicate() as StyleBoxFlat
     hover_style.bg_color = hover_style.bg_color.lightened(0.16)
     b.add_theme_stylebox_override("hover", hover_style)
