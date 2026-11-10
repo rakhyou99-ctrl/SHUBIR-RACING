@@ -66,6 +66,11 @@ func _input(event: InputEvent) -> void:
 
 
 func _refresh_multitouch_controls() -> void:
+    if not is_instance_valid(accel_button) or not is_instance_valid(brake_button) or not is_instance_valid(boost_button):
+        touch_accel = false
+        touch_brake = false
+        touch_nitro = false
+        return
     if touch_points.is_empty():
         touch_accel = false
         touch_brake = false
