@@ -1,12 +1,17 @@
 name: Build Android APK
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      release_ready:
+        description: "Enable only when the full game is complete and ready for final APK delivery"
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   android-apk:
+    if: ${{ inputs.release_ready == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
