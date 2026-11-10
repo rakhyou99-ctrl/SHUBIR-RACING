@@ -36,8 +36,14 @@ func _build_ui() -> void:
     garage.pressed.connect(func(): get_tree().change_scene_to_file("res://Scenes/garage.tscn"))
     add_child(garage)
 
+    var exit := _make_button("EXIT GAME", Vector2(440, 520), Vector2(400, 64))
+    exit.add_theme_stylebox_override("normal", _button_style(Color("#35445A")))
+    exit.add_theme_stylebox_override("hover", _button_style(Color("#52647D")))
+    exit.pressed.connect(func(): get_tree().quit())
+    add_child(exit)
+
     var note := Label.new()
-    note.text = "Prototype • Original placeholder 3D cars"
+    note.text = "OFFLINE RACING  •  TWO ORIGINAL CARS"
     note.add_theme_font_size_override("font_size", 16)
     note.add_theme_color_override("font_color", Color("#94A3B8"))
     note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
