@@ -187,6 +187,18 @@ func _build_road_segment(parent: Node3D) -> void:
         _box(parent, Vector3(0, 0.025, z), Vector3(0.16, 0.04, 3.0), Color("#F5F5F5"))
     _box(parent, Vector3(-10, -0.35, 0), Vector3(8, 0.2, 22), Color("#39764A"))
     _box(parent, Vector3(10, -0.35, 0), Vector3(8, 0.2, 22), Color("#39764A"))
+
+    # Continuous metallic highway guardrails with repeating support posts.
+    for side in [-1.0, 1.0]:
+        _box(parent, Vector3(side * 6.9, 0.62, 0), Vector3(0.16, 0.22, 22), Color("#AEB8C2"))
+        for post_z in [-9.0, -3.0, 3.0, 9.0]:
+            _box(parent, Vector3(side * 6.9, 0.22, post_z), Vector3(0.22, 0.48, 0.22), Color("#737E88"))
+        for marker_z in [-8.0, 0.0, 8.0]:
+            _box(parent, Vector3(side * 6.78, 0.72, marker_z), Vector3(0.035, 0.12, 0.72), Color("#FF7518"))
+
+    # Bright shoulder edge strips improve lane readability at speed.
+    _box(parent, Vector3(-6.05, 0.025, 0), Vector3(0.10, 0.035, 22), Color("#FFCF55"))
+    _box(parent, Vector3(6.05, 0.025, 0), Vector3(0.10, 0.035, 22), Color("#FFCF55"))
     _make_tree(parent, Vector3(-9.0, 0.0, -7.0))
     _make_tree(parent, Vector3(9.0, 0.0, 4.0))
 
