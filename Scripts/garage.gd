@@ -58,11 +58,45 @@ func _car_card(heading: String, decal: String, paint: Color, pos: Vector2, car_i
     h.add_theme_font_size_override("font_size", 24)
     panel.add_child(h)
 
-    var car := ColorRect.new()
-    car.color = paint
-    car.position = Vector2(90, 105)
-    car.size = Vector2(220, 95)
-    panel.add_child(car)
+    # Build a simple top-down car preview instead of a flat color tile.
+    var shadow := ColorRect.new()
+    shadow.color = Color("#0B111B")
+    shadow.position = Vector2(75, 125)
+    shadow.size = Vector2(250, 92)
+    panel.add_child(shadow)
+
+    var body := ColorRect.new()
+    body.color = paint
+    body.position = Vector2(88, 116)
+    body.size = Vector2(224, 82)
+    panel.add_child(body)
+
+    var cabin := ColorRect.new()
+    cabin.color = Color("#172B40")
+    cabin.position = Vector2(145, 124)
+    cabin.size = Vector2(110, 65)
+    panel.add_child(cabin)
+
+    var windshield := ColorRect.new()
+    windshield.color = Color("#6D879C")
+    windshield.position = Vector2(153, 130)
+    windshield.size = Vector2(94, 18)
+    panel.add_child(windshield)
+
+    for wheel_x in [78, 292]:
+        for wheel_y in [130, 178]:
+            var wheel := ColorRect.new()
+            wheel.color = Color("#080B10")
+            wheel.position = Vector2(wheel_x, wheel_y)
+            wheel.size = Vector2(18, 28)
+            panel.add_child(wheel)
+
+    for lamp_x in [96, 286]:
+        var lamp := ColorRect.new()
+        lamp.color = Color("#FFF1B8")
+        lamp.position = Vector2(lamp_x, 112)
+        lamp.size = Vector2(16, 7)
+        panel.add_child(lamp)
 
     var label := Label.new()
     label.text = decal
