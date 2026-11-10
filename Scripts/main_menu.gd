@@ -79,7 +79,7 @@ func _layout_menu() -> void:
     var scale_factor := clampf(minf(viewport_size.x / 1280.0, viewport_size.y / 720.0), 0.55, 1.15)
     var center_x := viewport_size.x * 0.5
     title_label.scale = Vector2.ONE * scale_factor
-    title_label.position = Vector2(center_x - 400.0 * scale_factor, viewport_size.y * 0.10)
+    title_label.position = Vector2(-400.0 * scale_factor, viewport_size.y * 0.10)
     title_label.size = Vector2(800, 90)
     subtitle_label.scale = Vector2.ONE * scale_factor
     subtitle_label.position = Vector2(0, viewport_size.y * 0.255)
