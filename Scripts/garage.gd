@@ -9,9 +9,17 @@ var blue_card: Panel
 var red_card: Panel
 var blue_button: Button
 var red_button: Button
+var preview_frame: Panel
+var viewport_box: SubViewportContainer
+var swipe_hint: Label
+var side_title: Label
+var back_button: Button
+var start_button: Button
 
 func _ready() -> void:
     _build_garage()
+    get_viewport().size_changed.connect(_layout_garage)
+    _layout_garage()
 
 func _process(delta: float) -> void:
     if is_instance_valid(preview_car) and not drag_active:
@@ -31,13 +39,13 @@ func _build_garage() -> void:
     header.add_theme_color_override("font_color", Color("#FF7518"))
     add_child(header)
 
-    var preview_frame := Panel.new()
+    preview_frame = Panel.new()
     preview_frame.position = Vector2(38, 100)
     preview_frame.size = Vector2(820, 540)
     preview_frame.add_theme_stylebox_override("panel", _panel_style(Color("#111D2E"), false))
     add_child(preview_frame)
 
-    var viewport_box := SubViewportContainer.new()
+    viewport_box = SubViewportContainer.new()
     viewport_box.position = Vector2(10, 10)
     viewport_box.size = Vector2(800, 500)
     viewport_box.stretch = true
@@ -107,7 +115,7 @@ func _build_garage() -> void:
     preview_car = _create_preview_car()
     preview_root.add_child(preview_car)
 
-    var swipe_hint := Label.new()
+    swipe_hint = Label.new()
     swipe_hint.text = "DRAG LEFT / RIGHT TO ROTATE  •  360° VIEW"
     swipe_hint.position = Vector2(0, 510)
     swipe_hint.size = Vector2(820, 24)
@@ -116,7 +124,7 @@ func _build_garage() -> void:
     swipe_hint.add_theme_color_override("font_color", Color("#AFC0D4"))
     preview_frame.add_child(swipe_hint)
 
-    var side_title := Label.new()
+    side_title = Label.new()
     side_title.text = "CHOOSE YOUR CAR"
     side_title.position = Vector2(895, 105)
     side_title.size = Vector2(340, 42)
@@ -138,7 +146,8 @@ func _build_garage() -> void:
     add_child(selected_label)
     _refresh_selection()
 
-    var back := Button.new()
+    back_button = Button.new()
+    var back := back_button
     back.text = "‹  BACK"
     back.position = Vector2(42, 660)
     back.size = Vector2(170, 46)
@@ -146,13 +155,44 @@ func _build_garage() -> void:
     back.pressed.connect(func(): get_tree().change_scene_to_file("res://Scenes/main_menu.tscn"))
     add_child(back)
 
-    var play := Button.new()
+    start_button = Button.new()
+    var play := start_button
     play.text = "START RACE  ›"
     play.position = Vector2(1030, 650)
     play.size = Vector2(205, 54)
     _style_button(play, true)
     play.pressed.connect(func(): get_tree().change_scene_to_file("res://Scenes/race.tscn"))
     add_child(play)
+
+func _layout_garage() -> void:
+    var viewport_size := get_viewport().get_visible_rect().size
+    var scale_factor := clampf(minf(viewport_size.x / 1280.0, viewport_size.y / 720.0), 0.55, 1.15)
+    var w := viewport_size.x
+    var h := viewport_size.y
+
+    preview_frame.scale = Vector2.ONE * scale_factor
+    preview_frame.position = Vector2(38.0, 100.0) * scale_factor
+    viewport_box.size = Vector2(800, 500)
+    swipe_hint.scale = Vector2.ONE
+    swipe_hint.position = Vector2(0, 510)
+    swipe_hint.size = Vector2(820, 24)
+
+    var side_x := 890.0 * scale_factor
+    side_title.scale = Vector2.ONE * scale_factor
+    side_title.position = Vector2(side_x, 105.0 * scale_factor)
+    side_title.size = Vector2(340, 42)
+    blue_card.scale = Vector2.ONE * scale_factor
+    blue_card.position = Vector2(side_x, 165.0 * scale_factor)
+    red_card.scale = Vector2.ONE * scale_factor
+    red_card.position = Vector2(side_x, 365.0 * scale_factor)
+    selected_label.scale = Vector2.ONE * scale_factor
+    selected_label.position = Vector2(side_x, 575.0 * scale_factor)
+    selected_label.size = Vector2(350, 34)
+
+    back_button.scale = Vector2.ONE * scale_factor
+    back_button.position = Vector2(42.0 * scale_factor, h - 60.0 * scale_factor)
+    start_button.scale = Vector2.ONE * scale_factor
+    start_button.position = Vector2(w - 250.0 * scale_factor, h - 70.0 * scale_factor)
 
 func _make_car_option(heading: String, decal: String, paint: Color, car_id: int, y: float) -> Panel:
     var card := Panel.new()
