@@ -110,7 +110,11 @@ func _process(delta: float) -> void:
     _move_traffic(delta)
     _move_obstacles(delta)
     _check_traffic_collision()
+    if game_over:
+        return
     _check_obstacle_collision()
+    if game_over:
+        return
 
     speed_label.text = "SPEED  %03d km/h" % int(speed)
     distance_label.text = "DISTANCE  %.2f km" % distance
@@ -566,6 +570,8 @@ func _move_obstacles(delta: float) -> void:
             obstacle.set_meta("approach_speed", randf_range(72.0, 100.0))
 
 func _check_obstacle_collision() -> void:
+    if game_over or game_paused:
+        return
     for obstacle in road_obstacles:
         if absf(obstacle.position.z - car.position.z) < 1.75 and absf(obstacle.position.x - car.position.x) < 1.15:
             _finish_race()
@@ -593,6 +599,8 @@ func _move_traffic(delta: float) -> void:
             traffic.set_meta("cruise_speed", randf_range(62.0, 108.0))
 
 func _check_traffic_collision() -> void:
+    if game_over or game_paused:
+        return
     for traffic in traffic_cars:
         # Match the collision window to the visible car body dimensions.
         if absf(traffic.position.z - car.position.z) < 3.2 and absf(traffic.position.x - car.position.x) < 1.8:
@@ -660,7 +668,15 @@ func _finish_race() -> void:
     if game_over:
         return
     game_over = true
+    game_paused = false
     speed = 0.0
+    touch_accel = false
+    touch_brake = false
+    touch_nitro = false
+    was_boosting = false
+    was_braking = false
+    if is_instance_valid(nitro_fx):
+        nitro_fx.visible = false
     if is_instance_valid(engine_player):
         engine_player.stop()
     if is_instance_valid(nitro_player):
