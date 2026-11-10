@@ -13,6 +13,10 @@ var red_button: Button
 func _ready() -> void:
     _build_garage()
 
+func _process(delta: float) -> void:
+    if is_instance_valid(preview_car) and not drag_active:
+        preview_car.rotation.y += delta * 0.16
+
 func _build_garage() -> void:
     var bg := ColorRect.new()
     bg.color = Color("#0B1220")
