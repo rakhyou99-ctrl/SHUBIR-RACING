@@ -44,8 +44,11 @@ var tilt_steer := 0.0
 var tilt_calibrated := false
 
 func _notification(what: int) -> void:
+    # Android Back is delivered as a window notification on mobile.
+    if what == NOTIFICATION_WM_GO_BACK_REQUEST and not game_over and not game_paused:
+        _show_pause_menu()
     # Freeze the race and require an explicit RESUME after Android backgrounds the app.
-    if what == NOTIFICATION_APPLICATION_PAUSED and not game_over and not game_paused:
+    elif what == NOTIFICATION_APPLICATION_PAUSED and not game_over and not game_paused:
         _show_pause_menu()
 
 
