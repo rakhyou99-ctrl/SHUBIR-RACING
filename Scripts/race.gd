@@ -48,6 +48,9 @@ func _process(delta: float) -> void:
 
     if boosting:
         nitro_left = maxf(0.0, nitro_left - delta)
+    else:
+        # Nitro slowly recharges while the player is not using the boost.
+        nitro_left = minf(3.0, nitro_left + delta * 0.22)
 
     steer = (1.0 if right else 0.0) - (1.0 if left else 0.0)
     car.position.x = clampf(car.position.x + steer * delta * (3.4 + speed / 55.0), -4.0, 4.0)
