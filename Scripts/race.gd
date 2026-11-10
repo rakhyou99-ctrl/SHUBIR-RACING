@@ -746,6 +746,16 @@ func _show_pause_menu() -> void:
     if game_over or game_paused:
         return
     game_paused = true
+    # Release every held driving control when the pause overlay takes focus.
+    # This prevents a pedal/BOOST held during pause from remaining active on resume.
+    touch_accel = false
+    touch_brake = false
+    touch_nitro = false
+    was_boosting = false
+    was_braking = false
+    boost_locked = true
+    if is_instance_valid(nitro_fx):
+        nitro_fx.visible = false
     if is_instance_valid(engine_player):
         engine_player.stream_paused = true
     if is_instance_valid(nitro_player):
@@ -773,6 +783,12 @@ func _show_pause_menu() -> void:
     resume.position = Vector2(440, 330)
     resume.size = Vector2(190, 65)
     resume.pressed.connect(func():
+        # Require a fresh BOOST press after unpausing; no stale input is restored.
+        touch_accel = false
+        touch_brake = false
+        touch_nitro = false
+        was_boosting = false
+        was_braking = false
         game_paused = false
         if is_instance_valid(engine_player):
             engine_player.stream_paused = false
