@@ -24,5 +24,10 @@ jobs:
       - name: Import project and check scripts
         run: godot --headless --editor --path . --quit
 
-      - name: Run project briefly
-        run: godot --headless --path . --quit-after 5
+      - name: Smoke-test every game screen
+        shell: bash
+        run: |
+          for scene in main_menu garage settings race; do
+            echo "Smoke-testing res://Scenes/${scene}.tscn"
+            godot --headless --path . "res://Scenes/${scene}.tscn" --quit-after 5
+          done
