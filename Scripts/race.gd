@@ -355,16 +355,25 @@ func _make_tree(parent: Node3D, tree_position: Vector3) -> void:
     trunk.position.y = 0.9
     tree.add_child(trunk)
 
-    var leaves := MeshInstance3D.new()
-    var leaves_mesh := SphereMesh.new()
-    leaves_mesh.radius = 0.9
-    leaves_mesh.height = 1.8
-    leaves.mesh = leaves_mesh
-    var leaves_material := StandardMaterial3D.new()
-    leaves_material.albedo_color = Color("#236B3A")
-    leaves.material_override = leaves_material
-    leaves.position.y = 2.2
-    tree.add_child(leaves)
+    # Layered foliage clusters give roadside trees a fuller silhouette.
+    var foliage_colors := [Color("#236B3A"), Color("#2D7A42"), Color("#1D6035"), Color("#34864A")]
+    for cluster in range(3):
+        var leaves := MeshInstance3D.new()
+        var leaves_mesh := SphereMesh.new()
+        leaves_mesh.radius = 0.72 if cluster == 0 else 0.58
+        leaves_mesh.height = leaves_mesh.radius * 2.0
+        leaves.mesh = leaves_mesh
+        var leaves_material := StandardMaterial3D.new()
+        leaves_material.albedo_color = foliage_colors[randi_range(0, foliage_colors.size() - 1)]
+        leaves_material.roughness = 0.95
+        leaves.material_override = leaves_material
+        if cluster == 0:
+            leaves.position = Vector3(0, 2.25, 0)
+        elif cluster == 1:
+            leaves.position = Vector3(-0.42, 2.45, 0.12)
+        else:
+            leaves.position = Vector3(0.40, 2.42, -0.10)
+        tree.add_child(leaves)
 
 func _make_car() -> void:
     car = Node3D.new()
