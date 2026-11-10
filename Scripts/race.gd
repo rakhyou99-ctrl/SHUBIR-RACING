@@ -869,6 +869,11 @@ func _show_pause_menu() -> void:
         touch_nitro = false
         was_boosting = false
         was_braking = false
+        # Re-zero the phone tilt after pause/background so steering does not jump on resume.
+        tilt_calibrated = false
+        tilt_center_x = 0.0
+        tilt_filtered_x = 0.0
+        tilt_steer = 0.0
         game_paused = false
         if is_instance_valid(engine_player):
             engine_player.stream_paused = false
