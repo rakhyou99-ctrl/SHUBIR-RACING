@@ -42,6 +42,12 @@ var tilt_filtered_x := 0.0
 var tilt_steer := 0.0
 var tilt_calibrated := false
 
+func _notification(what: int) -> void:
+    # Freeze the race and require an explicit RESUME after Android backgrounds the app.
+    if what == NOTIFICATION_APPLICATION_PAUSED and not game_over and not game_paused:
+        _show_pause_menu()
+
+
 func _ready() -> void:
     randomize()
     _load_best_distance()
