@@ -24,6 +24,8 @@ var engine_player: AudioStreamPlayer
 var nitro_player: AudioStreamPlayer
 var crash_player: AudioStreamPlayer
 var was_boosting := false
+var tilt_center_x := 0.0
+var tilt_steer := 0.0
 
 func _ready() -> void:
     randomize()
