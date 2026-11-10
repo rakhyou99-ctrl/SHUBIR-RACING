@@ -64,6 +64,10 @@ func _ready() -> void:
 func _process(delta: float) -> void:
     if game_over or game_paused:
         return
+    # Keyboard ESC / Android Back (when mapped to ui_cancel) opens the pause menu.
+    if Input.is_action_just_pressed("ui_cancel"):
+        _show_pause_menu()
+        return
 
     var accel := Input.is_action_pressed("ui_up") or touch_accel
     var braking := Input.is_action_pressed("ui_down") or touch_brake
@@ -1078,7 +1082,6 @@ func _layout_race_ui() -> void:
     speed_label.position = Vector2(22, 16) * scale_factor
     distance_label.position = Vector2(22, 54) * scale_factor
     best_label.position = Vector2(22, 86) * scale_factor
-    nitro_label.position = Vector2(22, 116) * scale_factor
     race_stage_label.position = Vector2(22, 116) * scale_factor
     race_stage_label.scale = Vector2.ONE * scale_factor
     nitro_label.position = Vector2(22, 142) * scale_factor
