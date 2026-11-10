@@ -295,12 +295,22 @@ func _create_preview_car() -> Node3D:
             root.add_child(hub)
             for lug_index in range(5):
                 var angle := TAU * float(lug_index) / 5.0
+                # Five slim alloy spokes make the wheel face read as a real rim.
+                var spoke := MeshInstance3D.new()
+                var spoke_mesh := BoxMesh.new()
+                spoke_mesh.size = Vector3(0.045, 0.055, 0.205)
+                spoke.mesh = spoke_mesh
+                spoke.rotation.x = angle
+                spoke.position = Vector3(side * 1.225, 0.36 + cos(angle) * 0.135, z + sin(angle) * 0.135)
+                spoke.material_override = rim_mat
+                root.add_child(spoke)
+
                 var lug := MeshInstance3D.new()
                 var lug_mesh := SphereMesh.new()
                 lug_mesh.radius = 0.027
                 lug_mesh.height = 0.054
                 lug.mesh = lug_mesh
-                lug.position = Vector3(side * 1.22, 0.36 + cos(angle) * 0.17, z + sin(angle) * 0.17)
+                lug.position = Vector3(side * 1.245, 0.36 + cos(angle) * 0.17, z + sin(angle) * 0.17)
                 lug.material_override = rim_mat
                 root.add_child(lug)
     for x in [-0.68, 0.68]:
@@ -310,6 +320,23 @@ func _create_preview_car() -> Node3D:
     _add_emissive_box(root, Vector3(-0.68, 0.62, -1.985), Vector3(0.42, 0.13, 0.045), Color("#FFF1B8"))
     _add_emissive_box(root, Vector3(0.68, 0.62, -1.985), Vector3(0.42, 0.13, 0.045), Color("#FFF1B8"))
     _add_emissive_box(root, Vector3(0, 0.65, 1.995), Vector3(1.35, 0.09, 0.045), Color("#FF263F"))
+
+    # Twin polished exhaust tips are visible at the rear of the showroom car.
+    for exhaust_side in [-0.48, 0.48]:
+        var exhaust_tip := MeshInstance3D.new()
+        var exhaust_mesh := CylinderMesh.new()
+        exhaust_mesh.top_radius = 0.13
+        exhaust_mesh.bottom_radius = 0.15
+        exhaust_mesh.height = 0.38
+        exhaust_tip.mesh = exhaust_mesh
+        exhaust_tip.rotation_degrees.x = 90
+        exhaust_tip.position = Vector3(exhaust_side, 0.31, 2.08)
+        var exhaust_mat := StandardMaterial3D.new()
+        exhaust_mat.albedo_color = Color("#B9C4CE")
+        exhaust_mat.metallic = 0.9
+        exhaust_mat.roughness = 0.18
+        exhaust_tip.material_override = exhaust_mat
+        root.add_child(exhaust_tip)
 
     # Glasshouse, sloped windscreens and side windows for a more finished showroom model.
     _add_box(root, Vector3(0, 1.08, -1.02), Vector3(1.34, 0.045, 0.62), Color("#7895AA"))
