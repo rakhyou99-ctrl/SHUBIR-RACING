@@ -672,11 +672,10 @@ func _add_car_decal(parent: Node3D, decal_text: String, decal_position: Vector3,
 func _make_traffic() -> void:
     for i in range(5):
         var traffic := Node3D.new()
-        # Register each vehicle before choosing the next spawn lane so initial
-        # traffic placement observes cars that were already created.
-        traffic_cars.append(traffic)
         var spawn_z := -45.0 - float(i) * 42.0
+        # Pick a clear lane using the vehicles already registered in this pool.
         traffic.position = Vector3(_spawn_lane_for(spawn_z), 0.45, spawn_z)
+        traffic_cars.append(traffic)
         # Each vehicle has its own cruising speed, so traffic does not move as one block.
         traffic.set_meta("cruise_speed", randf_range(62.0, 108.0))
         traffic.set_meta("lane_center_x", traffic.position.x)
