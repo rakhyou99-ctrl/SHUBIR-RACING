@@ -25,6 +25,7 @@ var pause_button: Button
 var touch_accel := false
 var touch_brake := false
 var touch_nitro := false
+var touch_points: Dictionary = {}
 var game_over := false
 var game_paused := false
 var best_distance := 0.0
@@ -46,6 +47,40 @@ func _notification(what: int) -> void:
     # Freeze the race and require an explicit RESUME after Android backgrounds the app.
     if what == NOTIFICATION_APPLICATION_PAUSED and not game_over and not game_paused:
         _show_pause_menu()
+
+
+func _input(event: InputEvent) -> void:
+    # Track raw touch indices so accelerator + BOOST can be held with two fingers.
+    if event is InputEventScreenTouch:
+        if event.pressed:
+            touch_points[event.index] = event.position
+        else:
+            touch_points.erase(event.index)
+        _refresh_multitouch_controls()
+    elif event is InputEventScreenDrag:
+        touch_points[event.index] = event.position
+        _refresh_multitouch_controls()
+
+
+func _refresh_multitouch_controls() -> void:
+    if touch_points.is_empty():
+        touch_accel = false
+        touch_brake = false
+        touch_nitro = false
+        return
+    var accel_held := false
+    var brake_held := false
+    var boost_held := false
+    for point in touch_points.values():
+        if accel_button.get_global_rect().has_point(point):
+            accel_held = true
+        if brake_button.get_global_rect().has_point(point):
+            brake_held = true
+        if boost_button.get_global_rect().has_point(point):
+            boost_held = true
+    touch_accel = accel_held
+    touch_brake = brake_held
+    touch_nitro = boost_held
 
 
 func _ready() -> void:
