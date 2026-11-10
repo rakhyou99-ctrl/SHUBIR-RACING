@@ -267,6 +267,7 @@ func _make_car_option(heading: String, decal: String, paint: Color, car_id: int,
     _style_button(choose, car_id == GameState.selected_car)
     choose.pressed.connect(func():
         GameState.selected_car = car_id
+        GameState.save_settings()
         _show_selected_car()
         _refresh_selection()
     )
