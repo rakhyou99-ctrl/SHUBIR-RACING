@@ -17,6 +17,11 @@ var header_label: Label
 var back_button: Button
 var start_button: Button
 
+func _notification(what: int) -> void:
+    # Android system Back returns from the showroom to the main menu.
+    if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+        get_tree().change_scene_to_file("res://Scenes/main_menu.tscn")
+
 func _ready() -> void:
     _build_garage()
     get_viewport().size_changed.connect(_layout_garage)
