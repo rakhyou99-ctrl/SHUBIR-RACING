@@ -38,6 +38,7 @@ var was_boosting := false
 var boost_locked := false
 var was_braking := false
 var tilt_center_x := 0.0
+var tilt_filtered_x := 0.0
 var tilt_steer := 0.0
 var tilt_calibrated := false
 
@@ -73,13 +74,18 @@ func _process(delta: float) -> void:
     if accel_reading.length() > 6.0:
         if not tilt_calibrated:
             tilt_center_x = accel_reading.y
+            tilt_filtered_x = accel_reading.y
             tilt_calibrated = true
-        var tilt_delta := accel_reading.y - tilt_center_x
-        if absf(tilt_delta) < 0.65:
+        # Low-pass filter reduces sensor jitter before converting tilt to steering.
+        tilt_filtered_x = lerpf(tilt_filtered_x, accel_reading.y, minf(1.0, delta * 10.0))
+        var tilt_delta := tilt_filtered_x - tilt_center_x
+        # A small dead zone prevents unwanted lane drift while held nearly level.
+        if absf(tilt_delta) < 0.75:
             tilt_delta = 0.0
-        tilt_steer = move_toward(tilt_steer, clampf(tilt_delta / 4.0, -1.0, 1.0), delta * 5.0)
+        var target_tilt := clampf(tilt_delta / 3.5, -1.0, 1.0)
+        tilt_steer = move_toward(tilt_steer, target_tilt, delta * 4.5)
     else:
-        tilt_steer = move_toward(tilt_steer, 0.0, delta * 4.0)
+        tilt_steer = move_toward(tilt_steer, 0.0, delta * 3.5)
 
     if braking:
         speed = move_toward(speed, 0.0, 150.0 * delta)
