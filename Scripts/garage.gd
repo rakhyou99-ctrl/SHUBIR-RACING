@@ -20,6 +20,7 @@ func _build_ui() -> void:
 
     add_child(_car_card("BLUE SUPERCAR", "SUBHOJIT", Color("#1677E8"), Vector2(190, 220), 0))
     add_child(_car_card("RED SPORT SEDAN", "BIRAJ", Color("#D83232"), Vector2(690, 220), 1))
+    _refresh_car_cards()
 
     var selected := Label.new()
     selected.name = "SelectedLabel"
@@ -48,7 +49,8 @@ func _car_card(heading: String, decal: String, paint: Color, pos: Vector2, car_i
     var panel := Panel.new()
     panel.position = pos
     panel.size = Vector2(400, 330)
-    panel.add_theme_stylebox_override("panel", _style(Color("#1D2A3D")))
+    panel.set_meta("car_id", car_id)
+    panel.add_theme_stylebox_override("panel", _style(Color("#1D2A3D"), car_id == GameState.selected_car))
 
     var h := Label.new()
     h.text = heading
@@ -108,11 +110,12 @@ func _car_card(heading: String, decal: String, paint: Color, pos: Vector2, car_i
     panel.add_child(label)
 
     var choose := Button.new()
-    choose.text = "SELECT"
+    choose.text = "SELECTED" if car_id == GameState.selected_car else "SELECT CAR"
     choose.position = Vector2(100, 265)
     choose.size = Vector2(200, 48)
     choose.pressed.connect(func():
         GameState.selected_car = car_id
+        _refresh_car_cards()
         var selected_label := get_node_or_null("SelectedLabel")
         if selected_label:
             selected_label.text = "SELECTED: " + ("BLUE / SUBHOJIT" if car_id == 0 else "RED / BIRAJ")
@@ -120,9 +123,20 @@ func _car_card(heading: String, decal: String, paint: Color, pos: Vector2, car_i
     panel.add_child(choose)
     return panel
 
-func _style(color: Color) -> StyleBoxFlat:
+func _refresh_car_cards() -> void:
+    for child in get_children():
+        if child is Panel and child.has_meta("car_id"):
+            var car_id := int(child.get_meta("car_id"))
+            child.add_theme_stylebox_override("panel", _style(Color("#1D2A3D"), car_id == GameState.selected_car))
+            for item in child.get_children():
+                if item is Button and item.text in ["SELECT CAR", "SELECTED"]:
+                    item.text = "SELECTED" if car_id == GameState.selected_car else "SELECT CAR"
+
+func _style(color: Color, selected: bool = false) -> StyleBoxFlat:
     var s := StyleBoxFlat.new()
     s.bg_color = color
+    s.border_color = Color("#FF7518") if selected else Color("#34445A")
+    s.set_border_width_all(4 if selected else 1)
     s.corner_radius_top_left = 10
     s.corner_radius_top_right = 10
     s.corner_radius_bottom_left = 10
