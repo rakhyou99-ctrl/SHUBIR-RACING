@@ -545,10 +545,14 @@ func _on_preview_input(event: InputEvent) -> void:
         preview_spin_velocity = clampf(event.relative.x * 0.045, -5.0, 5.0)
 
 func _show_selected_car() -> void:
+    # Keep the current showroom angle and swipe momentum when swapping paint
+    # and owner decals, so selecting another car does not reset the 360 view.
+    var saved_rotation := preview_car.rotation.y if is_instance_valid(preview_car) else 0.0
     if is_instance_valid(preview_car):
         preview_root.remove_child(preview_car)
         preview_car.queue_free()
     preview_car = _create_preview_car()
+    preview_car.rotation.y = saved_rotation
     preview_root.add_child(preview_car)
 
 func _refresh_selection() -> void:
