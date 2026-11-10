@@ -99,6 +99,8 @@ func _ready() -> void:
 func _process(delta: float) -> void:
     if game_over or game_paused:
         return
+    if not touch_points.is_empty():
+        _refresh_multitouch_controls()
     # Keyboard ESC / Android Back (when mapped to ui_cancel) opens the pause menu.
     if Input.is_action_just_pressed("ui_cancel"):
         _show_pause_menu()
@@ -812,6 +814,7 @@ func _show_pause_menu() -> void:
     touch_accel = false
     touch_brake = false
     touch_nitro = false
+    touch_points.clear()
     was_boosting = false
     was_braking = false
     boost_locked = true
@@ -890,6 +893,7 @@ func _finish_race() -> void:
     touch_accel = false
     touch_brake = false
     touch_nitro = false
+    touch_points.clear()
     was_boosting = false
     was_braking = false
     if is_instance_valid(nitro_fx):
