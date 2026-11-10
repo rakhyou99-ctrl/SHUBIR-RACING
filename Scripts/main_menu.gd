@@ -36,7 +36,13 @@ func _build_ui() -> void:
     garage.pressed.connect(func(): get_tree().change_scene_to_file("res://Scenes/garage.tscn"))
     add_child(garage)
 
-    var exit := _make_button("EXIT GAME", Vector2(440, 520), Vector2(400, 64))
+    var settings := _make_button("SETTINGS", Vector2(440, 520), Vector2(400, 64))
+    settings.add_theme_stylebox_override("normal", _button_style(Color("#35445A")))
+    settings.add_theme_stylebox_override("hover", _button_style(Color("#52647D")))
+    settings.pressed.connect(func(): get_tree().change_scene_to_file("res://Scenes/settings.tscn"))
+    add_child(settings)
+
+    var exit := _make_button("EXIT GAME", Vector2(440, 600), Vector2(400, 58))
     exit.add_theme_stylebox_override("normal", _button_style(Color("#35445A")))
     exit.add_theme_stylebox_override("hover", _button_style(Color("#52647D")))
     exit.pressed.connect(func(): get_tree().quit())
@@ -47,7 +53,7 @@ func _build_ui() -> void:
     note.add_theme_font_size_override("font_size", 16)
     note.add_theme_color_override("font_color", Color("#94A3B8"))
     note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    note.position = Vector2(0, 630)
+    note.position = Vector2(0, 675)
     note.size = Vector2(1280, 35)
     add_child(note)
 
