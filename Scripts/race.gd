@@ -237,14 +237,31 @@ func _make_car() -> void:
     var body_color := Color("#1677E8") if GameState.selected_car == 0 else Color("#D83232")
     _box(car, Vector3(0, 0.45, 0), Vector3(1.8, 0.55, 3.4), body_color)
     _box(car, Vector3(0, 0.9, -0.25), Vector3(1.35, 0.55, 1.55), Color("#17212E"))
+
+    # Sport-car body details: hood, roof glass, side skirts and front splitter.
+    _box(car, Vector3(0, 0.735, -1.05), Vector3(1.42, 0.045, 1.05), body_color.lightened(0.10))
+    _box(car, Vector3(0, 1.185, -0.22), Vector3(1.18, 0.035, 1.12), Color("#101A27"))
+    _box(car, Vector3(0, 0.22, -1.78), Vector3(1.95, 0.12, 0.22), Color("#202832"))
+    for side in [-1.0, 1.0]:
+        _box(car, Vector3(side * 0.91, 0.28, 0.05), Vector3(0.12, 0.18, 2.55), Color("#252B33"))
+        _box(car, Vector3(side * 0.98, 0.93, -0.65), Vector3(0.30, 0.12, 0.22), Color("#171D25"))
+        _box(car, Vector3(side * 1.08, 1.02, -0.65), Vector3(0.24, 0.10, 0.32), Color("#111820"))
+
     for x in [-0.95, 0.95]:
         for z in [-1.05, 1.05]:
             _box(car, Vector3(x, 0.2, z), Vector3(0.28, 0.55, 0.72), Color("#111111"))
+            _box(car, Vector3(x * 1.012, 0.2, z), Vector3(0.035, 0.30, 0.34), Color("#B7C0C8"))
 
-    # Visible headlights and rear lights make the placeholder car easier to read.
+    # Raised rear wing and supports, visible above the trunk from the chase camera.
+    for wing_x in [-0.62, 0.62]:
+        _box(car, Vector3(wing_x, 1.02, 1.28), Vector3(0.08, 0.48, 0.10), Color("#252B33"))
+    _box(car, Vector3(0, 1.28, 1.30), Vector3(2.0, 0.12, 0.42), Color("#171D25"))
+
+    # Visible headlights and full-width rear light strip.
     for x in [-0.62, 0.62]:
-        _box(car, Vector3(x, 0.49, -1.73), Vector3(0.34, 0.12, 0.06), Color("#FFF1B8"))
-        _box(car, Vector3(x, 0.49, 1.73), Vector3(0.34, 0.12, 0.06), Color("#E53935"))
+        _box(car, Vector3(x, 0.49, -1.73), Vector3(0.40, 0.14, 0.07), Color("#FFF1B8"))
+        _box(car, Vector3(x, 0.49, 1.73), Vector3(0.38, 0.14, 0.07), Color("#E53935"))
+    _box(car, Vector3(0, 0.49, 1.75), Vector3(0.72, 0.07, 0.06), Color("#FF3344"))
 
     var brand_text := "SUBHOJIT" if GameState.selected_car == 0 else "BIRAJ"
     _add_car_decal(car, brand_text, Vector3(-0.91, 0.62, 0.0), Vector3(0, 90, 0))
