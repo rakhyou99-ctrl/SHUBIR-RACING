@@ -847,9 +847,10 @@ func _show_pause_menu() -> void:
     center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     panel.add_child(center)
 
+    var screen_size := get_viewport().get_visible_rect().size
     var content := VBoxContainer.new()
-    content.custom_minimum_size = Vector2(430, 300)
-    content.add_theme_constant_override("separation", 22)
+    content.custom_minimum_size = Vector2(minf(430.0, screen_size.x - 32.0), minf(300.0, screen_size.y - 24.0))
+    content.add_theme_constant_override("separation", clampi(int(screen_size.y * 0.045), 12, 22))
     content.alignment = BoxContainer.ALIGNMENT_CENTER
     center.add_child(content)
 
@@ -861,8 +862,10 @@ func _show_pause_menu() -> void:
     content.add_child(title)
 
     var resume := Button.new()
+    var pause_button_width := minf(260.0, screen_size.x - 48.0)
+    var pause_button_height := maxf(42.0, minf(62.0, screen_size.y * 0.15))
     resume.text = "RESUME"
-    resume.custom_minimum_size = Vector2(260, 62)
+    resume.custom_minimum_size = Vector2(pause_button_width, pause_button_height)
     _style_overlay_button(resume, true)
     resume.pressed.connect(func():
         # Require a fresh BOOST press after unpausing; no stale input is restored.
@@ -889,14 +892,14 @@ func _show_pause_menu() -> void:
 
     var restart := Button.new()
     restart.text = "RESTART"
-    restart.custom_minimum_size = Vector2(260, 62)
+    restart.custom_minimum_size = Vector2(pause_button_width, pause_button_height)
     _style_overlay_button(restart, false)
     restart.pressed.connect(func(): get_tree().reload_current_scene())
     content.add_child(restart)
 
     var menu := Button.new()
     menu.text = "MAIN MENU"
-    menu.custom_minimum_size = Vector2(260, 58)
+    menu.custom_minimum_size = Vector2(pause_button_width, pause_button_height)
     _style_overlay_button(menu, false)
     menu.pressed.connect(func(): get_tree().change_scene_to_file("res://Scenes/main_menu.tscn"))
     content.add_child(menu)
@@ -949,9 +952,10 @@ func _finish_race() -> void:
     center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     overlay.add_child(center)
 
+    var screen_size := get_viewport().get_visible_rect().size
     var content := VBoxContainer.new()
-    content.custom_minimum_size = Vector2(540, 330)
-    content.add_theme_constant_override("separation", 18)
+    content.custom_minimum_size = Vector2(minf(540.0, screen_size.x - 32.0), minf(330.0, screen_size.y - 24.0))
+    content.add_theme_constant_override("separation", clampi(int(screen_size.y * 0.025), 10, 18))
     content.alignment = BoxContainer.ALIGNMENT_CENTER
     center.add_child(content)
 
@@ -988,16 +992,18 @@ func _finish_race() -> void:
     actions.add_theme_constant_override("separation", 18)
     content.add_child(actions)
 
+    var action_button_width := maxf(130.0, minf(190.0, (screen_size.x - 72.0) * 0.5))
+    var action_button_height := maxf(44.0, minf(62.0, screen_size.y * 0.13))
     var restart := Button.new()
     restart.text = "RACE AGAIN"
-    restart.custom_minimum_size = Vector2(190, 62)
+    restart.custom_minimum_size = Vector2(action_button_width, action_button_height)
     _style_overlay_button(restart, true)
     restart.pressed.connect(func(): get_tree().reload_current_scene())
     actions.add_child(restart)
 
     var menu := Button.new()
     menu.text = "MAIN MENU"
-    menu.custom_minimum_size = Vector2(190, 62)
+    menu.custom_minimum_size = Vector2(action_button_width, action_button_height)
     _style_overlay_button(menu, false)
     menu.pressed.connect(func(): get_tree().change_scene_to_file("res://Scenes/main_menu.tscn"))
     actions.add_child(menu)
