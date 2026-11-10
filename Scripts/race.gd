@@ -13,6 +13,10 @@ var speed_label: Label
 var distance_label: Label
 var best_label: Label
 var nitro_label: Label
+var brake_button: Button
+var boost_button: Button
+var accel_button: Button
+var pause_button: Button
 var touch_accel := false
 var touch_brake := false
 var touch_nitro := false
@@ -571,19 +575,20 @@ func _make_ui() -> void:
     nitro_label.add_theme_color_override("font_color", Color("#70D7FF"))
     ui_layer.add_child(nitro_label)
 
-    # Landscape layout: brake bottom-left, accelerator bottom-right, nitro above accelerator.
-    _add_hold_button("BRAKE", Vector2(35, 535), Vector2(155, 145), "brake")
-    _add_hold_button("BOOST", Vector2(1100, 405), Vector2(145, 105), "nitro")
-    _add_hold_button("ACCELERATOR", Vector2(1070, 535), Vector2(180, 145), "accel")
+    # Landscape controls are repositioned for the actual phone viewport.
+    brake_button = _add_hold_button("BRAKE", Vector2(35, 535), Vector2(155, 145), "brake")
+    boost_button = _add_hold_button("BOOST", Vector2(1100, 405), Vector2(145, 105), "nitro")
+    accel_button = _add_hold_button("ACCELERATOR", Vector2(1070, 535), Vector2(180, 145), "accel")
 
-    var pause := Button.new()
-    pause.text = "PAUSE"
-    pause.position = Vector2(1110, 20)
-    pause.size = Vector2(140, 48)
-    pause.pressed.connect(_show_pause_menu)
-    ui_layer.add_child(pause)
+    pause_button = Button.new()
+    pause_button.text = "PAUSE"
+    pause_button.size = Vector2(140, 48)
+    pause_button.pressed.connect(_show_pause_menu)
+    ui_layer.add_child(pause_button)
+    get_viewport().size_changed.connect(_layout_race_ui)
+    _layout_race_ui()
 
-func _add_hold_button(label_text: String, pos: Vector2, btn_size: Vector2, action: String) -> void:
+func _add_hold_button(label_text: String, pos: Vector2, btn_size: Vector2, action: String) -> Button:
     var b := Button.new()
     b.text = label_text
     b.position = pos
@@ -643,6 +648,30 @@ func _add_hold_button(label_text: String, pos: Vector2, btn_size: Vector2, actio
     b.button_down.connect(func(): _set_touch(action, true))
     b.button_up.connect(func(): _set_touch(action, false))
     ui_layer.add_child(b)
+    return b
+
+func _layout_race_ui() -> void:
+    var viewport_size := get_viewport().get_visible_rect().size
+    var scale_factor := minf(viewport_size.x / 1280.0, viewport_size.y / 720.0)
+    scale_factor = clampf(scale_factor, 0.55, 1.15)
+    var w := viewport_size.x
+    var h := viewport_size.y
+
+    speed_label.position = Vector2(22, 16) * scale_factor
+    distance_label.position = Vector2(22, 54) * scale_factor
+    best_label.position = Vector2(22, 86) * scale_factor
+    nitro_label.position = Vector2(22, 116) * scale_factor
+    for label in [speed_label, distance_label, best_label, nitro_label]:
+        label.scale = Vector2.ONE * scale_factor
+
+    brake_button.scale = Vector2.ONE * scale_factor
+    brake_button.position = Vector2(28.0 * scale_factor, h - 172.0 * scale_factor)
+    boost_button.scale = Vector2.ONE * scale_factor
+    boost_button.position = Vector2(w - 176.0 * scale_factor, h - 292.0 * scale_factor)
+    accel_button.scale = Vector2.ONE * scale_factor
+    accel_button.position = Vector2(w - 210.0 * scale_factor, h - 172.0 * scale_factor)
+    pause_button.scale = Vector2.ONE * scale_factor
+    pause_button.position = Vector2(w - 158.0 * scale_factor, 16.0 * scale_factor)
 
 func _set_touch(action: String, value: bool) -> void:
     match action:
