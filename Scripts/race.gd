@@ -6,21 +6,31 @@ var distance := 0.0
 var steer := 0.0
 var nitro_left := 3.0
 var road_segments: Array[Node3D] = []
+var traffic_cars: Array[Node3D] = []
 var ui_layer: CanvasLayer
 var speed_label: Label
 var distance_label: Label
+var best_label: Label
 var touch_left := false
 var touch_right := false
 var touch_accel := false
 var touch_brake := false
 var touch_nitro := false
+var game_over := false
+var best_distance := 0.0
 
 func _ready() -> void:
+    randomize()
+    _load_best_distance()
     _make_world()
     _make_car()
+    _make_traffic()
     _make_ui()
 
 func _process(delta: float) -> void:
+    if game_over:
+        return
+
     var accel := Input.is_action_pressed("ui_up") or touch_accel
     var braking := Input.is_action_pressed("ui_down") or touch_brake
     var left := Input.is_action_pressed("ui_left") or touch_left
@@ -40,9 +50,14 @@ func _process(delta: float) -> void:
     steer = (1.0 if right else 0.0) - (1.0 if left else 0.0)
     car.position.x = clampf(car.position.x + steer * delta * (3.4 + speed / 55.0), -4.0, 4.0)
     distance += speed * delta / 3600.0
+
     _move_road(delta)
+    _move_traffic(delta)
+    _check_traffic_collision()
+
     speed_label.text = "SPEED  %03d km/h" % int(speed)
     distance_label.text = "DISTANCE  %.2f km" % distance
+    best_label.text = "BEST  %.2f km" % best_distance
 
 func _make_world() -> void:
     var env := WorldEnvironment.new()
@@ -91,9 +106,94 @@ func _make_car() -> void:
     camera.current = true
     car.add_child(camera)
 
+func _make_traffic() -> void:
+    for i in range(5):
+        var traffic := Node3D.new()
+        traffic.position = Vector3(_random_lane(), 0.45, -45.0 - float(i) * 42.0)
+        add_child(traffic)
+        var paint := [Color("#F2C230"), Color("#E84A5F"), Color("#36A889"), Color("#D7DCE2")][i % 4]
+        _box(traffic, Vector3(0, 0.45, 0), Vector3(1.8, 0.55, 3.3), paint)
+        _box(traffic, Vector3(0, 0.9, -0.2), Vector3(1.3, 0.5, 1.45), Color("#26384A"))
+        traffic_cars.append(traffic)
+
+func _random_lane() -> float:
+    var lanes := [-3.5, 0.0, 3.5]
+    return lanes[randi_range(0, lanes.size() - 1)]
+
+func _move_traffic(delta: float) -> void:
+    var movement := speed * delta * 0.12
+    for traffic in traffic_cars:
+        traffic.position.z += movement
+        if traffic.position.z > 16.0:
+            traffic.position.z = -190.0 - randf_range(0.0, 65.0)
+            traffic.position.x = _random_lane()
+
+func _check_traffic_collision() -> void:
+    for traffic in traffic_cars:
+        if absf(traffic.position.z - car.position.z) < 2.4 and absf(traffic.position.x - car.position.x) < 1.65:
+            _finish_race()
+            return
+
+func _finish_race() -> void:
+    if game_over:
+        return
+    game_over = true
+    speed = 0.0
+    if distance > best_distance:
+        best_distance = distance
+        _save_best_distance()
+
+    var panel := ColorRect.new()
+    panel.color = Color(0.02, 0.03, 0.05, 0.88)
+    panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    ui_layer.add_child(panel)
+
+    var title := Label.new()
+    title.text = "GAME OVER"
+    title.position = Vector2(0, 190)
+    title.size = Vector2(1280, 80)
+    title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    title.add_theme_font_size_override("font_size", 58)
+    title.add_theme_color_override("font_color", Color("#FF7518"))
+    panel.add_child(title)
+
+    var score := Label.new()
+    score.text = "DISTANCE: %.2f km     BEST: %.2f km" % [distance, best_distance]
+    score.position = Vector2(0, 285)
+    score.size = Vector2(1280, 50)
+    score.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    score.add_theme_font_size_override("font_size", 26)
+    score.add_theme_color_override("font_color", Color.WHITE)
+    panel.add_child(score)
+
+    var restart := Button.new()
+    restart.text = "RESTART"
+    restart.position = Vector2(440, 390)
+    restart.size = Vector2(190, 65)
+    restart.pressed.connect(func(): get_tree().reload_current_scene())
+    panel.add_child(restart)
+
+    var menu := Button.new()
+    menu.text = "MAIN MENU"
+    menu.position = Vector2(650, 390)
+    menu.size = Vector2(190, 65)
+    menu.pressed.connect(func(): get_tree().change_scene_to_file("res://Scenes/main_menu.tscn"))
+    panel.add_child(menu)
+
+func _load_best_distance() -> void:
+    var save := ConfigFile.new()
+    if save.load("user://shubir_racing.cfg") == OK:
+        best_distance = float(save.get_value("score", "best_distance", 0.0))
+
+func _save_best_distance() -> void:
+    var save := ConfigFile.new()
+    save.set_value("score", "best_distance", best_distance)
+    save.save("user://shubir_racing.cfg")
+
 func _make_ui() -> void:
     ui_layer = CanvasLayer.new()
     add_child(ui_layer)
+
     speed_label = Label.new()
     speed_label.position = Vector2(25, 20)
     speed_label.add_theme_font_size_override("font_size", 28)
@@ -105,6 +205,12 @@ func _make_ui() -> void:
     distance_label.add_theme_font_size_override("font_size", 22)
     distance_label.add_theme_color_override("font_color", Color.WHITE)
     ui_layer.add_child(distance_label)
+
+    best_label = Label.new()
+    best_label.position = Vector2(25, 92)
+    best_label.add_theme_font_size_override("font_size", 18)
+    best_label.add_theme_color_override("font_color", Color("#FFCCAA"))
+    ui_layer.add_child(best_label)
 
     _add_hold_button("LEFT", Vector2(25, 560), Vector2(120, 90), "left")
     _add_hold_button("RIGHT", Vector2(155, 560), Vector2(120, 90), "right")
