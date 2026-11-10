@@ -17,6 +17,7 @@ var touch_accel := false
 var touch_brake := false
 var touch_nitro := false
 var game_over := false
+var game_paused := false
 var best_distance := 0.0
 
 func _ready() -> void:
@@ -28,7 +29,7 @@ func _ready() -> void:
     _make_ui()
 
 func _process(delta: float) -> void:
-    if game_over:
+    if game_over or game_paused:
         return
 
     var accel := Input.is_action_pressed("ui_up") or touch_accel
@@ -134,6 +135,51 @@ func _check_traffic_collision() -> void:
             _finish_race()
             return
 
+
+func _show_pause_menu() -> void:
+    if game_over or game_paused:
+        return
+    game_paused = true
+
+    var panel := ColorRect.new()
+    panel.name = "PauseOverlay"
+    panel.color = Color(0.02, 0.03, 0.05, 0.88)
+    panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    ui_layer.add_child(panel)
+
+    var title := Label.new()
+    title.text = "PAUSED"
+    title.position = Vector2(0, 190)
+    title.size = Vector2(1280, 80)
+    title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    title.add_theme_font_size_override("font_size", 58)
+    title.add_theme_color_override("font_color", Color("#FF7518"))
+    panel.add_child(title)
+
+    var resume := Button.new()
+    resume.text = "RESUME"
+    resume.position = Vector2(440, 330)
+    resume.size = Vector2(190, 65)
+    resume.pressed.connect(func():
+        game_paused = false
+        panel.queue_free()
+    )
+    panel.add_child(resume)
+
+    var restart := Button.new()
+    restart.text = "RESTART"
+    restart.position = Vector2(650, 330)
+    restart.size = Vector2(190, 65)
+    restart.pressed.connect(func(): get_tree().reload_current_scene())
+    panel.add_child(restart)
+
+    var menu := Button.new()
+    menu.text = "MAIN MENU"
+    menu.position = Vector2(545, 420)
+    menu.size = Vector2(190, 60)
+    menu.pressed.connect(func(): get_tree().change_scene_to_file("res://Scenes/main_menu.tscn"))
+    panel.add_child(menu)
+
 func _finish_race() -> void:
     if game_over:
         return
@@ -218,12 +264,12 @@ func _make_ui() -> void:
     _add_hold_button("NITRO", Vector2(1000, 560), Vector2(120, 90), "nitro")
     _add_hold_button("ACCEL", Vector2(1130, 560), Vector2(125, 90), "accel")
 
-    var menu := Button.new()
-    menu.text = "MENU"
-    menu.position = Vector2(1110, 20)
-    menu.size = Vector2(140, 48)
-    menu.pressed.connect(func(): get_tree().change_scene_to_file("res://Scenes/main_menu.tscn"))
-    ui_layer.add_child(menu)
+    var pause := Button.new()
+    pause.text = "PAUSE"
+    pause.position = Vector2(1110, 20)
+    pause.size = Vector2(140, 48)
+    pause.pressed.connect(_show_pause_menu)
+    ui_layer.add_child(pause)
 
 func _add_hold_button(label_text: String, pos: Vector2, btn_size: Vector2, action: String) -> void:
     var b := Button.new()
