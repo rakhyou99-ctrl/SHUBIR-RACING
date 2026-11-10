@@ -13,6 +13,7 @@ var preview_frame: Panel
 var viewport_box: SubViewportContainer
 var swipe_hint: Label
 var side_title: Label
+var header_label: Label
 var back_button: Button
 var start_button: Button
 
@@ -31,13 +32,13 @@ func _build_garage() -> void:
     bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     add_child(bg)
 
-    var header := Label.new()
-    header.text = "GARAGE  /  360° SHOWROOM"
-    header.position = Vector2(42, 24)
-    header.size = Vector2(800, 56)
-    header.add_theme_font_size_override("font_size", 34)
-    header.add_theme_color_override("font_color", Color("#FF7518"))
-    add_child(header)
+    header_label = Label.new()
+    header_label.text = "GARAGE  /  360° SHOWROOM"
+    header_label.position = Vector2(42, 24)
+    header_label.size = Vector2(800, 56)
+    header_label.add_theme_font_size_override("font_size", 34)
+    header_label.add_theme_color_override("font_color", Color("#FF7518"))
+    add_child(header_label)
 
     preview_frame = Panel.new()
     preview_frame.position = Vector2(38, 100)
@@ -198,6 +199,10 @@ func _layout_garage() -> void:
     var scale_factor := clampf(minf(viewport_size.x / 1280.0, viewport_size.y / 720.0), 0.55, 1.15)
     var w := viewport_size.x
     var h := viewport_size.y
+
+    header_label.scale = Vector2.ONE * scale_factor
+    header_label.position = Vector2(42.0, 24.0) * scale_factor
+    header_label.size = Vector2(maxf(400.0, w - 84.0) / scale_factor, 56)
 
     preview_frame.scale = Vector2.ONE * scale_factor
     preview_frame.position = Vector2(38.0, 100.0) * scale_factor
