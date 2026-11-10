@@ -38,6 +38,7 @@ var boost_locked := false
 var was_braking := false
 var tilt_center_x := 0.0
 var tilt_steer := 0.0
+var tilt_calibrated := false
 
 func _ready() -> void:
     randomize()
@@ -49,8 +50,8 @@ func _ready() -> void:
     _make_ui()
     _make_engine_audio()
     _make_effect_audio()
-    # Calibrate the neutral angle when the race starts.
-    tilt_center_x = Input.get_accelerometer().y
+    # Wait for a valid live sensor sample before calibrating neutral tilt.
+    tilt_calibrated = false
 
 func _process(delta: float) -> void:
     if game_over or game_paused:
@@ -68,7 +69,10 @@ func _process(delta: float) -> void:
 
     # Landscape phone tilt steering. Ignore tiny sensor movement to prevent drift.
     var accel_reading := Input.get_accelerometer()
-    if accel_reading.length() > 1.0:
+    if accel_reading.length() > 6.0:
+        if not tilt_calibrated:
+            tilt_center_x = accel_reading.y
+            tilt_calibrated = true
         var tilt_delta := accel_reading.y - tilt_center_x
         if absf(tilt_delta) < 0.65:
             tilt_delta = 0.0
