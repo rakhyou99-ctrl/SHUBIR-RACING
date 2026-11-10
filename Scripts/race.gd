@@ -268,8 +268,37 @@ func _build_road_segment(parent: Node3D) -> void:
     # Bright shoulder edge strips improve lane readability at speed.
     _box(parent, Vector3(-6.05, 0.025, 0), Vector3(0.10, 0.035, 22), Color("#FFCF55"))
     _box(parent, Vector3(6.05, 0.025, 0), Vector3(0.10, 0.035, 22), Color("#FFCF55"))
+    # More varied roadside scenery makes the endless highway feel less repetitive.
     _make_tree(parent, Vector3(-9.0, 0.0, -7.0))
     _make_tree(parent, Vector3(9.0, 0.0, 4.0))
+    _make_tree(parent, Vector3(-10.0, 0.0, 7.0))
+    _make_tree(parent, Vector3(10.0, 0.0, -8.0))
+    _make_bush(parent, Vector3(-7.9, 0.0, 2.0), Color("#2D8245"))
+    _make_bush(parent, Vector3(8.0, 0.0, -3.0), Color("#347D3E"))
+    _make_bush(parent, Vector3(-8.1, 0.0, -10.0), Color("#286F3A"))
+    _make_bush(parent, Vector3(8.2, 0.0, 9.0), Color("#3A914B"))
+
+    # Tall reflective roadside lamps, repeated with each road segment.
+    for lamp_side in [-1.0, 1.0]:
+        var lamp := Node3D.new()
+        lamp.position = Vector3(lamp_side * 8.1, 0.0, -5.0)
+        parent.add_child(lamp)
+        _box(lamp, Vector3(0, 2.5, 0), Vector3(0.12, 5.0, 0.12), Color("#68737D"))
+        _box(lamp, Vector3(-lamp_side * 0.48, 4.9, 0), Vector3(1.05, 0.10, 0.12), Color("#68737D"))
+        _box(lamp, Vector3(-lamp_side * 0.92, 4.82, 0), Vector3(0.42, 0.16, 0.34), Color("#FFF0B0"))
+
+func _make_bush(parent: Node3D, bush_position: Vector3, bush_color: Color) -> void:
+    var bush := MeshInstance3D.new()
+    var bush_mesh := SphereMesh.new()
+    bush_mesh.radius = 0.72
+    bush_mesh.height = 0.95
+    bush.mesh = bush_mesh
+    var bush_material := StandardMaterial3D.new()
+    bush_material.albedo_color = bush_color
+    bush_material.roughness = 0.92
+    bush.material_override = bush_material
+    bush.position = bush_position + Vector3(0, 0.42, 0)
+    parent.add_child(bush)
 
 func _make_tree(parent: Node3D, tree_position: Vector3) -> void:
     var tree := Node3D.new()
