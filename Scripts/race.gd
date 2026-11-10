@@ -13,6 +13,8 @@ var speed_label: Label
 var distance_label: Label
 var best_label: Label
 var nitro_label: Label
+var boost_meter_bg: ColorRect
+var boost_meter_fill: ColorRect
 var brake_button: Button
 var boost_button: Button
 var accel_button: Button
@@ -107,10 +109,14 @@ func _process(delta: float) -> void:
     best_label.text = "BEST  %.2f km" % best_distance
     if boosting:
         nitro_label.text = "BOOST ACTIVE  %.1f s" % nitro_left
+        boost_meter_fill.color = Color("#19CFFF")
     elif nitro_left >= 2.99:
         nitro_label.text = "BOOST READY"
+        boost_meter_fill.color = Color("#43E38B")
     else:
         nitro_label.text = "BOOST RECHARGING  %d%%" % int((nitro_left / 3.0) * 100.0)
+        boost_meter_fill.color = Color("#FFB347")
+    boost_meter_fill.size.x = 190.0 * (nitro_left / 3.0)
     if is_instance_valid(engine_player):
         engine_player.pitch_scale = 0.75 + (speed / 190.0) * 0.75
 
@@ -589,6 +595,15 @@ func _make_ui() -> void:
     nitro_label.add_theme_color_override("font_color", Color("#70D7FF"))
     ui_layer.add_child(nitro_label)
 
+    boost_meter_bg = ColorRect.new()
+    boost_meter_bg.color = Color("#243746")
+    boost_meter_bg.size = Vector2(190, 12)
+    ui_layer.add_child(boost_meter_bg)
+    boost_meter_fill = ColorRect.new()
+    boost_meter_fill.color = Color("#19CFFF")
+    boost_meter_fill.size = Vector2(190, 12)
+    boost_meter_bg.add_child(boost_meter_fill)
+
     # Landscape controls are repositioned for the actual phone viewport.
     brake_button = _add_hold_button("BRAKE", Vector2(35, 535), Vector2(155, 145), "brake")
     boost_button = _add_hold_button("BOOST", Vector2(1100, 405), Vector2(145, 105), "nitro")
@@ -675,6 +690,8 @@ func _layout_race_ui() -> void:
     distance_label.position = Vector2(22, 54) * scale_factor
     best_label.position = Vector2(22, 86) * scale_factor
     nitro_label.position = Vector2(22, 116) * scale_factor
+    boost_meter_bg.position = Vector2(22, 145) * scale_factor
+    boost_meter_bg.scale = Vector2.ONE * scale_factor
     for label in [speed_label, distance_label, best_label, nitro_label]:
         label.scale = Vector2.ONE * scale_factor
 
