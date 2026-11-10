@@ -308,9 +308,38 @@ func _make_car() -> void:
     camera.current = true
     car.add_child(camera)
 
-    # Twin blue exhaust flames appear only while Nitro is held.
+    # Twin metallic silencer outlets; Nitro flames emerge directly from their tips.
+    for exhaust_x in [-0.48, 0.48]:
+        var exhaust := MeshInstance3D.new()
+        var exhaust_mesh := CylinderMesh.new()
+        exhaust_mesh.top_radius = 0.13
+        exhaust_mesh.bottom_radius = 0.16
+        exhaust_mesh.height = 0.42
+        exhaust.mesh = exhaust_mesh
+        exhaust.rotation_degrees.x = 90
+        exhaust.position = Vector3(exhaust_x, 0.30, 1.82)
+        var exhaust_material := StandardMaterial3D.new()
+        exhaust_material.albedo_color = Color("#AEB9C3")
+        exhaust_material.metallic = 0.82
+        exhaust_material.roughness = 0.24
+        exhaust.material_override = exhaust_material
+        car.add_child(exhaust)
+        var exhaust_inner := MeshInstance3D.new()
+        var inner_mesh := CylinderMesh.new()
+        inner_mesh.top_radius = 0.075
+        inner_mesh.bottom_radius = 0.075
+        inner_mesh.height = 0.025
+        exhaust_inner.mesh = inner_mesh
+        exhaust_inner.rotation_degrees.x = 90
+        exhaust_inner.position = Vector3(exhaust_x, 0.30, 2.035)
+        var inner_material := StandardMaterial3D.new()
+        inner_material.albedo_color = Color("#101820")
+        exhaust_inner.material_override = inner_material
+        car.add_child(exhaust_inner)
+
+    # Twin blue Nitro flames originate at the silencer outlets, not underneath the car.
     nitro_fx = Node3D.new()
-    nitro_fx.position = Vector3(0, 0.38, 1.82)
+    nitro_fx.position = Vector3(0, 0.30, 2.045)
     nitro_fx.visible = false
     car.add_child(nitro_fx)
     for flame_x in [-0.48, 0.48]:
@@ -321,7 +350,7 @@ func _make_car() -> void:
         flame_mesh.height = 0.82
         flame.mesh = flame_mesh
         flame.rotation_degrees.x = 90
-        flame.position = Vector3(flame_x, 0.0, 0.42)
+        flame.position = Vector3(flame_x, 0.0, 0.34)
         var flame_material := StandardMaterial3D.new()
         flame_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
         flame_material.albedo_color = Color("#36CFFF")
