@@ -301,6 +301,11 @@ func _create_preview_car() -> Node3D:
     # Twin subtle hood creases catch the showroom key light.
     for crease_x in [-0.52, 0.52]:
         _add_box(root, Vector3(crease_x, 0.944, -1.23), Vector3(0.035, 0.018, 0.78), paint.lightened(0.28))
+    # Twin functional-style hood vents with metallic slats, matching the race model.
+    for vent_x in [-0.48, 0.48]:
+        _add_box(root, Vector3(vent_x, 0.958, -1.23), Vector3(0.22, 0.018, 0.44), Color("#17212B"))
+        for vent_line in [-0.13, 0.0, 0.13]:
+            _add_box(root, Vector3(vent_x, 0.972, -1.23 + vent_line), Vector3(0.17, 0.012, 0.022), Color("#AEBBC7"))
     # Orange lower-body pinstripe ties both selected cars to the game identity.
     for stripe_side in [-1.0, 1.0]:
         _add_box(root, Vector3(stripe_side * 1.025, 0.43, 0.05), Vector3(0.025, 0.035, 2.30), Color("#FF7518"))
