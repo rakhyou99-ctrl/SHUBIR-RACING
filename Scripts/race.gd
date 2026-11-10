@@ -446,6 +446,21 @@ func _make_car() -> void:
             hub.material_override = hub_material
             car.add_child(hub)
 
+            for spoke_index in range(5):
+                var spoke_angle := TAU * float(spoke_index) / 5.0
+                var spoke := MeshInstance3D.new()
+                var spoke_mesh := BoxMesh.new()
+                spoke_mesh.size = Vector3(0.035, 0.045, 0.18)
+                spoke.mesh = spoke_mesh
+                spoke.rotation.x = spoke_angle
+                spoke.position = Vector3(x * 1.025, 0.22 + cos(spoke_angle) * 0.13, z + sin(spoke_angle) * 0.13)
+                var spoke_material := StandardMaterial3D.new()
+                spoke_material.albedo_color = Color("#D2DCE4")
+                spoke_material.metallic = 0.88
+                spoke_material.roughness = 0.22
+                spoke.material_override = spoke_material
+                car.add_child(spoke)
+
     # Raised rear wing and supports, visible above the trunk from the chase camera.
     for wing_x in [-0.62, 0.62]:
         _box(car, Vector3(wing_x, 1.02, 1.28), Vector3(0.08, 0.48, 0.10), Color("#252B33"))
