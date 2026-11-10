@@ -133,11 +133,14 @@ func _make_value_label(y: float) -> Label:
 
 func _on_sensitivity_changed(value: float) -> void:
     sensitivity_value = value
+    GameState.steering_sensitivity = sensitivity_value
+    GameState.save_settings()
     _update_sensitivity_label()
 
 func _on_volume_changed(value: float) -> void:
     volume_value = value
-    AudioServer.set_bus_volume_linear(0, volume_value)
+    GameState.master_volume = volume_value
+    GameState.save_settings()
     _update_volume_label()
 
 func _update_sensitivity_label() -> void:
