@@ -481,6 +481,11 @@ func _make_car() -> void:
         _box(car, Vector3(side * 0.91, 0.28, 0.05), Vector3(0.12, 0.18, 2.55), Color("#252B33"))
         _box(car, Vector3(side * 0.98, 0.93, -0.65), Vector3(0.30, 0.12, 0.22), Color("#171D25"))
         _box(car, Vector3(side * 1.08, 1.02, -0.65), Vector3(0.24, 0.10, 0.32), Color("#111820"))
+        # Flush door handles and rear-quarter cooling vents on both sides.
+        _box(car, Vector3(side * 0.918, 0.72, -0.18), Vector3(0.035, 0.055, 0.30), Color("#AEB9C3"))
+        _box(car, Vector3(side * 0.928, 0.53, 0.88), Vector3(0.035, 0.22, 0.42), Color("#17212B"))
+        for vent_slot in [-0.12, 0.0, 0.12]:
+            _box(car, Vector3(side * 0.951, 0.53, 0.88 + vent_slot), Vector3(0.018, 0.025, 0.055), Color("#AEB9C3"))
 
     # Hood vents and a low front grille add recognizable sports-car detailing.
     for vent_x in [-0.48, 0.48]:
@@ -489,6 +494,13 @@ func _make_car() -> void:
             _box(car, Vector3(vent_x, 0.779, -1.12 + vent_line), Vector3(0.18, 0.012, 0.025), Color("#8795A2"))
     _box(car, Vector3(0, 0.43, -1.755), Vector3(0.78, 0.18, 0.035), Color("#101820"))
     _box(car, Vector3(0, 0.31, -1.79), Vector3(1.72, 0.055, 0.12), Color("#AEB9C3"))
+    # Rear diffuser with separated fins gives the lower bumper more depth.
+    _box(car, Vector3(0, 0.20, 1.76), Vector3(1.72, 0.10, 0.20), Color("#151B22"))
+    for diffuser_x in [-0.62, -0.22, 0.22, 0.62]:
+        _box(car, Vector3(diffuser_x, 0.16, 1.82), Vector3(0.055, 0.18, 0.30), Color("#8795A2"))
+    # Small front corner canards finish the lower front bumper.
+    for canard_side in [-1.0, 1.0]:
+        _box(car, Vector3(canard_side * 0.83, 0.28, -1.76), Vector3(0.30, 0.055, 0.24), Color("#202832"))
 
     # Rounded rubber tyres with metallic multi-layer alloy rims.
     for x in [-0.96, 0.96]:
