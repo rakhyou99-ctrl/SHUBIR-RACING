@@ -13,6 +13,8 @@ var ui_layer: CanvasLayer
 var speed_label: Label
 var distance_label: Label
 var best_label: Label
+var race_stage_label: Label
+var race_stage := 1
 var nitro_label: Label
 var boost_meter_bg: ColorRect
 var boost_meter_fill: ColorRect
@@ -102,6 +104,7 @@ func _process(delta: float) -> void:
     car.position.x = clampf(car.position.x + steer * GameState.steering_sensitivity * delta * (3.4 + speed / 55.0), -4.0, 4.0)
     car.rotation.z = lerpf(car.rotation.z, -steer * 0.075, minf(1.0, delta * 5.0))
     distance += speed * delta / 3600.0
+    race_stage = clampi(1 + int(distance / 0.5), 1, 10)
 
     _move_road(delta)
     _move_traffic(delta)
@@ -112,6 +115,7 @@ func _process(delta: float) -> void:
     speed_label.text = "SPEED  %03d km/h" % int(speed)
     distance_label.text = "DISTANCE  %.2f km" % distance
     best_label.text = "BEST  %.2f km" % best_distance
+    race_stage_label.text = "STAGE  %02d" % race_stage
     if boosting:
         nitro_label.text = "BOOST ACTIVE  %.1f s" % nitro_left
         boost_meter_fill.color = Color("#19CFFF")
@@ -552,7 +556,8 @@ func _make_obstacles() -> void:
 
 func _move_obstacles(delta: float) -> void:
     for obstacle in road_obstacles:
-        var approach_speed := float(obstacle.get_meta("approach_speed", 86.0))
+        var base_approach_speed := float(obstacle.get_meta("approach_speed", 86.0))
+        var approach_speed := maxf(55.0, base_approach_speed - float(race_stage - 1) * 1.1)
         var closing_speed := maxf(16.0, speed - approach_speed)
         obstacle.position.z += closing_speed * delta * 0.12
         if obstacle.position.z > 16.0:
@@ -568,7 +573,8 @@ func _check_obstacle_collision() -> void:
 
 func _move_traffic(delta: float) -> void:
     for traffic in traffic_cars:
-        var cruise_speed := float(traffic.get_meta("cruise_speed", 85.0))
+        var base_cruise_speed := float(traffic.get_meta("cruise_speed", 85.0))
+        var cruise_speed := maxf(48.0, base_cruise_speed - float(race_stage - 1) * 1.15)
         # Subtle in-lane drift makes each AI car feel alive without crossing lane boundaries.
         var lane_center := float(traffic.get_meta("lane_center_x", traffic.position.x))
         var sway_phase := float(traffic.get_meta("sway_phase", 0.0))
@@ -764,8 +770,14 @@ func _make_ui() -> void:
     best_label.add_theme_color_override("font_color", Color("#FFCCAA"))
     ui_layer.add_child(best_label)
 
+    race_stage_label = Label.new()
+    race_stage_label.position = Vector2(25, 118)
+    race_stage_label.add_theme_font_size_override("font_size", 18)
+    race_stage_label.add_theme_color_override("font_color", Color("#FF7518"))
+    ui_layer.add_child(race_stage_label)
+
     nitro_label = Label.new()
-    nitro_label.position = Vector2(25, 122)
+    nitro_label.position = Vector2(25, 146)
     nitro_label.add_theme_font_size_override("font_size", 18)
     nitro_label.add_theme_color_override("font_color", Color("#70D7FF"))
     ui_layer.add_child(nitro_label)
@@ -865,9 +877,12 @@ func _layout_race_ui() -> void:
     distance_label.position = Vector2(22, 54) * scale_factor
     best_label.position = Vector2(22, 86) * scale_factor
     nitro_label.position = Vector2(22, 116) * scale_factor
-    boost_meter_bg.position = Vector2(22, 145) * scale_factor
+    race_stage_label.position = Vector2(22, 116) * scale_factor
+    race_stage_label.scale = Vector2.ONE * scale_factor
+    nitro_label.position = Vector2(22, 142) * scale_factor
+    boost_meter_bg.position = Vector2(22, 171) * scale_factor
     boost_meter_bg.scale = Vector2.ONE * scale_factor
-    for label in [speed_label, distance_label, best_label, nitro_label]:
+    for label in [speed_label, distance_label, best_label, race_stage_label, nitro_label]:
         label.scale = Vector2.ONE * scale_factor
 
     brake_button.scale = Vector2.ONE * scale_factor
