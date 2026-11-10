@@ -629,46 +629,74 @@ func _finish_race() -> void:
         brake_player.stop()
     if is_instance_valid(crash_player):
         crash_player.play()
-    if distance > best_distance:
+
+    var new_record := distance > best_distance
+    if new_record:
         best_distance = distance
         _save_best_distance()
 
-    var panel := ColorRect.new()
-    panel.color = Color(0.02, 0.03, 0.05, 0.88)
-    panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    ui_layer.add_child(panel)
+    # Full-screen dim layer with a centered layout that adapts to landscape sizes.
+    var overlay := ColorRect.new()
+    overlay.name = "GameOverOverlay"
+    overlay.color = Color(0.02, 0.03, 0.05, 0.90)
+    overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+    ui_layer.add_child(overlay)
+
+    var center := CenterContainer.new()
+    center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    overlay.add_child(center)
+
+    var content := VBoxContainer.new()
+    content.custom_minimum_size = Vector2(540, 330)
+    content.add_theme_constant_override("separation", 18)
+    content.alignment = BoxContainer.ALIGNMENT_CENTER
+    center.add_child(content)
 
     var title := Label.new()
-    title.text = "GAME OVER"
-    title.position = Vector2(0, 190)
-    title.size = Vector2(1280, 80)
+    title.text = "RACE OVER"
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     title.add_theme_font_size_override("font_size", 58)
     title.add_theme_color_override("font_color", Color("#FF7518"))
-    panel.add_child(title)
+    content.add_child(title)
+
+    var subtitle := Label.new()
+    subtitle.text = "NEW PERSONAL BEST!" if new_record else "KEEP PUSHING. TRY AGAIN!"
+    subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    subtitle.add_theme_font_size_override("font_size", 23)
+    subtitle.add_theme_color_override("font_color", Color("#FFD0AD"))
+    content.add_child(subtitle)
 
     var score := Label.new()
-    score.text = "DISTANCE: %.2f km     BEST: %.2f km" % [distance, best_distance]
-    score.position = Vector2(0, 285)
-    score.size = Vector2(1280, 50)
+    score.text = "DISTANCE  %.2f km" % distance
     score.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    score.add_theme_font_size_override("font_size", 26)
+    score.add_theme_font_size_override("font_size", 30)
     score.add_theme_color_override("font_color", Color.WHITE)
-    panel.add_child(score)
+    content.add_child(score)
+
+    var best := Label.new()
+    best.text = "BEST  %.2f km" % best_distance
+    best.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    best.add_theme_font_size_override("font_size", 22)
+    best.add_theme_color_override("font_color", Color("#BFCAD4"))
+    content.add_child(best)
+
+    var actions := HBoxContainer.new()
+    actions.alignment = BoxContainer.ALIGNMENT_CENTER
+    actions.add_theme_constant_override("separation", 18)
+    content.add_child(actions)
 
     var restart := Button.new()
-    restart.text = "RESTART"
-    restart.position = Vector2(440, 390)
-    restart.size = Vector2(190, 65)
+    restart.text = "RACE AGAIN"
+    restart.custom_minimum_size = Vector2(190, 62)
     restart.pressed.connect(func(): get_tree().reload_current_scene())
-    panel.add_child(restart)
+    actions.add_child(restart)
 
     var menu := Button.new()
     menu.text = "MAIN MENU"
-    menu.position = Vector2(650, 390)
-    menu.size = Vector2(190, 65)
+    menu.custom_minimum_size = Vector2(190, 62)
     menu.pressed.connect(func(): get_tree().change_scene_to_file("res://Scenes/main_menu.tscn"))
-    panel.add_child(menu)
+    actions.add_child(menu)
 
 func _load_best_distance() -> void:
     var save := ConfigFile.new()
