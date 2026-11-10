@@ -13,6 +13,7 @@ func load_settings() -> void:
     if config.load("user://shubir_racing.cfg") == OK:
         steering_sensitivity = clampf(float(config.get_value("settings", "steering_sensitivity", 1.0)), 0.5, 1.8)
         master_volume = clampf(float(config.get_value("settings", "master_volume", 0.75)), 0.0, 1.0)
+        selected_car = clampi(int(config.get_value("garage", "selected_car", 0)), 0, 1)
     AudioServer.set_bus_volume_linear(0, master_volume)
 
 func save_settings() -> void:
@@ -20,5 +21,6 @@ func save_settings() -> void:
     config.load("user://shubir_racing.cfg")
     config.set_value("settings", "steering_sensitivity", steering_sensitivity)
     config.set_value("settings", "master_volume", master_volume)
+    config.set_value("garage", "selected_car", selected_car)
     AudioServer.set_bus_volume_linear(0, master_volume)
     config.save("user://shubir_racing.cfg")
