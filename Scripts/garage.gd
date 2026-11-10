@@ -206,12 +206,18 @@ func _layout_garage() -> void:
 
     preview_frame.scale = Vector2.ONE * scale_factor
     preview_frame.position = Vector2(38.0, 100.0) * scale_factor
-    viewport_box.size = Vector2(800, 500)
+
+    # Keep the showroom preview and the selection column side-by-side on
+    # compact landscape phones instead of letting the cards run off-screen.
+    var side_x := maxf(431.0, w - 380.0 * scale_factor)
+    var preview_width := clampf(side_x / scale_factor - 38.0 - 20.0 - 28.0 / scale_factor, 400.0, 800.0)
+    viewport_box.size = Vector2(preview_width, 500.0)
+    preview_frame.size = Vector2(preview_width + 20.0, 540.0)
     swipe_hint.scale = Vector2.ONE
     swipe_hint.position = Vector2(0, 510)
-    swipe_hint.size = Vector2(820, 24)
+    swipe_hint.size = Vector2(preview_width + 20.0, 24)
 
-    var side_x := 890.0 * scale_factor
+
     side_title.scale = Vector2.ONE * scale_factor
     side_title.position = Vector2(side_x, 105.0 * scale_factor)
     side_title.size = Vector2(340, 42)
