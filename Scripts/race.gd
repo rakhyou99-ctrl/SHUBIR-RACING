@@ -11,6 +11,7 @@ var ui_layer: CanvasLayer
 var speed_label: Label
 var distance_label: Label
 var best_label: Label
+var nitro_label: Label
 var touch_left := false
 var touch_right := false
 var touch_accel := false
@@ -59,6 +60,7 @@ func _process(delta: float) -> void:
     speed_label.text = "SPEED  %03d km/h" % int(speed)
     distance_label.text = "DISTANCE  %.2f km" % distance
     best_label.text = "BEST  %.2f km" % best_distance
+    nitro_label.text = "NITRO  %.1f s" % nitro_left
 
 func _make_world() -> void:
     var env := WorldEnvironment.new()
@@ -90,6 +92,36 @@ func _build_road_segment(parent: Node3D) -> void:
         _box(parent, Vector3(0, 0.025, z), Vector3(0.16, 0.04, 3.0), Color("#F5F5F5"))
     _box(parent, Vector3(-10, -0.35, 0), Vector3(8, 0.2, 22), Color("#39764A"))
     _box(parent, Vector3(10, -0.35, 0), Vector3(8, 0.2, 22), Color("#39764A"))
+    _make_tree(parent, Vector3(-9.0, 0.0, -7.0))
+    _make_tree(parent, Vector3(9.0, 0.0, 4.0))
+
+func _make_tree(parent: Node3D, tree_position: Vector3) -> void:
+    var tree := Node3D.new()
+    tree.position = tree_position
+    parent.add_child(tree)
+
+    var trunk := MeshInstance3D.new()
+    var trunk_mesh := CylinderMesh.new()
+    trunk_mesh.top_radius = 0.16
+    trunk_mesh.bottom_radius = 0.23
+    trunk_mesh.height = 1.8
+    trunk.mesh = trunk_mesh
+    var trunk_material := StandardMaterial3D.new()
+    trunk_material.albedo_color = Color("#76502E")
+    trunk.material_override = trunk_material
+    trunk.position.y = 0.9
+    tree.add_child(trunk)
+
+    var leaves := MeshInstance3D.new()
+    var leaves_mesh := SphereMesh.new()
+    leaves_mesh.radius = 0.9
+    leaves_mesh.height = 1.8
+    leaves.mesh = leaves_mesh
+    var leaves_material := StandardMaterial3D.new()
+    leaves_material.albedo_color = Color("#236B3A")
+    leaves.material_override = leaves_material
+    leaves.position.y = 2.2
+    tree.add_child(leaves)
 
 func _make_car() -> void:
     car = Node3D.new()
@@ -281,6 +313,12 @@ func _make_ui() -> void:
     best_label.add_theme_font_size_override("font_size", 18)
     best_label.add_theme_color_override("font_color", Color("#FFCCAA"))
     ui_layer.add_child(best_label)
+
+    nitro_label = Label.new()
+    nitro_label.position = Vector2(25, 122)
+    nitro_label.add_theme_font_size_override("font_size", 18)
+    nitro_label.add_theme_color_override("font_color", Color("#70D7FF"))
+    ui_layer.add_child(nitro_label)
 
     _add_hold_button("LEFT", Vector2(25, 560), Vector2(120, 90), "left")
     _add_hold_button("RIGHT", Vector2(155, 560), Vector2(120, 90), "right")
