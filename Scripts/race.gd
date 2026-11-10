@@ -769,19 +769,27 @@ func _show_pause_menu() -> void:
     panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     ui_layer.add_child(panel)
 
+    panel.mouse_filter = Control.MOUSE_FILTER_STOP
+    var center := CenterContainer.new()
+    center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    panel.add_child(center)
+
+    var content := VBoxContainer.new()
+    content.custom_minimum_size = Vector2(430, 300)
+    content.add_theme_constant_override("separation", 22)
+    content.alignment = BoxContainer.ALIGNMENT_CENTER
+    center.add_child(content)
+
     var title := Label.new()
     title.text = "PAUSED"
-    title.position = Vector2(0, 190)
-    title.size = Vector2(1280, 80)
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     title.add_theme_font_size_override("font_size", 58)
     title.add_theme_color_override("font_color", Color("#FF7518"))
-    panel.add_child(title)
+    content.add_child(title)
 
     var resume := Button.new()
     resume.text = "RESUME"
-    resume.position = Vector2(440, 330)
-    resume.size = Vector2(190, 65)
+    resume.custom_minimum_size = Vector2(260, 62)
     resume.pressed.connect(func():
         # Require a fresh BOOST press after unpausing; no stale input is restored.
         touch_accel = false
@@ -798,21 +806,19 @@ func _show_pause_menu() -> void:
             brake_player.stream_paused = false
         panel.queue_free()
     )
-    panel.add_child(resume)
+    content.add_child(resume)
 
     var restart := Button.new()
     restart.text = "RESTART"
-    restart.position = Vector2(650, 330)
-    restart.size = Vector2(190, 65)
+    restart.custom_minimum_size = Vector2(260, 62)
     restart.pressed.connect(func(): get_tree().reload_current_scene())
-    panel.add_child(restart)
+    content.add_child(restart)
 
     var menu := Button.new()
     menu.text = "MAIN MENU"
-    menu.position = Vector2(545, 420)
-    menu.size = Vector2(190, 60)
+    menu.custom_minimum_size = Vector2(260, 58)
     menu.pressed.connect(func(): get_tree().change_scene_to_file("res://Scenes/main_menu.tscn"))
-    panel.add_child(menu)
+    content.add_child(menu)
 
 func _finish_race() -> void:
     if game_over:
