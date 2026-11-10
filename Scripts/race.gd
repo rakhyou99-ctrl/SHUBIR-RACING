@@ -1,6 +1,7 @@
 extends Node3D
 
 var car: Node3D
+var nitro_fx: Node3D
 var speed := 0.0
 var distance := 0.0
 var steer := 0.0
@@ -70,6 +71,9 @@ func _process(delta: float) -> void:
         # Nitro slowly recharges while the player is not using the boost.
         nitro_left = minf(3.0, nitro_left + delta * 0.22)
     was_boosting = boosting
+    if is_instance_valid(nitro_fx):
+        nitro_fx.visible = boosting
+        nitro_fx.scale.z = 0.85 + 0.25 * sin(Time.get_ticks_msec() * 0.035) if boosting else 1.0
 
     steer = tilt_steer
     car.position.x = clampf(car.position.x + steer * GameState.steering_sensitivity * delta * (3.4 + speed / 55.0), -4.0, 4.0)
@@ -273,6 +277,29 @@ func _make_car() -> void:
     camera.rotation_degrees = Vector3(-20, 0, 0)
     camera.current = true
     car.add_child(camera)
+
+    # Twin blue exhaust flames appear only while Nitro is held.
+    nitro_fx = Node3D.new()
+    nitro_fx.position = Vector3(0, 0.38, 1.82)
+    nitro_fx.visible = false
+    car.add_child(nitro_fx)
+    for flame_x in [-0.48, 0.48]:
+        var flame := MeshInstance3D.new()
+        var flame_mesh := CylinderMesh.new()
+        flame_mesh.top_radius = 0.025
+        flame_mesh.bottom_radius = 0.19
+        flame_mesh.height = 0.82
+        flame.mesh = flame_mesh
+        flame.rotation_degrees.x = 90
+        flame.position = Vector3(flame_x, 0.0, 0.42)
+        var flame_material := StandardMaterial3D.new()
+        flame_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+        flame_material.albedo_color = Color("#36CFFF")
+        flame_material.emission_enabled = true
+        flame_material.emission = Color("#168DFF")
+        flame_material.emission_energy_multiplier = 2.2
+        flame.material_override = flame_material
+        nitro_fx.add_child(flame)
 
 
 func _add_car_decal(parent: Node3D, decal_text: String, decal_position: Vector3, decal_rotation: Vector3) -> void:
