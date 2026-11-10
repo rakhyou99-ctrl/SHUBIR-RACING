@@ -22,7 +22,9 @@ var best_distance := 0.0
 var engine_player: AudioStreamPlayer
 var nitro_player: AudioStreamPlayer
 var crash_player: AudioStreamPlayer
+var brake_player: AudioStreamPlayer
 var was_boosting := false
+var was_braking := false
 var tilt_center_x := 0.0
 var tilt_steer := 0.0
 
@@ -70,6 +72,9 @@ func _process(delta: float) -> void:
     else:
         # Nitro slowly recharges while the player is not using the boost.
         nitro_left = minf(3.0, nitro_left + delta * 0.22)
+    if braking and not was_braking and is_instance_valid(brake_player):
+        brake_player.play()
+    was_braking = braking
     was_boosting = boosting
     if is_instance_valid(nitro_fx):
         nitro_fx.visible = boosting
@@ -131,6 +136,31 @@ func _make_effect_audio() -> void:
     crash_player.stream = _create_effect_stream(false)
     crash_player.volume_db = -1.0
     add_child(crash_player)
+
+    brake_player = AudioStreamPlayer.new()
+    brake_player.stream = _create_brake_stream()
+    brake_player.volume_db = -7.0
+    add_child(brake_player)
+
+func _create_brake_stream() -> AudioStreamWAV:
+    var sample_rate := 16000
+    var sample_count := 5600
+    var samples := PackedByteArray()
+    samples.resize(sample_count * 2)
+    for i in range(sample_count):
+        var t := float(i) / float(sample_rate)
+        var progress := float(i) / float(sample_count)
+        var frequency := lerpf(620.0, 210.0, progress)
+        var envelope := sin(PI * progress) * (1.0 - progress * 0.35)
+        var wave := (sin(TAU * frequency * t) * 0.58 + sin(TAU * frequency * 2.03 * t) * 0.18) * envelope
+        var sample := int(clampf(wave, -1.0, 1.0) * 7200.0)
+        samples.encode_s16(i * 2, sample)
+    var stream := AudioStreamWAV.new()
+    stream.format = AudioStreamWAV.FORMAT_16_BITS
+    stream.mix_rate = sample_rate
+    stream.stereo = false
+    stream.data = samples
+    return stream
 
 func _create_effect_stream(is_nitro: bool) -> AudioStreamWAV:
     var sample_rate := 16000
@@ -370,6 +400,10 @@ func _show_pause_menu() -> void:
     game_paused = true
     if is_instance_valid(engine_player):
         engine_player.stream_paused = true
+    if is_instance_valid(nitro_player):
+        nitro_player.stream_paused = true
+    if is_instance_valid(brake_player):
+        brake_player.stream_paused = true
 
     var panel := ColorRect.new()
     panel.name = "PauseOverlay"
@@ -394,6 +428,10 @@ func _show_pause_menu() -> void:
         game_paused = false
         if is_instance_valid(engine_player):
             engine_player.stream_paused = false
+        if is_instance_valid(nitro_player):
+            nitro_player.stream_paused = false
+        if is_instance_valid(brake_player):
+            brake_player.stream_paused = false
         panel.queue_free()
     )
     panel.add_child(resume)
@@ -419,6 +457,10 @@ func _finish_race() -> void:
     speed = 0.0
     if is_instance_valid(engine_player):
         engine_player.stop()
+    if is_instance_valid(nitro_player):
+        nitro_player.stop()
+    if is_instance_valid(brake_player):
+        brake_player.stop()
     if is_instance_valid(crash_player):
         crash_player.play()
     if distance > best_distance:
