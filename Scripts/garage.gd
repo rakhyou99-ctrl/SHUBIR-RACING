@@ -410,6 +410,22 @@ func _create_preview_car() -> Node3D:
         _add_box(root, Vector3(wing_x, 1.00, 1.42), Vector3(0.07, 0.32, 0.08), Color("#242B35"))
     _add_box(root, Vector3(0, 1.17, 1.43), Vector3(1.95, 0.10, 0.34), Color("#171E29"))
 
+    # Rear-quarter cooling vents with slim metallic louvers, matching the race car.
+    for side in [-1.0, 1.0]:
+        _add_box(root, Vector3(side * 1.018, 0.61, 1.05), Vector3(0.035, 0.19, 0.48), Color("#111B27"))
+        for vent_index in range(3):
+            _add_box(root, Vector3(side * 1.043, 0.56 + float(vent_index) * 0.055, 1.05), Vector3(0.025, 0.018, 0.39), Color("#AEBBC7"))
+
+    # Rear diffuser and separated fins are visible from the rear three-quarter angle.
+    _add_box(root, Vector3(0, 0.245, 2.015), Vector3(1.62, 0.13, 0.22), Color("#101820"))
+    for diffuser_x in [-0.62, -0.21, 0.21, 0.62]:
+        _add_box(root, Vector3(diffuser_x, 0.19, 2.08), Vector3(0.055, 0.16, 0.28), Color("#687581"))
+
+    # Small front bumper canards finish both front corners.
+    for side in [-1.0, 1.0]:
+        _add_box(root, Vector3(side * 0.91, 0.38, -1.91), Vector3(0.32, 0.055, 0.18), Color("#202832"))
+        _add_box(root, Vector3(side * 1.055, 0.39, -1.82), Vector3(0.10, 0.045, 0.22), paint.darkened(0.12))
+
     # Custom owner decal on both doors and bonnet.
     var brand_text := "SUBHOJIT" if GameState.selected_car == 0 else "BIRAJ"
     for side in [-1.0, 1.0]:
