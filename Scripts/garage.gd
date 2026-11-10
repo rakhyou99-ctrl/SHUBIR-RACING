@@ -6,6 +6,7 @@ var drag_active := false
 var mouse_drag_active := false
 var preview_touch_index := -1
 var last_drag_x := 0.0
+var preview_spin_velocity := 0.0
 var selected_label: Label
 var blue_card: Panel
 var red_card: Panel
@@ -30,7 +31,13 @@ func _ready() -> void:
     _layout_garage()
 
 func _process(delta: float) -> void:
-    if is_instance_valid(preview_car) and not drag_active:
+    if not is_instance_valid(preview_car) or drag_active:
+        return
+    if absf(preview_spin_velocity) > 0.035:
+        preview_car.rotation.y += preview_spin_velocity * delta
+        preview_spin_velocity = move_toward(preview_spin_velocity, 0.0, delta * 1.35)
+    else:
+        preview_spin_velocity = 0.0
         preview_car.rotation.y += delta * 0.16
 
 func _build_garage() -> void:
@@ -519,7 +526,9 @@ func _on_preview_input(event: InputEvent) -> void:
         drag_active = mouse_drag_active or preview_touch_index >= 0
         last_drag_x = event.position.x
     elif event is InputEventMouseMotion and mouse_drag_active:
-        preview_car.rotation.y += (event.position.x - last_drag_x) * 0.012
+        var drag_delta := event.position.x - last_drag_x
+        preview_car.rotation.y += drag_delta * 0.012
+        preview_spin_velocity = clampf(drag_delta * 0.045, -5.0, 5.0)
         last_drag_x = event.position.x
     elif event is InputEventScreenTouch:
         if event.pressed and preview_touch_index < 0:
@@ -530,6 +539,7 @@ func _on_preview_input(event: InputEvent) -> void:
         drag_active = mouse_drag_active or preview_touch_index >= 0
     elif event is InputEventScreenDrag and event.index == preview_touch_index:
         preview_car.rotation.y += event.relative.x * 0.012
+        preview_spin_velocity = clampf(event.relative.x * 0.045, -5.0, 5.0)
 
 func _show_selected_car() -> void:
     if is_instance_valid(preview_car):
