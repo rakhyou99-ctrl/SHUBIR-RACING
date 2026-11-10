@@ -29,6 +29,7 @@ var engine_player: AudioStreamPlayer
 var nitro_player: AudioStreamPlayer
 var crash_player: AudioStreamPlayer
 var brake_player: AudioStreamPlayer
+var chase_camera: Camera3D
 var was_boosting := false
 var boost_locked := false
 var was_braking := false
@@ -117,8 +118,18 @@ func _process(delta: float) -> void:
         nitro_label.text = "BOOST RECHARGING  %d%%" % int((nitro_left / 3.0) * 100.0)
         boost_meter_fill.color = Color("#FFB347")
     boost_meter_fill.size.x = 190.0 * (nitro_left / 3.0)
+    var speed_ratio := clampf(speed / 190.0, 0.0, 1.0)
+    # Engine tone and loudness rise naturally with road speed and Boost.
     if is_instance_valid(engine_player):
-        engine_player.pitch_scale = 0.75 + (speed / 190.0) * 0.75
+        engine_player.pitch_scale = 0.72 + speed_ratio * 0.82 + (0.08 if boosting else 0.0)
+        engine_player.volume_db = lerpf(-16.0, -4.5, speed_ratio) + (1.0 if boosting else 0.0)
+
+    # Smooth chase-camera response: widen the view and pull back slightly at speed.
+    if is_instance_valid(chase_camera):
+        chase_camera.fov = lerpf(chase_camera.fov, 70.0 + speed_ratio * 12.0, minf(1.0, delta * 2.4))
+        chase_camera.position.y = lerpf(chase_camera.position.y, 5.2 + speed_ratio * 0.45, minf(1.0, delta * 2.0))
+        chase_camera.position.z = lerpf(chase_camera.position.z, 10.5 + speed_ratio * 1.15, minf(1.0, delta * 2.0))
+        chase_camera.rotation_degrees.z = lerpf(chase_camera.rotation_degrees.z, -steer * 1.4, minf(1.0, delta * 3.0))
 
 
 func _make_engine_audio() -> void:
@@ -326,11 +337,12 @@ func _make_car() -> void:
     _add_car_decal(car, brand_text, Vector3(0.91, 0.62, 0.0), Vector3(0, -90, 0))
     _add_car_decal(car, brand_text, Vector3(0, 0.76, -1.12), Vector3(-90, 0, 0))
 
-    var camera := Camera3D.new()
-    camera.position = Vector3(0, 5.2, 10.5)
-    camera.rotation_degrees = Vector3(-20, 0, 0)
-    camera.current = true
-    car.add_child(camera)
+    chase_camera = Camera3D.new()
+    chase_camera.position = Vector3(0, 5.2, 10.5)
+    chase_camera.rotation_degrees = Vector3(-20, 0, 0)
+    chase_camera.fov = 70.0
+    chase_camera.current = true
+    car.add_child(chase_camera)
 
     # Twin metallic silencer outlets; Nitro flames emerge directly from their tips.
     for exhaust_x in [-0.48, 0.48]:
