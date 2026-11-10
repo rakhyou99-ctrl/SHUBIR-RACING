@@ -442,6 +442,8 @@ func _make_traffic() -> void:
     for i in range(5):
         var traffic := Node3D.new()
         traffic.position = Vector3(_random_lane(), 0.45, -45.0 - float(i) * 42.0)
+        # Each vehicle has its own cruising speed, so traffic does not move as one block.
+        traffic.set_meta("cruise_speed", randf_range(62.0, 108.0))
         add_child(traffic)
         var paints := [Color("#F2C230"), Color("#E84A5F"), Color("#36A889"), Color("#D7DCE2")]
         var paint: Color = paints[i % paints.size()]
@@ -474,16 +476,20 @@ func _random_lane() -> float:
     return lanes[randi_range(0, lanes.size() - 1)]
 
 func _move_traffic(delta: float) -> void:
-    var movement := speed * delta * 0.12
     for traffic in traffic_cars:
-        traffic.position.z += movement
+        var cruise_speed := float(traffic.get_meta("cruise_speed", 85.0))
+        # Relative speed gives traffic a more natural approach instead of one shared pace.
+        var closing_speed := maxf(12.0, speed - cruise_speed)
+        traffic.position.z += closing_speed * delta * 0.12
         if traffic.position.z > 16.0:
             traffic.position.z = -190.0 - randf_range(0.0, 65.0)
             traffic.position.x = _random_lane()
+            traffic.set_meta("cruise_speed", randf_range(62.0, 108.0))
 
 func _check_traffic_collision() -> void:
     for traffic in traffic_cars:
-        if absf(traffic.position.z - car.position.z) < 2.4 and absf(traffic.position.x - car.position.x) < 1.65:
+        # Match the collision window to the visible car body dimensions.
+        if absf(traffic.position.z - car.position.z) < 3.2 and absf(traffic.position.x - car.position.x) < 1.8:
             _finish_race()
             return
 
