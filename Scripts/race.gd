@@ -711,8 +711,8 @@ func _random_lane() -> float:
     var lanes := [-3.5, 0.0, 3.5]
     return lanes[randi_range(0, lanes.size() - 1)]
 
-func _spawn_lane_for(spawn_z: float) -> float:
-    # Prefer lanes without another nearby vehicle or cone to avoid unfair stacked hazards.
+func _spawn_lane_for(spawn_z: float, excluded: Node3D = null) -> float:
+    # Avoid nearby traffic and cones, but never score the respawning object against itself.
     var lanes := [-3.5, 0.0, 3.5]
     var safest_lane := lanes[0]
     var best_clearance := -1.0
@@ -720,11 +720,11 @@ func _spawn_lane_for(spawn_z: float) -> float:
     for lane in lanes:
         var clearance := 999.0
         for other in traffic_cars:
-            if is_instance_valid(other) and absf(other.position.z - spawn_z) < 50.0:
+            if other != excluded and is_instance_valid(other) and absf(other.position.z - spawn_z) < 50.0:
                 if absf(other.position.x - lane) < 1.0:
                     clearance = minf(clearance, absf(other.position.z - spawn_z))
         for other in road_obstacles:
-            if is_instance_valid(other) and absf(other.position.z - spawn_z) < 34.0:
+            if other != excluded and is_instance_valid(other) and absf(other.position.z - spawn_z) < 50.0:
                 if absf(other.position.x - lane) < 1.0:
                     clearance = minf(clearance, absf(other.position.z - spawn_z))
         if clearance > best_clearance:
@@ -786,7 +786,7 @@ func _move_obstacles(delta: float) -> void:
         obstacle.position.z += road_movement
         if obstacle.position.z > 16.0:
             obstacle.position.z = -spawn_distance - randf_range(0.0, 60.0)
-            obstacle.position.x = _spawn_lane_for(obstacle.position.z)
+            obstacle.position.x = _spawn_lane_for(obstacle.position.z, obstacle)
 
 func _check_obstacle_collision() -> void:
     if game_over or game_paused:
@@ -812,7 +812,7 @@ func _move_traffic(delta: float) -> void:
         traffic.position.z += relative_speed * delta * 0.12
         if traffic.position.z > 16.0 or traffic.position.z < -360.0:
             traffic.position.z = -190.0 - randf_range(0.0, 65.0)
-            traffic.position.x = _spawn_lane_for(traffic.position.z)
+            traffic.position.x = _spawn_lane_for(traffic.position.z, traffic)
             traffic.set_meta("lane_center_x", traffic.position.x)
             traffic.set_meta("sway_phase", randf_range(0.0, TAU))
             traffic.set_meta("sway_rate", randf_range(0.65, 1.15))
