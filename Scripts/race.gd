@@ -36,6 +36,8 @@ func _ready() -> void:
     _make_ui()
     _make_engine_audio()
     _make_effect_audio()
+    # Calibrate the neutral angle when the race starts.
+    tilt_center_x = Input.get_accelerometer().y
 
 func _process(delta: float) -> void:
     if game_over or game_paused:
@@ -46,6 +48,16 @@ func _process(delta: float) -> void:
     var left := Input.is_action_pressed("ui_left") or touch_left
     var right := Input.is_action_pressed("ui_right") or touch_right
     var boosting := touch_nitro and nitro_left > 0.0
+
+    # Landscape phone tilt steering. Ignore tiny sensor movement to prevent drift.
+    var accel_reading := Input.get_accelerometer()
+    if accel_reading.length() > 1.0:
+        var tilt_delta := accel_reading.y - tilt_center_x
+        if absf(tilt_delta) < 0.65:
+            tilt_delta = 0.0
+        tilt_steer = move_toward(tilt_steer, clampf(tilt_delta / 4.0, -1.0, 1.0), delta * 5.0)
+    else:
+        tilt_steer = move_toward(tilt_steer, 0.0, delta * 4.0)
 
     if braking:
         speed = move_toward(speed, 0.0, 150.0 * delta)
@@ -63,7 +75,8 @@ func _process(delta: float) -> void:
         nitro_left = minf(3.0, nitro_left + delta * 0.22)
     was_boosting = boosting
 
-    steer = (1.0 if right else 0.0) - (1.0 if left else 0.0)
+    var touch_steer := (1.0 if right else 0.0) - (1.0 if left else 0.0)
+    steer = clampf(tilt_steer + touch_steer, -1.0, 1.0)
     car.position.x = clampf(car.position.x + steer * GameState.steering_sensitivity * delta * (3.4 + speed / 55.0), -4.0, 4.0)
     car.rotation.z = lerpf(car.rotation.z, -steer * 0.075, minf(1.0, delta * 5.0))
     distance += speed * delta / 3600.0
@@ -289,6 +302,8 @@ func _show_pause_menu() -> void:
     if game_over or game_paused:
         return
     game_paused = true
+    if is_instance_valid(engine_player):
+        engine_player.stream_paused = true
 
     var panel := ColorRect.new()
     panel.name = "PauseOverlay"
@@ -311,6 +326,8 @@ func _show_pause_menu() -> void:
     resume.size = Vector2(190, 65)
     resume.pressed.connect(func():
         game_paused = false
+        if is_instance_valid(engine_player):
+            engine_player.stream_paused = false
         panel.queue_free()
     )
     panel.add_child(resume)
