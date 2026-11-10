@@ -11,6 +11,7 @@ var traffic_cars: Array[Node3D] = []
 var road_obstacles: Array[Node3D] = []
 var ui_layer: CanvasLayer
 var speed_label: Label
+var car_identity_label: Label
 var distance_label: Label
 var best_label: Label
 var race_stage_label: Label
@@ -1012,6 +1013,13 @@ func _make_ui() -> void:
     ui_layer = CanvasLayer.new()
     add_child(ui_layer)
 
+    car_identity_label = Label.new()
+    car_identity_label.text = "SUBHOJIT  •  BLUE CAR" if GameState.selected_car == 0 else "BIRAJ  •  RED CAR"
+    car_identity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    car_identity_label.add_theme_font_size_override("font_size", 20)
+    car_identity_label.add_theme_color_override("font_color", Color("#FFD0AD") if GameState.selected_car == 0 else Color("#FF9A9A"))
+    ui_layer.add_child(car_identity_label)
+
     speed_label = Label.new()
     speed_label.position = Vector2(25, 20)
     speed_label.add_theme_font_size_override("font_size", 28)
@@ -1133,6 +1141,9 @@ func _layout_race_ui() -> void:
     var w := viewport_size.x
     var h := viewport_size.y
 
+    car_identity_label.scale = Vector2.ONE * scale_factor
+    car_identity_label.position = Vector2((w - 320.0 * scale_factor) * 0.5, 18.0 * scale_factor)
+    car_identity_label.size = Vector2(320, 32)
     speed_label.position = Vector2(22, 16) * scale_factor
     distance_label.position = Vector2(22, 54) * scale_factor
     best_label.position = Vector2(22, 86) * scale_factor
