@@ -429,10 +429,10 @@ func _make_ui() -> void:
     nitro_label.add_theme_color_override("font_color", Color("#70D7FF"))
     ui_layer.add_child(nitro_label)
 
-    # Driving controls stay along the bottom edge; accelerator is on the far right.
-    _add_hold_button("BRAKE", Vector2(25, 560), Vector2(140, 100), "brake")
-    _add_hold_button("NITRO", Vector2(965, 560), Vector2(135, 100), "nitro")
-    _add_hold_button("ACCELERATOR", Vector2(1110, 560), Vector2(155, 100), "accel")
+    # Landscape layout: brake bottom-left, accelerator bottom-right, nitro above accelerator.
+    _add_hold_button("BRAKE", Vector2(35, 535), Vector2(155, 145), "brake")
+    _add_hold_button("NITRO", Vector2(1100, 405), Vector2(145, 105), "nitro")
+    _add_hold_button("ACCELERATOR", Vector2(1070, 535), Vector2(180, 145), "accel")
 
     var pause := Button.new()
     pause.text = "PAUSE"
@@ -447,6 +447,24 @@ func _add_hold_button(label_text: String, pos: Vector2, btn_size: Vector2, actio
     b.position = pos
     b.size = btn_size
     b.add_theme_font_size_override("font_size", 20)
+    b.add_theme_color_override("font_color", Color.WHITE)
+    b.add_theme_color_override("font_hover_color", Color.WHITE)
+    b.add_theme_color_override("font_pressed_color", Color.WHITE)
+    b.focus_mode = Control.FOCUS_NONE
+    var base_style := StyleBoxFlat.new()
+    base_style.bg_color = Color("#25191B") if action == "brake" else (Color("#102B3C") if action == "nitro" else Color("#26351F"))
+    base_style.border_color = Color("#FF4545") if action == "brake" else (Color("#19CFFF") if action == "nitro" else Color("#8DDB43"))
+    base_style.set_border_width_all(4)
+    base_style.set_corner_radius_all(30)
+    base_style.shadow_color = Color(0, 0, 0, 0.55)
+    base_style.shadow_size = 8
+    b.add_theme_stylebox_override("normal", base_style)
+    var hover_style := base_style.duplicate() as StyleBoxFlat
+    hover_style.bg_color = hover_style.bg_color.lightened(0.16)
+    b.add_theme_stylebox_override("hover", hover_style)
+    var pressed_style := base_style.duplicate() as StyleBoxFlat
+    pressed_style.bg_color = pressed_style.bg_color.darkened(0.22)
+    b.add_theme_stylebox_override("pressed", pressed_style)
     b.button_down.connect(func(): _set_touch(action, true))
     b.button_up.connect(func(): _set_touch(action, false))
     ui_layer.add_child(b)
