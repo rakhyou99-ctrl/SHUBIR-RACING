@@ -28,6 +28,7 @@ var nitro_player: AudioStreamPlayer
 var crash_player: AudioStreamPlayer
 var brake_player: AudioStreamPlayer
 var was_boosting := false
+var boost_locked := false
 var was_braking := false
 var tilt_center_x := 0.0
 var tilt_steer := 0.0
@@ -50,7 +51,13 @@ func _process(delta: float) -> void:
 
     var accel := Input.is_action_pressed("ui_up") or touch_accel
     var braking := Input.is_action_pressed("ui_down") or touch_brake
-    var boosting := touch_nitro and nitro_left > 0.0
+    # A brake press or an empty boost tank cancels the current hold.
+    # The player must release BOOST before it can activate again.
+    if not touch_nitro:
+        boost_locked = false
+    if braking:
+        boost_locked = true
+    var boosting := touch_nitro and accel and not braking and not boost_locked and nitro_left > 0.0
 
     # Landscape phone tilt steering. Ignore tiny sensor movement to prevent drift.
     var accel_reading := Input.get_accelerometer()
@@ -73,9 +80,11 @@ func _process(delta: float) -> void:
         nitro_left = maxf(0.0, nitro_left - delta)
         if not was_boosting and is_instance_valid(nitro_player):
             nitro_player.play()
+        if nitro_left <= 0.0:
+            boost_locked = true
     else:
-        # Boost slowly recharges while the player is not using the boost.
-        nitro_left = minf(3.0, nitro_left + delta * 0.22)
+        # A fully empty 3-second tank recharges in 5 seconds while BOOST is released.
+        nitro_left = minf(3.0, nitro_left + delta * 0.60)
     if braking and not was_braking and is_instance_valid(brake_player):
         brake_player.play()
     was_braking = braking
@@ -96,7 +105,12 @@ func _process(delta: float) -> void:
     speed_label.text = "SPEED  %03d km/h" % int(speed)
     distance_label.text = "DISTANCE  %.2f km" % distance
     best_label.text = "BEST  %.2f km" % best_distance
-    nitro_label.text = "BOOST  %.1f s" % nitro_left
+    if boosting:
+        nitro_label.text = "BOOST ACTIVE  %.1f s" % nitro_left
+    elif nitro_left >= 2.99:
+        nitro_label.text = "BOOST READY"
+    else:
+        nitro_label.text = "BOOST RECHARGING  %d%%" % int((nitro_left / 3.0) * 100.0)
     if is_instance_valid(engine_player):
         engine_player.pitch_scale = 0.75 + (speed / 190.0) * 0.75
 
