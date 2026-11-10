@@ -101,11 +101,35 @@ func _make_car() -> void:
     for x in [-0.95, 0.95]:
         for z in [-1.05, 1.05]:
             _box(car, Vector3(x, 0.2, z), Vector3(0.28, 0.55, 0.72), Color("#111111"))
+
+    # Visible headlights and rear lights make the placeholder car easier to read.
+    for x in [-0.62, 0.62]:
+        _box(car, Vector3(x, 0.49, -1.73), Vector3(0.34, 0.12, 0.06), Color("#FFF1B8"))
+        _box(car, Vector3(x, 0.49, 1.73), Vector3(0.34, 0.12, 0.06), Color("#E53935"))
+
+    var brand_text := "SUBHOJIT" if GameState.selected_car == 0 else "BIRAJ"
+    _add_car_decal(car, brand_text, Vector3(-0.91, 0.62, 0.0), Vector3(0, 90, 0))
+    _add_car_decal(car, brand_text, Vector3(0.91, 0.62, 0.0), Vector3(0, -90, 0))
+    _add_car_decal(car, brand_text, Vector3(0, 0.76, -1.12), Vector3(-90, 0, 0))
+
     var camera := Camera3D.new()
     camera.position = Vector3(0, 5.2, 10.5)
     camera.rotation_degrees = Vector3(-20, 0, 0)
     camera.current = true
     car.add_child(camera)
+
+
+func _add_car_decal(parent: Node3D, decal_text: String, decal_position: Vector3, decal_rotation: Vector3) -> void:
+    var decal := Label3D.new()
+    decal.text = decal_text
+    decal.position = decal_position
+    decal.rotation_degrees = decal_rotation
+    decal.font_size = 48
+    decal.pixel_size = 0.004
+    decal.modulate = Color.WHITE
+    decal.outline_size = 8
+    decal.no_depth_test = false
+    parent.add_child(decal)
 
 func _make_traffic() -> void:
     for i in range(5):
