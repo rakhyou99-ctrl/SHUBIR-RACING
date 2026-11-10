@@ -799,7 +799,7 @@ func _check_obstacle_collision() -> void:
 func _move_traffic(delta: float) -> void:
     for traffic in traffic_cars:
         var base_cruise_speed := float(traffic.get_meta("cruise_speed", 85.0))
-        var cruise_speed := maxf(48.0, base_cruise_speed - float(race_stage - 1) * 1.15)
+        var cruise_speed := maxf(48.0, base_cruise_speed - float(race_stage - 1) * 1.8)
         # Subtle in-lane drift makes each AI car feel alive without crossing lane boundaries.
         var lane_center := float(traffic.get_meta("lane_center_x", traffic.position.x))
         var sway_phase := float(traffic.get_meta("sway_phase", 0.0))
