@@ -80,13 +80,31 @@ func _build_garage() -> void:
 
     var key_light := DirectionalLight3D.new()
     key_light.rotation_degrees = Vector3(-48, -32, 0)
-    key_light.light_energy = 1.6
+    key_light.light_energy = 1.75
+    key_light.shadow_enabled = true
+    key_light.directional_shadow_max_distance = 18.0
     preview_root.add_child(key_light)
     var fill_light := OmniLight3D.new()
     fill_light.position = Vector3(-3, 3, 2)
     fill_light.light_energy = 1.0
     fill_light.omni_range = 12.0
+    fill_light.shadow_enabled = true
     preview_root.add_child(fill_light)
+
+    # Soft front and overhead fills keep the grille, bonnet and roof readable
+    # as the player rotates the car through the full 360-degree view.
+    var front_fill := OmniLight3D.new()
+    front_fill.position = Vector3(0.0, 2.0, -5.0)
+    front_fill.light_color = Color("#DCEBFF")
+    front_fill.light_energy = 1.05
+    front_fill.omni_range = 10.0
+    preview_root.add_child(front_fill)
+    var overhead_fill := OmniLight3D.new()
+    overhead_fill.position = Vector3(0.0, 5.0, 0.0)
+    overhead_fill.light_color = Color("#FFFFFF")
+    overhead_fill.light_energy = 0.75
+    overhead_fill.omni_range = 11.0
+    preview_root.add_child(overhead_fill)
 
     # Colored showroom rim lights separate the body from the dark backdrop.
     var blue_rim := OmniLight3D.new()
@@ -103,8 +121,13 @@ func _build_garage() -> void:
     preview_root.add_child(warm_rim)
 
     var camera := Camera3D.new()
-    camera.position = Vector3(4.1, 2.65, -6.2)
-    camera.look_at(Vector3(0, 0.62, 0), Vector3.UP)
+    # A slightly wider, higher three-quarter framing keeps the complete car
+    # in view while giving the roof, wheels and front/rear bodywork clear depth.
+    camera.position = Vector3(4.8, 3.15, -8.0)
+    camera.fov = 66.0
+    camera.near = 0.1
+    camera.far = 100.0
+    camera.look_at(Vector3(0, 0.68, 0), Vector3.UP)
     camera.current = true
     preview_root.add_child(camera)
 
