@@ -77,7 +77,7 @@ func _build_ui() -> void:
 
     note_label = Label.new()
     var note := note_label
-    note.text = "OFFLINE RACING  •  TWO ORIGINAL CARS"
+    note.text = "TILT TO STEER  •  BRAKE  •  ACCELERATOR  •  BOOST"
     note.add_theme_font_size_override("font_size", 16)
     note.add_theme_color_override("font_color", Color("#94A3B8"))
     note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
