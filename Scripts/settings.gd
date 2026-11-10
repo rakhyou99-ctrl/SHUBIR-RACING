@@ -11,6 +11,11 @@ var volume_heading: Label
 var volume_slider: HSlider
 var save_button: Button
 
+func _notification(what: int) -> void:
+    # Save changed preferences and return when Android system Back is pressed.
+    if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+        _save_and_back()
+
 func _ready() -> void:
     sensitivity_value = GameState.steering_sensitivity
     volume_value = GameState.master_volume
