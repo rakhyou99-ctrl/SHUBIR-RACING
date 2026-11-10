@@ -3,6 +3,7 @@ extends Control
 var sensitivity_value: float = 1.0
 var volume_value: float = 0.75
 var volume_label: Label
+var sensitivity_label: Label
 var settings_title: Label
 var steering_heading: Label
 var steering_slider: HSlider
