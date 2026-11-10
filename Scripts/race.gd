@@ -863,6 +863,7 @@ func _show_pause_menu() -> void:
     var resume := Button.new()
     resume.text = "RESUME"
     resume.custom_minimum_size = Vector2(260, 62)
+    _style_overlay_button(resume, true)
     resume.pressed.connect(func():
         # Require a fresh BOOST press after unpausing; no stale input is restored.
         touch_accel = false
@@ -889,12 +890,14 @@ func _show_pause_menu() -> void:
     var restart := Button.new()
     restart.text = "RESTART"
     restart.custom_minimum_size = Vector2(260, 62)
+    _style_overlay_button(restart, false)
     restart.pressed.connect(func(): get_tree().reload_current_scene())
     content.add_child(restart)
 
     var menu := Button.new()
     menu.text = "MAIN MENU"
     menu.custom_minimum_size = Vector2(260, 58)
+    _style_overlay_button(menu, false)
     menu.pressed.connect(func(): get_tree().change_scene_to_file("res://Scenes/main_menu.tscn"))
     content.add_child(menu)
 
@@ -988,14 +991,36 @@ func _finish_race() -> void:
     var restart := Button.new()
     restart.text = "RACE AGAIN"
     restart.custom_minimum_size = Vector2(190, 62)
+    _style_overlay_button(restart, true)
     restart.pressed.connect(func(): get_tree().reload_current_scene())
     actions.add_child(restart)
 
     var menu := Button.new()
     menu.text = "MAIN MENU"
     menu.custom_minimum_size = Vector2(190, 62)
+    _style_overlay_button(menu, false)
     menu.pressed.connect(func(): get_tree().change_scene_to_file("res://Scenes/main_menu.tscn"))
     actions.add_child(menu)
+
+func _style_overlay_button(button: Button, primary: bool) -> void:
+    var normal := StyleBoxFlat.new()
+    normal.bg_color = Color("#FF7518") if primary else Color("#263950")
+    normal.border_color = Color("#FF9A55") if primary else Color("#52647D")
+    normal.set_border_width_all(2)
+    normal.set_corner_radius_all(10)
+    normal.content_margin_left = 14.0
+    normal.content_margin_right = 14.0
+    button.add_theme_stylebox_override("normal", normal)
+    var hover := normal.duplicate() as StyleBoxFlat
+    hover.bg_color = Color("#FF8B3D") if primary else Color("#354B66")
+    button.add_theme_stylebox_override("hover", hover)
+    var pressed := normal.duplicate() as StyleBoxFlat
+    pressed.bg_color = Color("#D95F0D") if primary else Color("#1B2B40")
+    button.add_theme_stylebox_override("pressed", pressed)
+    button.add_theme_color_override("font_color", Color.WHITE)
+    button.add_theme_color_override("font_hover_color", Color.WHITE)
+    button.add_theme_color_override("font_pressed_color", Color("#FFF0E6"))
+    button.add_theme_font_size_override("font_size", 21)
 
 func _load_best_distance() -> void:
     var save := ConfigFile.new()
