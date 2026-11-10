@@ -256,8 +256,10 @@ func _build_road_segment(parent: Node3D) -> void:
     _box(parent, Vector3(0, -0.2, 0), Vector3(12, 0.4, 22), Color("#30343B"))
     _box(parent, Vector3(-6.4, -0.1, 0), Vector3(0.35, 0.2, 22), Color("#E8E8E8"))
     _box(parent, Vector3(6.4, -0.1, 0), Vector3(0.35, 0.2, 22), Color("#E8E8E8"))
-    for z in [-7.0, 0.0, 7.0]:
-        _box(parent, Vector3(0, 0.025, z), Vector3(0.16, 0.04, 3.0), Color("#F5F5F5"))
+    # Dashed lane dividers mark three clear driving lanes.
+    for lane_edge_x in [-2.0, 2.0]:
+        for z in [-7.0, 0.0, 7.0]:
+            _box(parent, Vector3(lane_edge_x, 0.025, z), Vector3(0.13, 0.04, 3.0), Color("#F5F5F5"))
     _box(parent, Vector3(-10, -0.35, 0), Vector3(8, 0.2, 22), Color("#39764A"))
     _box(parent, Vector3(10, -0.35, 0), Vector3(8, 0.2, 22), Color("#39764A"))
 
@@ -270,6 +272,10 @@ func _build_road_segment(parent: Node3D) -> void:
             _box(parent, Vector3(side * 6.78, 0.72, marker_z), Vector3(0.035, 0.12, 0.72), Color("#FF7518"))
 
     # Bright shoulder edge strips improve lane readability at speed.
+    # Short orange rumble strips add a visual edge cue without narrowing the road.
+    for side in [-1.0, 1.0]:
+        for rumble_z in [-8.0, 3.0]:
+            _box(parent, Vector3(side * 5.82, 0.035, rumble_z), Vector3(0.22, 0.06, 2.2), Color("#D9A33A"))
     _box(parent, Vector3(-6.05, 0.025, 0), Vector3(0.10, 0.035, 22), Color("#FFCF55"))
     _box(parent, Vector3(6.05, 0.025, 0), Vector3(0.10, 0.035, 22), Color("#FFCF55"))
     # More varied roadside scenery makes the endless highway feel less repetitive.
