@@ -1,0 +1,49 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  android-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: |
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Install Godot 4.7.2 and export templates
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+
+      - name: Import project
+        run: godot --headless --editor --path . --quit
+
+      - name: Export Android APK
+        run: |
+          mkdir -p build
+          godot --headless --path . --editor --install-android-build-template --quit
+          godot --headless --path . --export-debug "Android" build/SHUBIR-RACING.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SHUBIR-RACING-Android-APK
+          path: build/SHUBIR-RACING.apk
+          if-no-files-found: error
