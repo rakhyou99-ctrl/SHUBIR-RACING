@@ -446,38 +446,57 @@ func _add_hold_button(label_text: String, pos: Vector2, btn_size: Vector2, actio
     b.text = label_text
     b.position = pos
     b.size = btn_size
-    b.add_theme_font_size_override("font_size", 20)
-    b.add_theme_color_override("font_color", Color.WHITE)
-    b.add_theme_color_override("font_hover_color", Color.WHITE)
+    b.add_theme_font_size_override("font_size", 19 if action != "nitro" else 18)
+    var label_color := Color("#D83B35") if action == "brake" else (Color("#21B65B") if action == "accel" else Color.WHITE)
+    b.add_theme_color_override("font_color", label_color)
+    b.add_theme_color_override("font_hover_color", label_color.lightened(0.18))
     b.add_theme_color_override("font_pressed_color", Color.WHITE)
     b.focus_mode = Control.FOCUS_NONE
+
     var base_style := StyleBoxFlat.new()
-    base_style.bg_color = Color("#25191B") if action == "brake" else (Color("#102B3C") if action == "nitro" else Color("#26351F"))
-    base_style.border_color = Color("#FF4545") if action == "brake" else (Color("#19CFFF") if action == "nitro" else Color("#8DDB43"))
-    base_style.set_border_width_all(4)
-    # Brake and accelerator look like real rectangular metal foot pedals, not round touch pads.
-    base_style.set_corner_radius_all(8 if action != "nitro" else 28)
-    base_style.shadow_color = Color(0, 0, 0, 0.55)
-    base_style.shadow_size = 8
-    if action != "nitro":
-        base_style.set_content_margin_all(12)
-        base_style.content_margin_top = 48.0
+    if action == "nitro":
+        base_style.bg_color = Color("#102B3C")
+        base_style.border_color = Color("#19CFFF")
+        base_style.set_border_width_all(4)
+        base_style.set_corner_radius_all(22)
+        base_style.content_margin_top = 10.0
+        base_style.content_margin_bottom = 10.0
+    else:
+        # Brushed-metal pedal plate with a dark raised rim.
+        base_style.bg_color = Color("#B9C2CA")
+        base_style.border_color = Color("#59636D")
+        base_style.set_border_width_all(5)
+        base_style.set_corner_radius_all(7)
+        base_style.shadow_color = Color(0, 0, 0, 0.62)
+        base_style.shadow_size = 9
+        base_style.content_margin_left = 8.0
+        base_style.content_margin_right = 8.0
+        base_style.content_margin_top = 82.0
         base_style.content_margin_bottom = 8.0
     b.add_theme_stylebox_override("normal", base_style)
+
     if action != "nitro":
-        # Raised grip ribs across the upper face make each control read as a foot pedal.
-        for rib_index in range(3):
+        # Five dark rubber grip ribs and small metal fasteners create a pedal-like face.
+        for rib_index in range(5):
             var rib := ColorRect.new()
-            rib.position = Vector2(22, 18 + rib_index * 10)
-            rib.size = Vector2(btn_size.x - 44, 4)
-            rib.color = Color("#87919A") if action == "brake" else Color("#9BAA8C")
+            rib.position = Vector2(20, 16 + rib_index * 12)
+            rib.size = Vector2(btn_size.x - 40, 5)
+            rib.color = Color("#303840")
             rib.mouse_filter = Control.MOUSE_FILTER_IGNORE
             b.add_child(rib)
+        for screw_pos in [Vector2(12, 10), Vector2(btn_size.x - 20, 10), Vector2(12, 62), Vector2(btn_size.x - 20, 62)]:
+            var screw := ColorRect.new()
+            screw.position = screw_pos
+            screw.size = Vector2(7, 7)
+            screw.color = Color("#E7EDF1")
+            screw.mouse_filter = Control.MOUSE_FILTER_IGNORE
+            b.add_child(screw)
+
     var hover_style := base_style.duplicate() as StyleBoxFlat
-    hover_style.bg_color = hover_style.bg_color.lightened(0.16)
+    hover_style.bg_color = hover_style.bg_color.lightened(0.12)
     b.add_theme_stylebox_override("hover", hover_style)
     var pressed_style := base_style.duplicate() as StyleBoxFlat
-    pressed_style.bg_color = pressed_style.bg_color.darkened(0.22)
+    pressed_style.bg_color = pressed_style.bg_color.darkened(0.18)
     b.add_theme_stylebox_override("pressed", pressed_style)
     b.button_down.connect(func(): _set_touch(action, true))
     b.button_up.connect(func(): _set_touch(action, false))
