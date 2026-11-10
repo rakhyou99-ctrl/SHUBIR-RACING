@@ -112,6 +112,35 @@ func _build_garage() -> void:
     floor.material_override = floor_mat
     preview_root.add_child(floor)
 
+    # Low circular display plinth with a thin orange illuminated edge.
+    var plinth := MeshInstance3D.new()
+    var plinth_mesh := CylinderMesh.new()
+    plinth_mesh.top_radius = 3.15
+    plinth_mesh.bottom_radius = 3.15
+    plinth_mesh.height = 0.12
+    plinth.mesh = plinth_mesh
+    plinth.position.y = 0.015
+    var plinth_mat := StandardMaterial3D.new()
+    plinth_mat.albedo_color = Color("#202E42")
+    plinth_mat.metallic = 0.72
+    plinth_mat.roughness = 0.28
+    plinth.material_override = plinth_mat
+    preview_root.add_child(plinth)
+    var plinth_edge := MeshInstance3D.new()
+    var edge_mesh := CylinderMesh.new()
+    edge_mesh.top_radius = 3.17
+    edge_mesh.bottom_radius = 3.17
+    edge_mesh.height = 0.035
+    plinth_edge.mesh = edge_mesh
+    plinth_edge.position.y = -0.045
+    var edge_mat := StandardMaterial3D.new()
+    edge_mat.albedo_color = Color("#FF7518")
+    edge_mat.emission_enabled = true
+    edge_mat.emission = Color("#FF5A12")
+    edge_mat.emission_energy_multiplier = 0.65
+    plinth_edge.material_override = edge_mat
+    preview_root.add_child(plinth_edge)
+
     preview_car = _create_preview_car()
     preview_root.add_child(preview_car)
 
@@ -250,6 +279,12 @@ func _create_preview_car() -> Node3D:
     _add_box(root, Vector3(0, 0.55, 0), Vector3(2.0, 0.58, 3.8), paint)
     _add_box(root, Vector3(0, 0.99, -0.22), Vector3(1.48, 0.62, 1.8), Color("#172638"))
     _add_box(root, Vector3(0, 0.88, -1.25), Vector3(1.55, 0.10, 1.0), paint.lightened(0.12))
+    # Twin subtle hood creases catch the showroom key light.
+    for crease_x in [-0.52, 0.52]:
+        _add_box(root, Vector3(crease_x, 0.944, -1.23), Vector3(0.035, 0.018, 0.78), paint.lightened(0.28))
+    # Orange lower-body pinstripe ties both selected cars to the game identity.
+    for stripe_side in [-1.0, 1.0]:
+        _add_box(root, Vector3(stripe_side * 1.025, 0.43, 0.05), Vector3(0.025, 0.035, 2.30), Color("#FF7518"))
     _add_box(root, Vector3(0, 1.30, -0.18), Vector3(1.30, 0.045, 1.35), Color("#101A27"))
     _add_box(root, Vector3(0, 0.32, 1.92), Vector3(2.12, 0.14, 0.24), Color("#202832"))
     for side in [-1.0, 1.0]:
