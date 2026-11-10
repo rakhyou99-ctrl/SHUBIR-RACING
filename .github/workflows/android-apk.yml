@@ -8,7 +8,7 @@ on:
 jobs:
   android-apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,22 +40,26 @@ jobs:
           use-dotnet: false
           include-templates: true
 
+      - name: Configure Godot Android paths
+        shell: bash
+        run: |
+          mkdir -p "$HOME/.config/godot" "$HOME/.android"
+          cat > "$HOME/.config/godot/editor_settings-4.7.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOF
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
       - name: Import project
         run: godot --headless --editor --path . --quit
 
-      - name: Install Android build template
-        shell: bash
-        run: |
-          godot --headless --editor --path . --install-android-build-template --quit
-          echo "Checking Android build template files..."
-          if [ ! -d android/build ]; then
-            echo "Android build template was not created. Project files:"
-            find . -maxdepth 3 -type d -print | sort | head -n 100
-            exit 1
-          fi
-          ls -la android/build
-
       - name: Export Android APK
+        shell: bash
         run: |
           mkdir -p build
           godot --headless --path . --export-debug "Android" build/SHUBIR-RACING.apk
