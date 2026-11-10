@@ -672,7 +672,11 @@ func _add_car_decal(parent: Node3D, decal_text: String, decal_position: Vector3,
 func _make_traffic() -> void:
     for i in range(5):
         var traffic := Node3D.new()
-        traffic.position = Vector3(_spawn_lane_for(-45.0 - float(i) * 42.0), 0.45, -45.0 - float(i) * 42.0)
+        # Register each vehicle before choosing the next spawn lane so initial
+        # traffic placement observes cars that were already created.
+        traffic_cars.append(traffic)
+        var spawn_z := -45.0 - float(i) * 42.0
+        traffic.position = Vector3(_spawn_lane_for(spawn_z), 0.45, spawn_z)
         # Each vehicle has its own cruising speed, so traffic does not move as one block.
         traffic.set_meta("cruise_speed", randf_range(62.0, 108.0))
         traffic.set_meta("lane_center_x", traffic.position.x)
@@ -703,7 +707,6 @@ func _make_traffic() -> void:
         for light_x in [-0.62, 0.62]:
             _box(traffic, Vector3(light_x, 0.49, -1.70), Vector3(0.34, 0.14, 0.07), Color("#FFF1B8"))
             _box(traffic, Vector3(light_x, 0.49, 1.70), Vector3(0.34, 0.14, 0.07), Color("#F32938"))
-        traffic_cars.append(traffic)
 
 func _random_lane() -> float:
     var lanes := [-3.5, 0.0, 3.5]
@@ -718,7 +721,7 @@ func _spawn_lane_for(spawn_z: float) -> float:
     for lane in lanes:
         var clearance := 999.0
         for other in traffic_cars:
-            if is_instance_valid(other) and absf(other.position.z - spawn_z) < 34.0:
+            if is_instance_valid(other) and absf(other.position.z - spawn_z) < 50.0:
                 if absf(other.position.x - lane) < 1.0:
                     clearance = minf(clearance, absf(other.position.z - spawn_z))
         for other in road_obstacles:
