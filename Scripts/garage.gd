@@ -72,9 +72,23 @@ func _build_garage() -> void:
     fill_light.omni_range = 12.0
     preview_root.add_child(fill_light)
 
+    # Colored showroom rim lights separate the body from the dark backdrop.
+    var blue_rim := OmniLight3D.new()
+    blue_rim.position = Vector3(4.0, 2.1, -1.8)
+    blue_rim.light_color = Color("#398DFF")
+    blue_rim.light_energy = 1.15
+    blue_rim.omni_range = 8.0
+    preview_root.add_child(blue_rim)
+    var warm_rim := OmniLight3D.new()
+    warm_rim.position = Vector3(-3.6, 1.7, -2.8)
+    warm_rim.light_color = Color("#FF9A55")
+    warm_rim.light_energy = 0.8
+    warm_rim.omni_range = 7.0
+    preview_root.add_child(warm_rim)
+
     var camera := Camera3D.new()
-    camera.position = Vector3(0, 2.45, 6.4)
-    camera.look_at(Vector3(0, 0.55, 0), Vector3.UP)
+    camera.position = Vector3(4.1, 2.65, -6.2)
+    camera.look_at(Vector3(0, 0.62, 0), Vector3.UP)
     camera.current = true
     preview_root.add_child(camera)
 
@@ -85,7 +99,8 @@ func _build_garage() -> void:
     floor.position.y = -0.04
     var floor_mat := StandardMaterial3D.new()
     floor_mat.albedo_color = Color("#17263A")
-    floor_mat.roughness = 0.72
+    floor_mat.metallic = 0.22
+    floor_mat.roughness = 0.38
     floor.material_override = floor_mat
     preview_root.add_child(floor)
 
