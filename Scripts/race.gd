@@ -723,7 +723,6 @@ func _make_obstacles() -> void:
     for i in range(3):
         var obstacle := Node3D.new()
         obstacle.position = Vector3(_spawn_lane_for(-85.0 - float(i) * 105.0), 0.0, -85.0 - float(i) * 105.0)
-        obstacle.set_meta("approach_speed", randf_range(72.0, 100.0))
         add_child(obstacle)
 
         var base := MeshInstance3D.new()
@@ -765,15 +764,15 @@ func _make_obstacles() -> void:
         road_obstacles.append(obstacle)
 
 func _move_obstacles(delta: float) -> void:
+    # Cones are fixed to the road, so they must scroll at exactly the road speed.
+    var road_movement := speed * delta * 0.12
+    var stage_progress := float(race_stage - 1) / 9.0
+    var spawn_distance := lerpf(360.0, 220.0, stage_progress)
     for obstacle in road_obstacles:
-        var base_approach_speed := float(obstacle.get_meta("approach_speed", 86.0))
-        var approach_speed := maxf(55.0, base_approach_speed - float(race_stage - 1) * 1.1)
-        var closing_speed := maxf(16.0, speed - approach_speed)
-        obstacle.position.z += closing_speed * delta * 0.12
+        obstacle.position.z += road_movement
         if obstacle.position.z > 16.0:
-            obstacle.position.z = -260.0 - randf_range(0.0, 100.0)
+            obstacle.position.z = -spawn_distance - randf_range(0.0, 60.0)
             obstacle.position.x = _spawn_lane_for(obstacle.position.z)
-            obstacle.set_meta("approach_speed", randf_range(72.0, 100.0))
 
 func _check_obstacle_collision() -> void:
     if game_over or game_paused:
@@ -793,10 +792,11 @@ func _move_traffic(delta: float) -> void:
         var sway_rate := float(traffic.get_meta("sway_rate", 0.85))
         var sway := sin(float(Time.get_ticks_msec()) * 0.001 * sway_rate + sway_phase) * 0.12
         traffic.position.x = lane_center + sway
-        # Relative speed gives traffic a more natural approach instead of one shared pace.
-        var closing_speed := maxf(12.0, speed - cruise_speed)
-        traffic.position.z += closing_speed * delta * 0.12
-        if traffic.position.z > 16.0:
+        # Move traffic by its true speed difference: faster traffic pulls away,
+        # while the player catches slower traffic naturally.
+        var relative_speed := speed - cruise_speed
+        traffic.position.z += relative_speed * delta * 0.12
+        if traffic.position.z > 16.0 or traffic.position.z < -360.0:
             traffic.position.z = -190.0 - randf_range(0.0, 65.0)
             traffic.position.x = _spawn_lane_for(traffic.position.z)
             traffic.set_meta("lane_center_x", traffic.position.x)
