@@ -841,6 +841,14 @@ func _finish_race() -> void:
         brake_player.stop()
     if is_instance_valid(crash_player):
         crash_player.play()
+    # Brief camera impact shake makes a collision feel immediate before the results overlay.
+    if is_instance_valid(chase_camera):
+        var camera_home := chase_camera.position
+        var impact_tween := create_tween()
+        impact_tween.tween_property(chase_camera, "position", camera_home + Vector3(0.20, 0.10, 0.0), 0.06)
+        impact_tween.tween_property(chase_camera, "position", camera_home + Vector3(-0.16, -0.06, 0.0), 0.07)
+        impact_tween.tween_property(chase_camera, "position", camera_home + Vector3(0.08, 0.03, 0.0), 0.07)
+        impact_tween.tween_property(chase_camera, "position", camera_home, 0.10)
 
     var new_record := distance > best_distance
     if new_record:
