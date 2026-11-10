@@ -21,6 +21,9 @@ var game_over := false
 var game_paused := false
 var best_distance := 0.0
 var engine_player: AudioStreamPlayer
+var nitro_player: AudioStreamPlayer
+var crash_player: AudioStreamPlayer
+var was_boosting := false
 
 func _ready() -> void:
     randomize()
@@ -30,6 +33,7 @@ func _ready() -> void:
     _make_traffic()
     _make_ui()
     _make_engine_audio()
+    _make_effect_audio()
 
 func _process(delta: float) -> void:
     if game_over or game_paused:
@@ -50,9 +54,12 @@ func _process(delta: float) -> void:
 
     if boosting:
         nitro_left = maxf(0.0, nitro_left - delta)
+        if not was_boosting and is_instance_valid(nitro_player):
+            nitro_player.play()
     else:
         # Nitro slowly recharges while the player is not using the boost.
         nitro_left = minf(3.0, nitro_left + delta * 0.22)
+    was_boosting = boosting
 
     steer = (1.0 if right else 0.0) - (1.0 if left else 0.0)
     car.position.x = clampf(car.position.x + steer * GameState.steering_sensitivity * delta * (3.4 + speed / 55.0), -4.0, 4.0)
@@ -98,6 +105,47 @@ func _make_engine_audio() -> void:
     engine_player.volume_db = -5.0
     add_child(engine_player)
     engine_player.play()
+
+
+func _make_effect_audio() -> void:
+    nitro_player = AudioStreamPlayer.new()
+    nitro_player.stream = _create_effect_stream(true)
+    nitro_player.volume_db = -3.0
+    add_child(nitro_player)
+
+    crash_player = AudioStreamPlayer.new()
+    crash_player.stream = _create_effect_stream(false)
+    crash_player.volume_db = -1.0
+    add_child(crash_player)
+
+func _create_effect_stream(is_nitro: bool) -> AudioStreamWAV:
+    var sample_rate := 16000
+    var sample_count := 8000
+    var samples := PackedByteArray()
+    samples.resize(sample_count * 2)
+    var noise_state := 13579 if is_nitro else 24681
+    for i in range(sample_count):
+        var t := float(i) / float(sample_rate)
+        var progress := float(i) / float(sample_count)
+        var wave: float
+        if is_nitro:
+            var frequency := lerpf(260.0, 1050.0, progress)
+            wave = sin(TAU * frequency * t) * (1.0 - progress) * 0.55
+            wave += sin(TAU * frequency * 1.7 * t) * (1.0 - progress) * 0.16
+        else:
+            noise_state = int((noise_state * 1103515245 + 12345) & 0x7fffffff)
+            var noise := (float(noise_state) / 1073741823.5) - 1.0
+            wave = noise * exp(-progress * 8.0) * 0.72
+            wave += sin(TAU * 68.0 * t) * exp(-progress * 12.0) * 0.3
+        var sample := int(clampf(wave, -1.0, 1.0) * 10000.0)
+        samples.encode_s16(i * 2, sample)
+
+    var stream := AudioStreamWAV.new()
+    stream.format = AudioStreamWAV.FORMAT_16_BITS
+    stream.mix_rate = sample_rate
+    stream.stereo = false
+    stream.data = samples
+    return stream
 
 func _make_world() -> void:
     var env := WorldEnvironment.new()
@@ -284,6 +332,10 @@ func _finish_race() -> void:
         return
     game_over = true
     speed = 0.0
+    if is_instance_valid(engine_player):
+        engine_player.stop()
+    if is_instance_valid(crash_player):
+        crash_player.play()
     if distance > best_distance:
         best_distance = distance
         _save_best_distance()
