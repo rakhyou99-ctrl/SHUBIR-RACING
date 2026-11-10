@@ -588,7 +588,7 @@ func _add_car_decal(parent: Node3D, decal_text: String, decal_position: Vector3,
 func _make_traffic() -> void:
     for i in range(5):
         var traffic := Node3D.new()
-        traffic.position = Vector3(_random_lane(), 0.45, -45.0 - float(i) * 42.0)
+        traffic.position = Vector3(_spawn_lane_for(-45.0 - float(i) * 42.0), 0.45, -45.0 - float(i) * 42.0)
         # Each vehicle has its own cruising speed, so traffic does not move as one block.
         traffic.set_meta("cruise_speed", randf_range(62.0, 108.0))
         traffic.set_meta("lane_center_x", traffic.position.x)
@@ -625,11 +625,32 @@ func _random_lane() -> float:
     var lanes := [-3.5, 0.0, 3.5]
     return lanes[randi_range(0, lanes.size() - 1)]
 
+func _spawn_lane_for(spawn_z: float) -> float:
+    # Prefer lanes without another nearby vehicle or cone to avoid unfair stacked hazards.
+    var lanes := [-3.5, 0.0, 3.5]
+    var safest_lane := lanes[0]
+    var best_clearance := -1.0
+    lanes.shuffle()
+    for lane in lanes:
+        var clearance := 999.0
+        for other in traffic_cars:
+            if is_instance_valid(other) and absf(other.position.z - spawn_z) < 34.0:
+                if absf(other.position.x - lane) < 1.0:
+                    clearance = minf(clearance, absf(other.position.z - spawn_z))
+        for other in road_obstacles:
+            if is_instance_valid(other) and absf(other.position.z - spawn_z) < 34.0:
+                if absf(other.position.x - lane) < 1.0:
+                    clearance = minf(clearance, absf(other.position.z - spawn_z))
+        if clearance > best_clearance:
+            best_clearance = clearance
+            safest_lane = lane
+    return safest_lane
+
 func _make_obstacles() -> void:
     # Lightweight road cones add occasional hazards without requiring external assets.
     for i in range(3):
         var obstacle := Node3D.new()
-        obstacle.position = Vector3(_random_lane(), 0.0, -85.0 - float(i) * 105.0)
+        obstacle.position = Vector3(_spawn_lane_for(-85.0 - float(i) * 105.0), 0.0, -85.0 - float(i) * 105.0)
         obstacle.set_meta("approach_speed", randf_range(72.0, 100.0))
         add_child(obstacle)
 
@@ -679,7 +700,7 @@ func _move_obstacles(delta: float) -> void:
         obstacle.position.z += closing_speed * delta * 0.12
         if obstacle.position.z > 16.0:
             obstacle.position.z = -260.0 - randf_range(0.0, 100.0)
-            obstacle.position.x = _random_lane()
+            obstacle.position.x = _spawn_lane_for(obstacle.position.z)
             obstacle.set_meta("approach_speed", randf_range(72.0, 100.0))
 
 func _check_obstacle_collision() -> void:
@@ -705,7 +726,7 @@ func _move_traffic(delta: float) -> void:
         traffic.position.z += closing_speed * delta * 0.12
         if traffic.position.z > 16.0:
             traffic.position.z = -190.0 - randf_range(0.0, 65.0)
-            traffic.position.x = _random_lane()
+            traffic.position.x = _spawn_lane_for(traffic.position.z)
             traffic.set_meta("lane_center_x", traffic.position.x)
             traffic.set_meta("sway_phase", randf_range(0.0, TAU))
             traffic.set_meta("sway_rate", randf_range(0.65, 1.15))
