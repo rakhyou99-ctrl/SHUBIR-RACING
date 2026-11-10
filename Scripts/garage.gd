@@ -14,6 +14,7 @@ var blue_button: Button
 var red_button: Button
 var preview_frame: Panel
 var viewport_box: SubViewportContainer
+var preview_viewport: SubViewport
 var swipe_hint: Label
 var side_title: Label
 var header_label: Label
@@ -68,13 +69,13 @@ func _build_garage() -> void:
     preview_frame.add_child(viewport_box)
     viewport_box.gui_input.connect(_on_preview_input)
 
-    var viewport := SubViewport.new()
-    viewport.size = Vector2i(800, 500)
-    viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-    viewport_box.add_child(viewport)
+    preview_viewport = SubViewport.new()
+    preview_viewport.size = Vector2i(800, 500)
+    preview_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+    viewport_box.add_child(preview_viewport)
 
     preview_root = Node3D.new()
-    viewport.add_child(preview_root)
+    preview_viewport.add_child(preview_root)
     var world := WorldEnvironment.new()
     var environment := Environment.new()
     environment.background_mode = Environment.BG_COLOR
@@ -249,6 +250,8 @@ func _layout_garage() -> void:
     var side_x := maxf(24.0 * scale_factor, w - 380.0 * scale_factor)
     var preview_width := clampf(side_x / scale_factor - 38.0 - 20.0 - 28.0 / scale_factor, 400.0, 800.0)
     viewport_box.size = Vector2(preview_width, 500.0)
+    if is_instance_valid(preview_viewport):
+        preview_viewport.size = Vector2i(maxi(1, roundi(preview_width)), 500)
     preview_frame.size = Vector2(preview_width + 20.0, 540.0)
     swipe_hint.scale = Vector2.ONE
     swipe_hint.position = Vector2(0, 510)
