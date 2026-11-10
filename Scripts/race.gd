@@ -385,6 +385,10 @@ func _make_car() -> void:
 
     # Sport-car body details: hood, roof glass, side skirts and front splitter.
     _box(car, Vector3(0, 0.735, -1.05), Vector3(1.42, 0.045, 1.05), body_color.lightened(0.10))
+    for crease_x in [-0.48, 0.48]:
+        _box(car, Vector3(crease_x, 0.762, -1.08), Vector3(0.035, 0.018, 0.78), body_color.lightened(0.28))
+    for stripe_side in [-1.0, 1.0]:
+        _box(car, Vector3(stripe_side * 0.925, 0.34, 0.05), Vector3(0.025, 0.035, 2.25), Color("#FF7518"))
     _box(car, Vector3(0, 1.185, -0.22), Vector3(1.18, 0.035, 1.12), Color("#101A27"))
     _box(car, Vector3(0, 0.22, -1.78), Vector3(1.95, 0.12, 0.22), Color("#202832"))
     for side in [-1.0, 1.0]:
