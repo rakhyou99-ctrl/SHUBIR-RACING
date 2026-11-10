@@ -3,6 +3,7 @@ extends Control
 var title_label: Label
 var subtitle_label: Label
 var note_label: Label
+var best_distance_label: Label
 var play_button: Button
 var garage_button: Button
 var settings_button: Button
@@ -64,6 +65,16 @@ func _build_ui() -> void:
     exit.pressed.connect(func(): get_tree().quit())
     add_child(exit)
 
+    best_distance_label = Label.new()
+    var best_record := ConfigFile.new()
+    best_record.load("user://shubir_racing.cfg")
+    var best_distance := float(best_record.get_value("score", "best_distance", 0.0))
+    best_distance_label.text = "PERSONAL BEST  %.2f KM" % best_distance
+    best_distance_label.add_theme_font_size_override("font_size", 19)
+    best_distance_label.add_theme_color_override("font_color", Color("#FFCCAA"))
+    best_distance_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    add_child(best_distance_label)
+
     note_label = Label.new()
     var note := note_label
     note.text = "OFFLINE RACING  •  TWO ORIGINAL CARS"
@@ -97,6 +108,9 @@ func _layout_menu() -> void:
         button.position = Vector2(center_x - 200.0 * scale_factor, y)
         button.size = Vector2(400, heights[i])
         y += heights[i] * scale_factor + button_gap
+    best_distance_label.scale = Vector2.ONE * scale_factor
+    best_distance_label.position = Vector2(0, viewport_size.y - 82.0 * scale_factor)
+    best_distance_label.size = Vector2(viewport_size.x, 30)
     note_label.scale = Vector2.ONE * scale_factor
     note_label.position = Vector2(0, viewport_size.y - 42.0 * scale_factor)
     note_label.size = Vector2(viewport_size.x, 35)
