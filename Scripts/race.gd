@@ -470,9 +470,12 @@ func _make_traffic() -> void:
         traffic.position = Vector3(_random_lane(), 0.45, -45.0 - float(i) * 42.0)
         # Each vehicle has its own cruising speed, so traffic does not move as one block.
         traffic.set_meta("cruise_speed", randf_range(62.0, 108.0))
+        traffic.set_meta("lane_center_x", traffic.position.x)
+        traffic.set_meta("sway_phase", randf_range(0.0, TAU))
+        traffic.set_meta("sway_rate", randf_range(0.65, 1.15))
         add_child(traffic)
-        var paints := [Color("#F2C230"), Color("#E84A5F"), Color("#36A889"), Color("#D7DCE2")]
-        var paint: Color = paints[i % paints.size()]
+        var paints := [Color("#F2C230"), Color("#E84A5F"), Color("#36A889"), Color("#D7DCE2"), Color("#3979C6"), Color("#E87532")]
+        var paint: Color = paints[randi_range(0, paints.size() - 1)]
 
         # Sculpted-looking traffic body, cabin glass and front/rear bumpers.
         _box(traffic, Vector3(0, 0.45, 0), Vector3(1.82, 0.56, 3.35), paint)
@@ -566,12 +569,21 @@ func _check_obstacle_collision() -> void:
 func _move_traffic(delta: float) -> void:
     for traffic in traffic_cars:
         var cruise_speed := float(traffic.get_meta("cruise_speed", 85.0))
+        # Subtle in-lane drift makes each AI car feel alive without crossing lane boundaries.
+        var lane_center := float(traffic.get_meta("lane_center_x", traffic.position.x))
+        var sway_phase := float(traffic.get_meta("sway_phase", 0.0))
+        var sway_rate := float(traffic.get_meta("sway_rate", 0.85))
+        var sway := sin(float(Time.get_ticks_msec()) * 0.001 * sway_rate + sway_phase) * 0.12
+        traffic.position.x = lane_center + sway
         # Relative speed gives traffic a more natural approach instead of one shared pace.
         var closing_speed := maxf(12.0, speed - cruise_speed)
         traffic.position.z += closing_speed * delta * 0.12
         if traffic.position.z > 16.0:
             traffic.position.z = -190.0 - randf_range(0.0, 65.0)
             traffic.position.x = _random_lane()
+            traffic.set_meta("lane_center_x", traffic.position.x)
+            traffic.set_meta("sway_phase", randf_range(0.0, TAU))
+            traffic.set_meta("sway_rate", randf_range(0.65, 1.15))
             traffic.set_meta("cruise_speed", randf_range(62.0, 108.0))
 
 func _check_traffic_collision() -> void:
