@@ -739,6 +739,7 @@ func _make_traffic() -> void:
         traffic_cars.append(traffic)
         # Each vehicle has its own cruising speed, so traffic does not move as one block.
         traffic.set_meta("cruise_speed", randf_range(62.0, 108.0))
+        traffic.set_meta("near_miss_awarded", false)
         traffic.set_meta("lane_center_x", traffic.position.x)
         traffic.set_meta("sway_phase", randf_range(0.0, TAU))
         traffic.set_meta("sway_rate", randf_range(0.65, 1.15))
@@ -895,7 +896,8 @@ func _move_traffic(delta: float) -> void:
             var traffic_x_at_crossing := lerpf(previous_x, traffic.position.x, crossing_t)
             var car_x_at_crossing := lerpf(previous_car_frame_x, car.position.x, crossing_t)
             var lateral_gap := absf(traffic_x_at_crossing - car_x_at_crossing)
-            if lateral_gap >= 1.8 and lateral_gap < 3.25:
+            if lateral_gap >= 1.8 and lateral_gap < 3.25 and not bool(traffic.get_meta("near_miss_awarded", false)):
+                traffic.set_meta("near_miss_awarded", true)
                 _register_near_miss()
         if traffic.position.z > 16.0 or traffic.position.z < -360.0:
             traffic.position.z = -190.0 - randf_range(0.0, 65.0)
@@ -904,6 +906,7 @@ func _move_traffic(delta: float) -> void:
             traffic.set_meta("sway_phase", randf_range(0.0, TAU))
             traffic.set_meta("sway_rate", randf_range(0.65, 1.15))
             traffic.set_meta("cruise_speed", randf_range(62.0, 108.0))
+            traffic.set_meta("near_miss_awarded", false)
             # Do not sweep the recycled car across the whole road on the next collision check.
             traffic.set_meta("previous_frame_z", traffic.position.z)
             traffic.set_meta("previous_frame_x", traffic.position.x)
