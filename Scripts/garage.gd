@@ -77,7 +77,10 @@ func _build_garage() -> void:
 
     preview_viewport = SubViewport.new()
     preview_viewport.size = Vector2i(800, 500)
-    preview_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+    # Render the showroom only while its SubViewport is visible in the UI.
+    # This avoids spending GPU time on an off-screen preview without affecting
+    # the 360-degree rotation while the Garage is open.
+    preview_viewport.render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
     viewport_box.add_child(preview_viewport)
 
     preview_root = Node3D.new()
