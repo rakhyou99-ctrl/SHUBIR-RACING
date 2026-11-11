@@ -205,6 +205,8 @@ func _run_smoke_tests() -> void:
             # Settings writes must preserve existing race records in the shared config.
             var preservation_config := ConfigFile.new()
             preservation_config.load("user://shubir_racing.cfg")
+            var original_best_distance := float(preservation_config.get_value("score", "best_distance", 0.0))
+            var original_best_score := int(preservation_config.get_value("score", "best_score", 0))
             preservation_config.set_value("score", "best_distance", 12.34)
             preservation_config.set_value("score", "best_score", 56789)
             if preservation_config.save("user://shubir_racing.cfg") != OK:
@@ -240,6 +242,16 @@ func _run_smoke_tests() -> void:
             var preserved_config := ConfigFile.new()
             if preserved_config.load("user://shubir_racing.cfg") != OK or absf(float(preserved_config.get_value("score", "best_distance", 0.0)) - 12.34) > 0.001 or int(preserved_config.get_value("score", "best_score", 0)) != 56789:
                 push_error("Saving settings overwrote existing best distance or score records.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            var restore_score_config := ConfigFile.new()
+            restore_score_config.load("user://shubir_racing.cfg")
+            restore_score_config.set_value("score", "best_distance", original_best_distance)
+            restore_score_config.set_value("score", "best_score", original_best_score)
+            if restore_score_config.save("user://shubir_racing.cfg") != OK:
+                push_error("Could not restore original score config after isolation test.")
                 root.remove_child(instance)
                 instance.free()
                 quit(1)
