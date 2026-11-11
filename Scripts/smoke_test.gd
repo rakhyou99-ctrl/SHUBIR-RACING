@@ -106,7 +106,23 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             print("Game Over navigation checks passed: Race Again and Main Menu buttons exist.")
-            main_menu_button.pressed.emit()
+            race_again_button.pressed.emit()
+            await process_frame
+            await process_frame
+            if current_scene == null or current_scene.scene_file_path != "res://Scenes/race.tscn":
+                push_error("Game Over Race Again button did not reload the race.")
+                quit(1)
+                return
+            print("Game Over Race Again navigation passed.")
+            current_scene.call("_finish_race")
+            await process_frame
+            var restarted_overlay := current_scene.find_child("GameOverOverlay", true, false)
+            var restarted_menu_button := restarted_overlay.find_child("MainMenuButton", true, false)
+            if restarted_menu_button == null:
+                push_error("Restarted race did not recreate the Game Over Main Menu button.")
+                quit(1)
+                return
+            restarted_menu_button.pressed.emit()
             await process_frame
             if current_scene == null or current_scene.scene_file_path != "res://Scenes/main_menu.tscn":
                 push_error("Game Over Main Menu button did not open the main menu.")
