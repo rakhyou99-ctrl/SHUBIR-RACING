@@ -79,21 +79,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for scene in main_menu garage settings race; do
-            echo "Smoke-testing res://Scenes/${scene}.tscn"
-            LOG_FILE="$RUNNER_TEMP/${scene}-smoke.log"
-            if [[ "$scene" == "race" ]]; then
-              GODOT_ARGS=(--verbose --headless --path . "res://Scenes/${scene}.tscn" --quit-after 120)
-            else
-              GODOT_ARGS=(--headless --path . "res://Scenes/${scene}.tscn" --quit-after 120)
-            fi
-            if ! godot "${GODOT_ARGS[@]}" >"$LOG_FILE" 2>&1; then
-              cat "$LOG_FILE"
-              exit 1
-            fi
+          LOG_FILE="$RUNNER_TEMP/game-screen-smoke.log"
+          if ! godot --verbose --headless --path . --script Scripts/smoke_test.gd >"$LOG_FILE" 2>&1; then
             cat "$LOG_FILE"
-            if grep -Eq 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' "$LOG_FILE"; then
-              echo "Godot reported errors while loading ${scene}."
-              exit 1
-            fi
-          done
+            exit 1
+          fi
+          cat "$LOG_FILE"
+          if grep -Eq 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' "$LOG_FILE"; then
+            echo "Godot reported errors during runtime scene smoke tests."
+            exit 1
+          fi
