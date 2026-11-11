@@ -707,6 +707,27 @@ func _run_smoke_tests() -> void:
                 return
             print("Recycle checks passed: traffic and cones reset swept history without phantom hits.")
 
+            # Cones must move with the road at the exact same speed, while
+            # retaining their true previous-frame position for swept collision.
+            var moving_obstacle: Node3D = fresh_obstacles[1]
+            moving_obstacle.position = Vector3(1.5, moving_obstacle.position.y, -50.0)
+            fresh_race.set("race_stage", 1)
+            fresh_race.set("speed", 100.0)
+            fresh_race.call("_move_obstacles", 0.25)
+            if absf(moving_obstacle.position.z - (-47.0)) > 0.001:
+                push_error("Road cone did not scroll at the exact road movement speed.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            if absf(float(moving_obstacle.get_meta("previous_frame_z")) - (-50.0)) > 0.001 or absf(float(moving_obstacle.get_meta("previous_frame_x")) - 1.5) > 0.001:
+                push_error("Road cone did not preserve its previous-frame position before scrolling.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Road hazard motion passed: cones match road speed and preserve swept-collision history.")
+
             # Long-run recycle stress: traffic, cones and road segments must reuse
             # their existing nodes instead of allocating an ever-growing scene.
             var recycle_node_baseline := _count_scene_nodes(fresh_race)
