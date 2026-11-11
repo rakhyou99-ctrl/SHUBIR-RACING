@@ -45,6 +45,8 @@ var near_miss_label: Label
 var near_miss_count := 0
 var near_miss_feedback_timer := 0.0
 var near_miss_tween: Tween
+var stage_feedback_label: Label
+var stage_feedback_tween: Tween
 var was_boosting := false
 var boost_locked := false
 var was_braking := false
@@ -191,7 +193,13 @@ func _process(delta: float) -> void:
     car.position.x = clampf(car.position.x + steer * GameState.steering_sensitivity * delta * (3.4 + speed / 55.0), -4.0, 4.0)
     car.rotation.z = lerpf(car.rotation.z, -steer * 0.075, minf(1.0, delta * 5.0))
     distance += speed * delta / 3600.0
-    race_stage = clampi(1 + int(distance / 0.5), 1, 10)
+    var next_stage := clampi(1 + int(distance / 0.5), 1, 10)
+    if next_stage > race_stage:
+        race_stage = next_stage
+        bonus_score += 500
+        _show_stage_feedback()
+    else:
+        race_stage = next_stage
 
     _move_road(delta)
     _move_traffic(delta)
@@ -204,7 +212,7 @@ func _process(delta: float) -> void:
         return
 
     score_label.text = "SCORE  %06d" % int(distance * 1000.0 + bonus_score)
-    near_miss_total_label.text = "NEAR MISSES  %02d  •  BONUS  +%d" % [near_miss_count, bonus_score]
+    near_miss_total_label.text = "NEAR MISSES  %02d  •  TOTAL BONUS  +%d" % [near_miss_count, bonus_score]
     speed_label.text = "SPEED  %03d km/h" % int(speed)
     distance_label.text = "DISTANCE  %.2f km" % distance
     best_label.text = "BEST  %.2f km  •  %06d" % [best_distance, best_score]
@@ -866,6 +874,26 @@ func _move_traffic(delta: float) -> void:
             traffic.set_meta("sway_rate", randf_range(0.65, 1.15))
             traffic.set_meta("cruise_speed", randf_range(62.0, 108.0))
 
+
+func _show_stage_feedback() -> void:
+    if not is_instance_valid(stage_feedback_label):
+        return
+    if is_instance_valid(stage_feedback_tween) and stage_feedback_tween.is_running():
+        stage_feedback_tween.kill()
+    stage_feedback_label.text = "STAGE %02d  •  +500 BONUS" % race_stage
+    stage_feedback_label.visible = true
+    stage_feedback_label.modulate.a = 1.0
+    var base_scale := Vector2.ONE * clampf(minf(get_viewport().get_visible_rect().size.x / 1280.0, get_viewport().get_visible_rect().size.y / 720.0), 0.55, 1.15)
+    stage_feedback_label.scale = base_scale * 0.82
+    stage_feedback_tween = create_tween()
+    stage_feedback_tween.set_parallel(true)
+    stage_feedback_tween.tween_property(stage_feedback_label, "scale", base_scale, 0.24).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    stage_feedback_tween.set_parallel(false)
+    stage_feedback_tween.tween_interval(1.15)
+    stage_feedback_tween.tween_property(stage_feedback_label, "modulate:a", 0.0, 0.40)
+    stage_feedback_tween.tween_callback(func(): stage_feedback_label.visible = false)
+
+
 func _register_near_miss() -> void:
     near_miss_count += 1
     bonus_score += 250
@@ -1177,6 +1205,13 @@ func _make_ui() -> void:
     near_miss_total_label.add_theme_color_override("font_color", Color("#FFD34E"))
     ui_layer.add_child(near_miss_total_label)
 
+    stage_feedback_label = Label.new()
+    stage_feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    stage_feedback_label.add_theme_font_size_override("font_size", 30)
+    stage_feedback_label.add_theme_color_override("font_color", Color("#FFB347"))
+    stage_feedback_label.visible = false
+    ui_layer.add_child(stage_feedback_label)
+
     speed_label = Label.new()
     speed_label.position = Vector2(25, 20)
     speed_label.add_theme_font_size_override("font_size", 28)
@@ -1307,6 +1342,9 @@ func _layout_race_ui() -> void:
     near_miss_label.scale = Vector2.ONE * scale_factor
     near_miss_label.position = Vector2((w - 360.0 * scale_factor) * 0.5, 58.0 * scale_factor)
     near_miss_label.size = Vector2(360, 38)
+    stage_feedback_label.scale = Vector2.ONE * scale_factor
+    stage_feedback_label.position = Vector2((w - 460.0 * scale_factor) * 0.5, 104.0 * scale_factor)
+    stage_feedback_label.size = Vector2(460, 44)
     score_label.position = Vector2(22, 198) * scale_factor
     score_label.scale = Vector2.ONE * scale_factor
     near_miss_total_label.position = Vector2(22, 224) * scale_factor
