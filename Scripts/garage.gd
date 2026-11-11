@@ -202,6 +202,15 @@ func _build_garage() -> void:
     swipe_hint.add_theme_color_override("font_color", Color("#AFC0D4"))
     preview_frame.add_child(swipe_hint)
 
+    zoom_out_button = _make_zoom_button("−", false)
+    zoom_out_button.name = "ZoomOutButton"
+    zoom_out_button.pressed.connect(func(): _change_preview_zoom(3.5))
+    preview_frame.add_child(zoom_out_button)
+    zoom_in_button = _make_zoom_button("+", true)
+    zoom_in_button.name = "ZoomInButton"
+    zoom_in_button.pressed.connect(func(): _change_preview_zoom(-3.5))
+    preview_frame.add_child(zoom_in_button)
+
     side_title = Label.new()
     side_title.text = "CHOOSE YOUR CAR"
     side_title.position = Vector2(895, 105)
