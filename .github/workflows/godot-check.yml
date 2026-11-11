@@ -43,6 +43,10 @@ jobs:
           grep -Fq 'SHUBIR_RELEASE_KEY_ALIAS' .github/workflows/android-apk.yml
           grep -Fq 'GODOT_ANDROID_KEYSTORE_RELEASE_PATH' .github/workflows/android-apk.yml
           grep -Fq -- '--export-release' .github/workflows/android-apk.yml
+          grep -Fq '/build/' .gitignore
+          grep -Fq '*.apk' .gitignore
+          grep -Fq '*.keystore' .gitignore
+          grep -Fq '*.jks' .gitignore
           grep -Fq 'cmdline-tools;latest' .github/workflows/android-apk.yml
           grep -Fq 'build-tools;35.0.1' .github/workflows/android-apk.yml
           grep -Fq 'GODOT_ANDROID_KEYSTORE_DEBUG_PATH=' .github/workflows/android-apk.yml
