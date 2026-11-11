@@ -255,6 +255,30 @@ func _run_smoke_tests() -> void:
                 return
             print("Tilt steering logic checks passed: calibration, dead zone, left/right response, and sensor fallback.")
 
+            # Confirm the Settings sensitivity multiplier changes actual car movement.
+            var steering_game_state: Node = root.get_node("GameState")
+            var saved_sensitivity := float(steering_game_state.get("steering_sensitivity"))
+            instance.set("tilt_steer", 0.5)
+            instance.set("speed", 55.0)
+            var steering_car: Node3D = instance.get("car")
+            steering_car.position.x = 0.0
+            steering_game_state.set("steering_sensitivity", 0.5)
+            instance.call("_apply_player_steering", 0.1)
+            var low_sensitivity_delta := steering_car.position.x
+            steering_car.position.x = 0.0
+            steering_game_state.set("steering_sensitivity", 1.8)
+            instance.call("_apply_player_steering", 0.1)
+            var high_sensitivity_delta := steering_car.position.x
+            steering_game_state.set("steering_sensitivity", saved_sensitivity)
+            if high_sensitivity_delta <= low_sensitivity_delta * 3.0:
+                push_error("Steering sensitivity setting did not scale actual player movement.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            steering_car.position.x = 0.0
+            print("Steering sensitivity checks passed: low and high settings change car movement.")
+
             var obstacles: Array = instance.get("road_obstacles")
             if obstacles.is_empty():
                 push_error("Race scene did not create road collision hazards.")
