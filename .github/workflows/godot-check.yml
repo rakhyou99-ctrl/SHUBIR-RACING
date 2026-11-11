@@ -37,6 +37,11 @@ jobs:
           grep -Fq 'default: false' .github/workflows/android-apk.yml
           grep -Fq 'type: boolean' .github/workflows/android-apk.yml
           grep -Fq 'inputs.release_ready == true' .github/workflows/android-apk.yml
+          grep -Fq 'SHUBIR_RELEASE_KEYSTORE_BASE64' .github/workflows/android-apk.yml
+          grep -Fq 'SHUBIR_RELEASE_KEYSTORE_PASSWORD' .github/workflows/android-apk.yml
+          grep -Fq 'SHUBIR_RELEASE_KEY_ALIAS' .github/workflows/android-apk.yml
+          grep -Fq 'GODOT_ANDROID_KEYSTORE_RELEASE_PATH' .github/workflows/android-apk.yml
+          grep -Fq -- '--export-release' .github/workflows/android-apk.yml
           grep -Fq 'cmdline-tools;latest' .github/workflows/android-apk.yml
           grep -Fq 'build-tools;35.0.1' .github/workflows/android-apk.yml
           grep -Fq 'GODOT_ANDROID_KEYSTORE_DEBUG_PATH=' .github/workflows/android-apk.yml
