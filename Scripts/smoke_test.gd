@@ -66,6 +66,14 @@ func _run_smoke_tests() -> void:
             var game_state: Node = root.get_node("GameState")
             var original_car := int(game_state.get("selected_car"))
             var garage_instance: Control = instance
+            var preview_viewport: SubViewport = garage_instance.get("preview_viewport")
+            if preview_viewport == null or preview_viewport.render_target_update_mode != SubViewport.UPDATE_WHEN_VISIBLE:
+                push_error("Garage showroom must render only while its preview is visible.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Garage render efficiency passed: showroom SubViewport uses UPDATE_WHEN_VISIBLE.")
             var red_card: Control = garage_instance.get("red_card")
             var red_select: Button = null
             if red_card != null:
