@@ -4,6 +4,8 @@ var car: Node3D
 var nitro_fx: Node3D
 var speed := 0.0
 var distance := 0.0
+var bonus_score := 0
+var score_label: Label
 var steer := 0.0
 var nitro_left := 3.0
 var road_segments: Array[Node3D] = []
@@ -197,6 +199,7 @@ func _process(delta: float) -> void:
     if game_over:
         return
 
+    score_label.text = "SCORE  %06d" % int(distance * 1000.0 + bonus_score)
     speed_label.text = "SPEED  %03d km/h" % int(speed)
     distance_label.text = "DISTANCE  %.2f km" % distance
     best_label.text = "BEST  %.2f km" % best_distance
@@ -833,7 +836,10 @@ func _move_traffic(delta: float) -> void:
 
 func _register_near_miss() -> void:
     near_miss_count += 1
+    bonus_score += 250
     near_miss_feedback_timer = 1.35
+    if is_instance_valid(score_label):
+        score_label.text = "SCORE  %06d" % int(distance * 1000.0 + bonus_score)
     if is_instance_valid(near_miss_label):
         near_miss_label.text = "NEAR MISS!  ×%02d" % near_miss_count
         near_miss_label.visible = true
@@ -1009,7 +1015,7 @@ func _finish_race() -> void:
     content.add_child(subtitle)
 
     var score := Label.new()
-    score.text = "DISTANCE  %.2f km" % distance
+    score.text = "DISTANCE  %.2f km   •   SCORE  %06d" % [distance, int(distance * 1000.0 + bonus_score)]
     score.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     score.add_theme_font_size_override("font_size", 30)
     score.add_theme_color_override("font_color", Color.WHITE)
@@ -1093,6 +1099,11 @@ func _make_ui() -> void:
     near_miss_label.add_theme_color_override("font_color", Color("#FFD34E"))
     near_miss_label.visible = false
     ui_layer.add_child(near_miss_label)
+
+    score_label = Label.new()
+    score_label.add_theme_font_size_override("font_size", 18)
+    score_label.add_theme_color_override("font_color", Color("#FFD34E"))
+    ui_layer.add_child(score_label)
 
     speed_label = Label.new()
     speed_label.position = Vector2(25, 20)
@@ -1224,6 +1235,8 @@ func _layout_race_ui() -> void:
     near_miss_label.scale = Vector2.ONE * scale_factor
     near_miss_label.position = Vector2((w - 360.0 * scale_factor) * 0.5, 58.0 * scale_factor)
     near_miss_label.size = Vector2(360, 38)
+    score_label.position = Vector2(22, 198) * scale_factor
+    score_label.scale = Vector2.ONE * scale_factor
     speed_label.position = Vector2(22, 16) * scale_factor
     distance_label.position = Vector2(22, 54) * scale_factor
     best_label.position = Vector2(22, 86) * scale_factor
