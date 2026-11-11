@@ -86,6 +86,20 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             print("Garage render efficiency passed: showroom SubViewport uses UPDATE_WHEN_VISIBLE.")
+            var showroom_root: Node3D = garage_instance.get("preview_root")
+            var showroom_key_light: DirectionalLight3D = null
+            if showroom_root != null:
+                for preview_child in showroom_root.get_children():
+                    if preview_child is DirectionalLight3D:
+                        showroom_key_light = preview_child
+                        break
+            if showroom_key_light == null or showroom_key_light.shadow_enabled:
+                push_error("Garage mobile lighting must disable the realtime directional shadow map.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Garage render efficiency passed: showroom directional shadow map is disabled.")
             var red_card: Control = garage_instance.get("red_card")
             var red_select: Button = null
             if red_card != null:
