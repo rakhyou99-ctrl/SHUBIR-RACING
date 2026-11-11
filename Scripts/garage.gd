@@ -560,7 +560,7 @@ func _on_preview_input(event: InputEvent) -> void:
         drag_active = mouse_drag_active or preview_touch_index >= 0
         last_drag_x = event.position.x
     elif event is InputEventMouseMotion and mouse_drag_active:
-        var drag_delta := event.position.x - last_drag_x
+        var drag_delta: float = event.position.x - last_drag_x
         preview_car.rotation.y += drag_delta * 0.012
         preview_spin_velocity = clampf(drag_delta * 0.045, -5.0, 5.0)
         last_drag_x = event.position.x
