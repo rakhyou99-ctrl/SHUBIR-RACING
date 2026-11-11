@@ -338,6 +338,43 @@ func _run_smoke_tests() -> void:
             print("Settings responsive bounds passed: 640x360, 800x360, and 2340x1080.")
 
         if scene_path.ends_with("/race.tscn"):
+            # Verify all driving controls remain visible and independently tappable
+            # across compact, standard and high-resolution landscape viewports.
+            var race_instance: Control = instance
+            var race_controls: Array = [
+                race_instance.get("brake_button"),
+                race_instance.get("boost_button"),
+                race_instance.get("accel_button"),
+                race_instance.get("pause_button")
+            ]
+            for test_size in [Vector2(640, 360), Vector2(800, 360), Vector2(2340, 1080)]:
+                race_instance.call("_layout_race_ui_for_size", test_size)
+                await process_frame
+                for control in race_controls:
+                    var bounds: Rect2 = control.get_global_rect()
+                    if bounds.position.x < -1.0 or bounds.position.y < -1.0 or bounds.end.x > test_size.x + 1.0 or bounds.end.y > test_size.y + 1.0:
+                        push_error("Race control is outside %s: %s rect=%s" % [test_size, control.name, bounds])
+                        race_instance.call("_layout_race_ui")
+                        root.remove_child(instance)
+                        instance.free()
+                        quit(1)
+                        return
+                for first_index in range(race_controls.size()):
+                    var first_control: Control = race_controls[first_index]
+                    var first_rect := first_control.get_global_rect()
+                    for second_index in range(first_index + 1, race_controls.size()):
+                        var second_control: Control = race_controls[second_index]
+                        var second_rect := second_control.get_global_rect()
+                        if first_rect.intersects(second_rect):
+                            push_error("Race controls overlap at %s: %s rect=%s AND %s rect=%s" % [test_size, first_control.name, first_rect, second_control.name, second_rect])
+                            race_instance.call("_layout_race_ui")
+                            root.remove_child(instance)
+                            instance.free()
+                            quit(1)
+                            return
+            race_instance.call("_layout_race_ui")
+            await process_frame
+            print("Race control responsive bounds and spacing passed: 640x360, 800x360, and 2340x1080.")
             instance.set("touch_accel", true)
             for frame in range(30):
                 await process_frame
