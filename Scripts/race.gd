@@ -44,6 +44,8 @@ var brake_player: AudioStreamPlayer
 var near_miss_player: AudioStreamPlayer
 var chase_camera: Camera3D
 var brake_lights: Array[MeshInstance3D] = []
+# Share immutable box materials by color to reduce duplicated GPU resources.
+var box_material_cache: Dictionary = {}
 var near_miss_label: Label
 var near_miss_count := 0
 var near_miss_feedback_timer := 0.0
@@ -1445,8 +1447,14 @@ func _box(parent: Node3D, pos: Vector3, size: Vector3, color: Color) -> void:
     var mesh := BoxMesh.new()
     mesh.size = size
     mesh_instance.mesh = mesh
-    var material := StandardMaterial3D.new()
-    material.albedo_color = color
+    var material_key: int = color.to_rgba32()
+    var material: StandardMaterial3D
+    if box_material_cache.has(material_key):
+        material = box_material_cache[material_key] as StandardMaterial3D
+    else:
+        material = StandardMaterial3D.new()
+        material.albedo_color = color
+        box_material_cache[material_key] = material
     mesh_instance.material_override = material
     mesh_instance.position = pos
     parent.add_child(mesh_instance)
