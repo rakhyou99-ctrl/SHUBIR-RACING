@@ -70,7 +70,7 @@ jobs:
             exit 1
           fi
           cat "$LOG_FILE"
-          if grep -Eq 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR: Failed to' "$LOG_FILE"; then
+          if grep -Eq 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' "$LOG_FILE"; then
             echo "Godot reported script/import errors."
             exit 1
           fi
@@ -87,7 +87,7 @@ jobs:
               exit 1
             fi
             cat "$LOG_FILE"
-            if grep -Eq 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR: Failed to' "$LOG_FILE"; then
+            if grep -Eq 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' "$LOG_FILE"; then
               echo "Godot reported errors while loading ${scene}."
               exit 1
             fi
