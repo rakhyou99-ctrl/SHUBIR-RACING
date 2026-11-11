@@ -47,6 +47,7 @@ var brake_lights: Array[MeshInstance3D] = []
 # Share immutable box materials by color to reduce duplicated GPU resources.
 var box_material_cache: Dictionary = {}
 var box_mesh_cache: Dictionary = {}
+var cylinder_mesh_cache: Dictionary = {}
 var environment_mesh_cache: Dictionary = {}
 var environment_material_cache: Dictionary = {}
 var near_miss_label: Label
@@ -589,10 +590,7 @@ func _make_car() -> void:
     for x in [-0.96, 0.96]:
         for z in [-1.05, 1.05]:
             var tyre := MeshInstance3D.new()
-            var tyre_mesh := CylinderMesh.new()
-            tyre_mesh.top_radius = 0.37
-            tyre_mesh.bottom_radius = 0.37
-            tyre_mesh.height = 0.27
+            var tyre_mesh := _cached_cylinder_mesh(0.37, 0.37, 0.27)
             tyre.mesh = tyre_mesh
             tyre.rotation.z = PI / 2.0
             tyre.position = Vector3(x, 0.22, z)
@@ -603,10 +601,7 @@ func _make_car() -> void:
             car.add_child(tyre)
 
             var rim := MeshInstance3D.new()
-            var rim_mesh := CylinderMesh.new()
-            rim_mesh.top_radius = 0.235
-            rim_mesh.bottom_radius = 0.235
-            rim_mesh.height = 0.285
+            var rim_mesh := _cached_cylinder_mesh(0.235, 0.235, 0.285)
             rim.mesh = rim_mesh
             rim.rotation.z = PI / 2.0
             rim.position = Vector3(x * 1.012, 0.22, z)
@@ -618,10 +613,7 @@ func _make_car() -> void:
             car.add_child(rim)
 
             var hub := MeshInstance3D.new()
-            var hub_mesh := CylinderMesh.new()
-            hub_mesh.top_radius = 0.075
-            hub_mesh.bottom_radius = 0.075
-            hub_mesh.height = 0.30
+            var hub_mesh := _cached_cylinder_mesh(0.075, 0.075, 0.30)
             hub.mesh = hub_mesh
             hub.rotation.z = PI / 2.0
             hub.position = Vector3(x * 1.02, 0.22, z)
@@ -673,10 +665,7 @@ func _make_car() -> void:
     # Twin metallic silencer outlets; Nitro flames emerge directly from their tips.
     for exhaust_x in [-0.48, 0.48]:
         var exhaust := MeshInstance3D.new()
-        var exhaust_mesh := CylinderMesh.new()
-        exhaust_mesh.top_radius = 0.13
-        exhaust_mesh.bottom_radius = 0.16
-        exhaust_mesh.height = 0.42
+        var exhaust_mesh := _cached_cylinder_mesh(0.13, 0.16, 0.42)
         exhaust.mesh = exhaust_mesh
         exhaust.rotation_degrees.x = 90
         exhaust.position = Vector3(exhaust_x, 0.30, 1.82)
@@ -687,10 +676,7 @@ func _make_car() -> void:
         exhaust.material_override = exhaust_material
         car.add_child(exhaust)
         var exhaust_inner := MeshInstance3D.new()
-        var inner_mesh := CylinderMesh.new()
-        inner_mesh.top_radius = 0.075
-        inner_mesh.bottom_radius = 0.075
-        inner_mesh.height = 0.025
+        var inner_mesh := _cached_cylinder_mesh(0.075, 0.075, 0.025)
         exhaust_inner.mesh = inner_mesh
         exhaust_inner.rotation_degrees.x = 90
         exhaust_inner.position = Vector3(exhaust_x, 0.30, 2.035)
@@ -706,10 +692,7 @@ func _make_car() -> void:
     car.add_child(nitro_fx)
     for flame_x in [-0.48, 0.48]:
         var flame := MeshInstance3D.new()
-        var flame_mesh := CylinderMesh.new()
-        flame_mesh.top_radius = 0.025
-        flame_mesh.bottom_radius = 0.19
-        flame_mesh.height = 0.82
+        var flame_mesh := _cached_cylinder_mesh(0.025, 0.19, 0.82)
         flame.mesh = flame_mesh
         flame.rotation_degrees.x = 90
         flame.position = Vector3(flame_x, 0.0, 0.34)
@@ -824,10 +807,7 @@ func _make_obstacles() -> void:
         add_child(obstacle)
 
         var base := MeshInstance3D.new()
-        var base_mesh := CylinderMesh.new()
-        base_mesh.top_radius = 0.42
-        base_mesh.bottom_radius = 0.42
-        base_mesh.height = 0.12
+        var base_mesh := _cached_cylinder_mesh(0.42, 0.42, 0.12)
         base.mesh = base_mesh
         var base_material := StandardMaterial3D.new()
         base_material.albedo_color = Color("#292F36")
@@ -836,10 +816,7 @@ func _make_obstacles() -> void:
         obstacle.add_child(base)
 
         var cone := MeshInstance3D.new()
-        var cone_mesh := CylinderMesh.new()
-        cone_mesh.top_radius = 0.045
-        cone_mesh.bottom_radius = 0.32
-        cone_mesh.height = 0.88
+        var cone_mesh := _cached_cylinder_mesh(0.045, 0.32, 0.88)
         cone.mesh = cone_mesh
         var cone_material := StandardMaterial3D.new()
         cone_material.albedo_color = Color("#FF7518")
@@ -849,10 +826,7 @@ func _make_obstacles() -> void:
         obstacle.add_child(cone)
 
         var stripe := MeshInstance3D.new()
-        var stripe_mesh := CylinderMesh.new()
-        stripe_mesh.top_radius = 0.19
-        stripe_mesh.bottom_radius = 0.23
-        stripe_mesh.height = 0.14
+        var stripe_mesh := _cached_cylinder_mesh(0.19, 0.23, 0.14)
         stripe.mesh = stripe_mesh
         var stripe_material := StandardMaterial3D.new()
         stripe_material.albedo_color = Color.WHITE
@@ -1461,6 +1435,18 @@ func _move_road(delta: float) -> void:
         segment.position.z += movement
         if segment.position.z > 22.0:
             segment.position.z -= 264.0
+
+func _cached_cylinder_mesh(top_radius: float, bottom_radius: float, height: float) -> CylinderMesh:
+    # Identical tyre, rim, exhaust and cone shapes share immutable mesh resources.
+    var key := "%.4f|%.4f|%.4f" % [top_radius, bottom_radius, height]
+    if not cylinder_mesh_cache.has(key):
+        var mesh := CylinderMesh.new()
+        mesh.top_radius = top_radius
+        mesh.bottom_radius = bottom_radius
+        mesh.height = height
+        cylinder_mesh_cache[key] = mesh
+    return cylinder_mesh_cache[key] as CylinderMesh
+
 
 func _box(parent: Node3D, pos: Vector3, size: Vector3, color: Color) -> void:
     var mesh_instance := MeshInstance3D.new()
