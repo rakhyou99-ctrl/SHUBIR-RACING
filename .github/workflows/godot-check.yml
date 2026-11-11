@@ -27,6 +27,9 @@ jobs:
           grep -Fq 'window/handheld/orientation=0' project.godot
           grep -Fq 'sensors/enable_accelerometer=true' project.godot
           grep -Fq 'screen/orientation=0' export_presets.cfg
+          grep -Fq 'config/icon="res://Assets/icon.png"' project.godot
+          grep -Fq 'launcher_icons/main_192x192="res://Assets/icon.png"' export_presets.cfg
+          test -s Assets/icon.png
           grep -Fq 'package/unique_name="com.shubir.racing"' export_presets.cfg
           grep -Fq 'architectures/arm64-v8a=true' export_presets.cfg
           grep -Fq 'architectures/armeabi-v7a=false' export_presets.cfg
