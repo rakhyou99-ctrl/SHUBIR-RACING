@@ -43,7 +43,7 @@ The final APK workflow uses a permanent, developer-owned release keystore; it do
 
 1. Generate and securely back up a release keystore on a trusted computer. Keep the keystore password and key password identical for Godot Android export:
    `keytool -genkeypair -v -keystore shubir-racing-release.keystore -storetype JKS -alias shubir-racing -keyalg RSA -keysize 2048 -validity 10000`
-2. Encode the keystore file as one Base64 line (Linux/macOS: `base64 -w 0 shubir-racing-release.keystore`; on macOS use `base64 shubir-racing-release.keystore | tr -d '\\n'`).
+2. Encode the keystore file as one Base64 line (Linux/macOS: `base64 -w 0 shubir-racing-release.keystore`; on macOS use `base64 shubir-racing-release.keystore | tr -d '\n'`).
 3. In the GitHub repository, add these **Actions repository secrets**:
    - `SHUBIR_RELEASE_KEYSTORE_BASE64`: the Base64 keystore contents.
    - `SHUBIR_RELEASE_KEYSTORE_PASSWORD`: the keystore/key password.
