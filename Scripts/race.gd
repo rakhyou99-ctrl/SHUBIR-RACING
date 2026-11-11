@@ -883,7 +883,9 @@ func _register_near_miss() -> void:
         var popup_tween := create_tween()
         popup_tween.set_parallel(true)
         popup_tween.tween_property(near_miss_label, "scale", popup_scale, 0.20).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-        popup_tween.tween_property(near_miss_label, "modulate:a", 1.0, 0.12)
+        popup_tween.set_parallel(false)
+        popup_tween.tween_interval(0.85)
+        popup_tween.tween_property(near_miss_label, "modulate:a", 0.0, 0.35)
 
 
 func _check_traffic_collision() -> void:
