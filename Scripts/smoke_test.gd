@@ -436,7 +436,7 @@ func _run_smoke_tests() -> void:
             # Exercise the same lifecycle entry points Android sends while the race is active.
             fresh_race.set("touch_accel", true)
             fresh_race.set("touch_nitro", true)
-            fresh_race.call("_notification", 201)
+            fresh_race.call("_notification", 2015)
             if not fresh_race.get("game_paused") or fresh_race.get("touch_accel") or fresh_race.get("touch_nitro"):
                 push_error("Application-paused notification did not safely pause the race.")
                 fresh_race.queue_free()
