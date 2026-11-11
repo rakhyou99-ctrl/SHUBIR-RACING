@@ -1201,6 +1201,7 @@ func _finish_race() -> void:
     actions.add_child(restart)
 
     var menu := Button.new()
+    menu.name = "MainMenuButton"
     menu.text = "MAIN MENU"
     menu.custom_minimum_size = Vector2(action_button_width, action_button_height)
     _style_overlay_button(menu, false)
