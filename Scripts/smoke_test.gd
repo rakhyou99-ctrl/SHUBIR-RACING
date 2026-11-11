@@ -1057,18 +1057,23 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             print("Stage progression awarded the expected +500 bonus.")
-            # A clean near miss must award exactly +250, update both counters,
-            # refresh the score HUD, and show the short-lived feedback label.
+            # A near miss must award exactly +250 even after an earlier pass
+            # in this same race; compare deltas rather than assuming zero counters.
+            var near_miss_count_before := int(fresh_race.get("near_miss_count"))
+            var near_miss_bonus_before := int(fresh_race.get("near_miss_bonus_score"))
+            var bonus_score_before := int(fresh_race.get("bonus_score"))
             fresh_race.call("_register_near_miss")
             var near_miss_feedback: Label = fresh_race.get("near_miss_label")
             var near_miss_score: Label = fresh_race.get("score_label")
-            if int(fresh_race.get("near_miss_count")) != 1 or int(fresh_race.get("near_miss_bonus_score")) != 250 or int(fresh_race.get("bonus_score")) != 750:
+            if int(fresh_race.get("near_miss_count")) != near_miss_count_before + 1 or int(fresh_race.get("near_miss_bonus_score")) != near_miss_bonus_before + 250 or int(fresh_race.get("bonus_score")) != bonus_score_before + 250:
                 push_error("Near miss did not award exactly +250 and update its counters.")
                 fresh_race.queue_free()
                 await process_frame
                 quit(1)
                 return
-            if near_miss_feedback == null or not near_miss_feedback.visible or not near_miss_feedback.text.contains("×01") or near_miss_score == null or near_miss_score.text != "SCORE 001250":
+            var expected_near_miss_text := "NEAR MISS!  ×%02d" % (near_miss_count_before + 1)
+            var expected_score_text := "SCORE  %06d" % int(float(fresh_race.get("distance")) * 1000.0 + bonus_score_before + 250)
+            if near_miss_feedback == null or not near_miss_feedback.visible or near_miss_feedback.text != expected_near_miss_text or near_miss_score == null or near_miss_score.text != expected_score_text or float(fresh_race.get("near_miss_feedback_timer")) < 1.3:
                 push_error("Near miss feedback or score HUD did not reflect the +250 reward.")
                 fresh_race.queue_free()
                 await process_frame
