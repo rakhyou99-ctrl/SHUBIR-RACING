@@ -526,7 +526,7 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             if not engine_audio.stream_paused or not boost_audio.stream_paused or not brake_audio.stream_paused or not near_miss_audio.stream_paused:
-                push_error("Pause did not suspend all active gameplay audio streams.")
+                push_error("Pause audio state mismatch: engine=%s boost=%s brake=%s near_miss=%s" % [engine_audio.stream_paused, boost_audio.stream_paused, brake_audio.stream_paused, near_miss_audio.stream_paused])
                 fresh_race.queue_free()
                 await process_frame
                 quit(1)
