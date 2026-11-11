@@ -39,7 +39,7 @@ func _build_ui() -> void:
     title.add_theme_color_override("font_color", Color("#FF7518"))
     add_child(title)
 
-    steering_heading = _make_heading("STEERING SENSITIVITY", 210)
+    steering_heading = _make_heading("PHONE TILT STEERING SENSITIVITY", 210)
     add_child(steering_heading)
 
     steering_slider = HSlider.new()
