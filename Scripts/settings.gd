@@ -102,7 +102,7 @@ func _layout_settings_for_size(viewport_size: Vector2) -> void:
     # overlap the volume controls or push SAVE & BACK off-screen.
     settings_title.scale = Vector2.ONE * scale_factor
     settings_title.position = Vector2(0, viewport_size.y * 0.055)
-    settings_title.size = Vector2(viewport_size.x, 75)
+    settings_title.size = Vector2(viewport_size.x / scale_factor, 75)
     steering_heading.scale = Vector2.ONE * scale_factor
     steering_heading.position = Vector2(center_x - 340.0 * scale_factor, viewport_size.y * 0.245)
     steering_heading.size = Vector2(680, 40)
@@ -111,7 +111,7 @@ func _layout_settings_for_size(viewport_size: Vector2) -> void:
     steering_slider.size = Vector2(580, 45)
     sensitivity_label.scale = Vector2.ONE * scale_factor
     sensitivity_label.position = Vector2(0, viewport_size.y * 0.435)
-    sensitivity_label.size = Vector2(viewport_size.x, 35)
+    sensitivity_label.size = Vector2(viewport_size.x / scale_factor, 35)
     volume_heading.scale = Vector2.ONE * scale_factor
     volume_heading.position = Vector2(center_x - 340.0 * scale_factor, viewport_size.y * 0.525)
     volume_heading.size = Vector2(680, 40)
@@ -120,10 +120,10 @@ func _layout_settings_for_size(viewport_size: Vector2) -> void:
     volume_slider.size = Vector2(580, 45)
     volume_label.scale = Vector2.ONE * scale_factor
     volume_label.position = Vector2(0, viewport_size.y * 0.715)
-    volume_label.size = Vector2(viewport_size.x, 35)
+    volume_label.size = Vector2(viewport_size.x / scale_factor, 35)
     tilt_hint.scale = Vector2.ONE * scale_factor
     tilt_hint.position = Vector2(0, viewport_size.y * 0.795)
-    tilt_hint.size = Vector2(viewport_size.x, 28)
+    tilt_hint.size = Vector2(viewport_size.x / scale_factor, 28)
     save_button.scale = Vector2.ONE * scale_factor
     save_button.position = Vector2(center_x - 200.0 * scale_factor, viewport_size.y - 82.0 * scale_factor)
     save_button.size = Vector2(400, 65)
