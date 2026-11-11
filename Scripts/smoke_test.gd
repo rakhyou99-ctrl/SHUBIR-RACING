@@ -167,6 +167,10 @@ func _run_smoke_tests() -> void:
                     var first_rect := first_control.get_global_rect()
                     for second_index in range(first_index + 1, garage_controls.size()):
                         var second_control: Control = garage_controls[second_index]
+                        # A card intentionally contains its own SELECT button;
+                        # parent/child containment is not a layout collision.
+                        if first_control.is_ancestor_of(second_control) or second_control.is_ancestor_of(first_control):
+                            continue
                         var second_rect := second_control.get_global_rect()
                         if first_rect.intersects(second_rect):
                             push_error("Garage elements overlap at %s: %s and %s" % [test_size, first_control.name, second_control.name])
