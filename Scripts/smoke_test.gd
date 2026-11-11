@@ -86,6 +86,34 @@ func _run_smoke_tests() -> void:
             await process_frame
         print("Processed ", frames_to_run, " frames for ", scene_path)
 
+        if scene_path.ends_with("/main_menu.tscn"):
+            var menu_instance: Control = instance
+            for test_size in [Vector2(640, 360), Vector2(800, 360), Vector2(2340, 1080)]:
+                menu_instance.call("_layout_menu_for_size", test_size)
+                await process_frame
+                var menu_controls: Array = [
+                    menu_instance.get("title_label"),
+                    menu_instance.get("subtitle_label"),
+                    menu_instance.get("play_button"),
+                    menu_instance.get("garage_button"),
+                    menu_instance.get("settings_button"),
+                    menu_instance.get("exit_button"),
+                    menu_instance.get("best_distance_label"),
+                    menu_instance.get("note_label")
+                ]
+                for control in menu_controls:
+                    var bounds: Rect2 = control.get_global_rect()
+                    if bounds.position.x < -1.0 or bounds.position.y < -1.0 or bounds.end.x > test_size.x + 1.0 or bounds.end.y > test_size.y + 1.0:
+                        push_error("Main Menu element is outside %s: %s rect=%s" % [test_size, control.name, bounds])
+                        menu_instance.call("_layout_menu")
+                        root.remove_child(instance)
+                        instance.free()
+                        quit(1)
+                        return
+            menu_instance.call("_layout_menu")
+            await process_frame
+            print("Main Menu responsive bounds passed: 640x360, 800x360, and 2340x1080.")
+
         if scene_path.ends_with("/settings.tscn"):
             var game_state: Node = root.get_node("GameState")
             var original_sensitivity := float(game_state.get("steering_sensitivity"))
@@ -115,6 +143,33 @@ func _run_smoke_tests() -> void:
             game_state.set("master_volume", original_volume)
             game_state.call("save_settings")
             print("Settings slider persistence checks passed: tilt sensitivity and master volume.")
+
+            for test_size in [Vector2(640, 360), Vector2(800, 360), Vector2(2340, 1080)]:
+                settings_instance.call("_layout_settings_for_size", test_size)
+                await process_frame
+                var settings_controls: Array = [
+                    settings_instance.get("settings_title"),
+                    settings_instance.get("steering_heading"),
+                    sensitivity_slider,
+                    settings_instance.get("sensitivity_label"),
+                    settings_instance.get("volume_heading"),
+                    volume_slider,
+                    settings_instance.get("volume_label"),
+                    settings_instance.get("tilt_hint"),
+                    settings_instance.get("save_button")
+                ]
+                for control in settings_controls:
+                    var bounds: Rect2 = control.get_global_rect()
+                    if bounds.position.x < -1.0 or bounds.position.y < -1.0 or bounds.end.x > test_size.x + 1.0 or bounds.end.y > test_size.y + 1.0:
+                        push_error("Settings element is outside %s: %s rect=%s" % [test_size, control.name, bounds])
+                        settings_instance.call("_layout_settings")
+                        root.remove_child(instance)
+                        instance.free()
+                        quit(1)
+                        return
+            settings_instance.call("_layout_settings")
+            await process_frame
+            print("Settings responsive bounds passed: 640x360, 800x360, and 2340x1080.")
 
         if scene_path.ends_with("/race.tscn"):
             instance.set("touch_accel", true)
