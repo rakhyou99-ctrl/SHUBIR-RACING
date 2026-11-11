@@ -11,6 +11,32 @@ func _initialize() -> void:
     call_deferred("_run_smoke_tests")
 
 
+
+
+func _overlay_controls_fit(overlay: Node, control_names: Array, context: String) -> bool:
+    if overlay == null:
+        push_error(context + " overlay is missing.")
+        return false
+    var controls: Array[Control] = []
+    var viewport_size := get_root().get_visible_rect().size
+    for control_name in control_names:
+        var control := overlay.find_child(str(control_name), true, false) as Control
+        if control == null:
+            push_error(context + " is missing control: " + str(control_name))
+            return false
+        var bounds := control.get_global_rect()
+        if bounds.position.x < -1.0 or bounds.position.y < -1.0 or bounds.end.x > viewport_size.x + 1.0 or bounds.end.y > viewport_size.y + 1.0:
+            push_error("%s control is outside the viewport: %s rect=%s viewport=%s" % [context, control_name, bounds, viewport_size])
+            return false
+        controls.append(control)
+    for first_index in range(controls.size()):
+        for second_index in range(first_index + 1, controls.size()):
+            if controls[first_index].get_global_rect().intersects(controls[second_index].get_global_rect()):
+                push_error("%s controls overlap: %s and %s" % [context, controls[first_index].name, controls[second_index].name])
+                return false
+    return true
+
+
 func _count_scene_nodes(node: Node, meshes_only: bool = false) -> int:
     var count := 1 if (not meshes_only or node is MeshInstance3D) else 0
     for child in node.get_children():
@@ -743,6 +769,11 @@ func _run_smoke_tests() -> void:
                 instance.free()
                 quit(1)
                 return
+            if not _overlay_controls_fit(results_overlay, ["RaceAgainButton", "MainMenuButton"], "Game Over overlay"):
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
             var results_content := results_overlay.get_child(0).get_child(0) as VBoxContainer
             if results_content == null or results_content.get_child_count() < 6:
                 push_error("Game Over results layout is missing its summary rows.")
@@ -1123,6 +1154,12 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             var pause_overlay := fresh_race.find_child("PauseOverlay", true, false)
+            await process_frame
+            if not _overlay_controls_fit(pause_overlay, ["ResumeButton", "Restart", "MainMenuButton"], "Pause overlay"):
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
             var resume_button := pause_overlay.find_child("ResumeButton", true, false) if pause_overlay != null else null
             if resume_button == null:
                 push_error("Pause overlay did not create a Resume button.")
