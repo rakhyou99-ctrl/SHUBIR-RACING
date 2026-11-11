@@ -82,7 +82,12 @@ jobs:
           for scene in main_menu garage settings race; do
             echo "Smoke-testing res://Scenes/${scene}.tscn"
             LOG_FILE="$RUNNER_TEMP/${scene}-smoke.log"
-            if ! godot --headless --path . "res://Scenes/${scene}.tscn" --quit-after 120 >"$LOG_FILE" 2>&1; then
+            if [[ "$scene" == "race" ]]; then
+              GODOT_ARGS=(--verbose --headless --path . "res://Scenes/${scene}.tscn" --quit-after 120)
+            else
+              GODOT_ARGS=(--headless --path . "res://Scenes/${scene}.tscn" --quit-after 120)
+            fi
+            if ! godot "${GODOT_ARGS[@]}" >"$LOG_FILE" 2>&1; then
               cat "$LOG_FILE"
               exit 1
             fi
