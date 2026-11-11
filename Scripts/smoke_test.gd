@@ -375,6 +375,35 @@ func _run_smoke_tests() -> void:
             race_instance.call("_layout_race_ui")
             await process_frame
             print("Race control responsive bounds and spacing passed: 640x360, 800x360, and 2340x1080.")
+
+            # The HUD must remain on-screen on compact phones as well as wider
+            # landscape displays. Check the actual visible labels and Boost meter.
+            var race_hud: Array = [
+                race_instance.get("car_identity_label"),
+                race_instance.get("speed_label"),
+                race_instance.get("distance_label"),
+                race_instance.get("best_label"),
+                race_instance.get("race_stage_label"),
+                race_instance.get("nitro_label"),
+                race_instance.get("score_label"),
+                race_instance.get("near_miss_total_label"),
+                race_instance.get("boost_meter_bg")
+            ]
+            for test_size in [Vector2(640, 360), Vector2(800, 360), Vector2(2340, 1080)]:
+                race_instance.call("_layout_race_ui_for_size", test_size)
+                await process_frame
+                for hud_control in race_hud:
+                    var hud_bounds: Rect2 = hud_control.get_global_rect()
+                    if hud_bounds.position.x < -1.0 or hud_bounds.position.y < -1.0 or hud_bounds.end.x > test_size.x + 1.0 or hud_bounds.end.y > test_size.y + 1.0:
+                        push_error("Race HUD is outside %s: %s rect=%s" % [test_size, hud_control.name, hud_bounds])
+                        race_instance.call("_layout_race_ui")
+                        root.remove_child(instance)
+                        instance.free()
+                        quit(1)
+                        return
+            race_instance.call("_layout_race_ui")
+            await process_frame
+            print("Race HUD responsive bounds passed: 640x360, 800x360, and 2340x1080.")
             instance.set("touch_accel", true)
             for frame in range(30):
                 await process_frame
