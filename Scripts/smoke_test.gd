@@ -635,7 +635,19 @@ func _run_smoke_tests() -> void:
                 await process_frame
                 quit(1)
                 return
-            print("Swept collision checks passed: high-speed hit detected and lateral false hit rejected.")
+            if not bool(fresh_race.call("_swept_overlap", 0.0, -6.0, 0.0, 6.0, 0.0, 0.0, 1.45, 2.35)):
+                push_error("Swept collision missed a high-speed road-cone path through the player.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            if bool(fresh_race.call("_swept_overlap", 2.5, -6.0, 2.5, 6.0, 0.0, 0.0, 1.45, 2.35)):
+                push_error("Swept collision reported a road-cone hit outside its lateral width.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Swept collision checks passed: high-speed traffic and cone hits detected; lateral false hits rejected.")
 
             # Fill two lanes at the same spawn distance; the spawn helper must choose
             # the remaining clear lane instead of placing a car/cone into traffic.
