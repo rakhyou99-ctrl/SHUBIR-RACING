@@ -167,6 +167,25 @@ func _run_smoke_tests() -> void:
                 return
             var test_traffic: Node3D = fresh_traffic[0]
             var fresh_car: Node3D = fresh_race.get("car")
+            # A safe lateral pass across the player's Z must award exactly one near-miss reward.
+            fresh_race.set("speed", 100.0)
+            fresh_race.set("previous_car_frame_x", fresh_car.position.x)
+            test_traffic.position = Vector3(fresh_car.position.x + 2.5, test_traffic.position.y, fresh_car.position.z - 0.01)
+            test_traffic.set_meta("lane_center_x", fresh_car.position.x + 2.5)
+            test_traffic.set_meta("sway_phase", 0.0)
+            test_traffic.set_meta("sway_rate", 0.0)
+            test_traffic.set_meta("cruise_speed", 99.0)
+            test_traffic.set_meta("near_miss_awarded", false)
+            test_traffic.set_meta("previous_frame_x", test_traffic.position.x)
+            test_traffic.set_meta("previous_frame_z", test_traffic.position.z)
+            fresh_race.call("_move_traffic", 0.2)
+            if fresh_race.get("near_miss_count") != 1 or fresh_race.get("near_miss_bonus_score") != 250:
+                push_error("A safe traffic pass did not award the expected near-miss bonus.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Near-miss pass awarded one +250 bonus.")
             test_traffic.position = Vector3(fresh_car.position.x, test_traffic.position.y, fresh_car.position.z)
             test_traffic.set_meta("previous_frame_x", fresh_car.position.x)
             test_traffic.set_meta("previous_frame_z", fresh_car.position.z)
