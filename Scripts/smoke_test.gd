@@ -46,6 +46,35 @@ func _run_smoke_tests() -> void:
             await process_frame
         print("Processed ", frames_to_run, " frames for ", scene_path)
 
+        if scene_path.ends_with("/settings.tscn"):
+            var original_sensitivity := GameState.steering_sensitivity
+            var original_volume := GameState.master_volume
+            var settings_instance: Control = instance
+            var sensitivity_slider: HSlider = settings_instance.get("steering_slider")
+            var volume_slider: HSlider = settings_instance.get("volume_slider")
+            if sensitivity_slider == null or volume_slider == null:
+                push_error("Settings scene is missing a steering or volume slider.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            sensitivity_slider.value = 1.4
+            volume_slider.value = 0.4
+            GameState.load_settings()
+            if absf(GameState.steering_sensitivity - 1.4) > 0.01 or absf(GameState.master_volume - 0.4) > 0.01:
+                push_error("Settings sliders did not persist steering sensitivity and master volume.")
+                GameState.steering_sensitivity = original_sensitivity
+                GameState.master_volume = original_volume
+                GameState.save_settings()
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            GameState.steering_sensitivity = original_sensitivity
+            GameState.master_volume = original_volume
+            GameState.save_settings()
+            print("Settings slider persistence checks passed: tilt sensitivity and master volume.")
+
         if scene_path.ends_with("/race.tscn"):
             instance.set("touch_accel", true)
             for frame in range(30):
