@@ -876,6 +876,14 @@ func _register_near_miss() -> void:
     if is_instance_valid(near_miss_label):
         near_miss_label.text = "NEAR MISS!  ×%02d" % near_miss_count
         near_miss_label.visible = true
+        # A quick scale pop and fade makes the reward readable without blocking the road.
+        var popup_scale := near_miss_label.scale
+        near_miss_label.scale = popup_scale * 0.82
+        near_miss_label.modulate.a = 1.0
+        var popup_tween := create_tween()
+        popup_tween.set_parallel(true)
+        popup_tween.tween_property(near_miss_label, "scale", popup_scale, 0.20).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+        popup_tween.tween_property(near_miss_label, "modulate:a", 1.0, 0.12)
 
 
 func _check_traffic_collision() -> void:
