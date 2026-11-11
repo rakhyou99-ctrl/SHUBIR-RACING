@@ -36,6 +36,9 @@ var crash_player: AudioStreamPlayer
 var brake_player: AudioStreamPlayer
 var chase_camera: Camera3D
 var brake_lights: Array[MeshInstance3D] = []
+var near_miss_label: Label
+var near_miss_count := 0
+var near_miss_feedback_timer := 0.0
 var was_boosting := false
 var boost_locked := false
 var was_braking := false
@@ -110,6 +113,10 @@ func _process(delta: float) -> void:
         return
     if not touch_points.is_empty():
         _refresh_multitouch_controls()
+    if near_miss_feedback_timer > 0.0:
+        near_miss_feedback_timer = maxf(0.0, near_miss_feedback_timer - delta)
+        if near_miss_feedback_timer <= 0.0 and is_instance_valid(near_miss_label):
+            near_miss_label.visible = false
     # Keyboard ESC / Android Back (when mapped to ui_cancel) opens the pause menu.
     if Input.is_action_just_pressed("ui_cancel"):
         _show_pause_menu()
@@ -809,7 +816,13 @@ func _move_traffic(delta: float) -> void:
         # Move traffic by its true speed difference: faster traffic pulls away,
         # while the player catches slower traffic naturally.
         var relative_speed := speed - cruise_speed
+        var previous_z := traffic.position.z
         traffic.position.z += relative_speed * delta * 0.12
+        # Award a near miss only when a car passes without entering the collision zone.
+        if previous_z < car.position.z and traffic.position.z >= car.position.z:
+            var lateral_gap := absf(traffic.position.x - car.position.x)
+            if lateral_gap >= 1.8 and lateral_gap < 3.25:
+                _register_near_miss()
         if traffic.position.z > 16.0 or traffic.position.z < -360.0:
             traffic.position.z = -190.0 - randf_range(0.0, 65.0)
             traffic.position.x = _spawn_lane_for(traffic.position.z, traffic)
@@ -817,6 +830,14 @@ func _move_traffic(delta: float) -> void:
             traffic.set_meta("sway_phase", randf_range(0.0, TAU))
             traffic.set_meta("sway_rate", randf_range(0.65, 1.15))
             traffic.set_meta("cruise_speed", randf_range(62.0, 108.0))
+
+func _register_near_miss() -> void:
+    near_miss_count += 1
+    near_miss_feedback_timer = 1.35
+    if is_instance_valid(near_miss_label):
+        near_miss_label.text = "NEAR MISS!  ×%02d" % near_miss_count
+        near_miss_label.visible = true
+
 
 func _check_traffic_collision() -> void:
     if game_over or game_paused:
@@ -1065,6 +1086,14 @@ func _make_ui() -> void:
     car_identity_label.add_theme_color_override("font_color", Color("#FFD0AD") if GameState.selected_car == 0 else Color("#FF9A9A"))
     ui_layer.add_child(car_identity_label)
 
+    near_miss_label = Label.new()
+    near_miss_label.text = ""
+    near_miss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    near_miss_label.add_theme_font_size_override("font_size", 27)
+    near_miss_label.add_theme_color_override("font_color", Color("#FFD34E"))
+    near_miss_label.visible = false
+    ui_layer.add_child(near_miss_label)
+
     speed_label = Label.new()
     speed_label.position = Vector2(25, 20)
     speed_label.add_theme_font_size_override("font_size", 28)
@@ -1192,6 +1221,9 @@ func _layout_race_ui() -> void:
     car_identity_label.scale = Vector2.ONE * scale_factor
     car_identity_label.position = Vector2((w - 320.0 * scale_factor) * 0.5, 18.0 * scale_factor)
     car_identity_label.size = Vector2(320, 32)
+    near_miss_label.scale = Vector2.ONE * scale_factor
+    near_miss_label.position = Vector2((w - 360.0 * scale_factor) * 0.5, 58.0 * scale_factor)
+    near_miss_label.size = Vector2(360, 38)
     speed_label.position = Vector2(22, 16) * scale_factor
     distance_label.position = Vector2(22, 54) * scale_factor
     best_label.position = Vector2(22, 86) * scale_factor
