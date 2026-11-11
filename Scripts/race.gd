@@ -44,6 +44,7 @@ var brake_lights: Array[MeshInstance3D] = []
 var near_miss_label: Label
 var near_miss_count := 0
 var near_miss_feedback_timer := 0.0
+var near_miss_tween: Tween
 var was_boosting := false
 var boost_locked := false
 var was_braking := false
@@ -874,18 +875,21 @@ func _register_near_miss() -> void:
     if is_instance_valid(score_label):
         score_label.text = "SCORE  %06d" % int(distance * 1000.0 + bonus_score)
     if is_instance_valid(near_miss_label):
+        # Cancel an older popup animation so a fresh near miss never gets faded by stale timing.
+        if is_instance_valid(near_miss_tween) and near_miss_tween.is_running():
+            near_miss_tween.kill()
         near_miss_label.text = "NEAR MISS!  ×%02d" % near_miss_count
         near_miss_label.visible = true
         # A quick scale pop and fade makes the reward readable without blocking the road.
-        var popup_scale := near_miss_label.scale
+        var popup_scale := Vector2.ONE * clampf(minf(get_viewport().get_visible_rect().size.x / 1280.0, get_viewport().get_visible_rect().size.y / 720.0), 0.55, 1.15)
         near_miss_label.scale = popup_scale * 0.82
         near_miss_label.modulate.a = 1.0
-        var popup_tween := create_tween()
-        popup_tween.set_parallel(true)
-        popup_tween.tween_property(near_miss_label, "scale", popup_scale, 0.20).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-        popup_tween.set_parallel(false)
-        popup_tween.tween_interval(0.85)
-        popup_tween.tween_property(near_miss_label, "modulate:a", 0.0, 0.35)
+        near_miss_tween = create_tween()
+        near_miss_tween.set_parallel(true)
+        near_miss_tween.tween_property(near_miss_label, "scale", popup_scale, 0.20).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+        near_miss_tween.set_parallel(false)
+        near_miss_tween.tween_interval(0.85)
+        near_miss_tween.tween_property(near_miss_label, "modulate:a", 0.0, 0.35)
 
 
 func _check_traffic_collision() -> void:
