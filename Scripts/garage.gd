@@ -22,6 +22,8 @@ var back_button: Button
 var start_button: Button
 var preview_material_cache: Dictionary = {}
 var preview_mesh_cache: Dictionary = {}
+var preview_cylinder_mesh_cache: Dictionary = {}
+var preview_sphere_mesh_cache: Dictionary = {}
 
 func _notification(what: int) -> void:
     # Android system Back returns from the showroom to the main menu.
@@ -157,10 +159,7 @@ func _build_garage() -> void:
 
     # Low circular display plinth with a thin orange illuminated edge.
     var plinth := MeshInstance3D.new()
-    var plinth_mesh := CylinderMesh.new()
-    plinth_mesh.top_radius = 3.15
-    plinth_mesh.bottom_radius = 3.15
-    plinth_mesh.height = 0.12
+    var plinth_mesh := _cached_preview_cylinder(3.15, 3.15, 0.12)
     plinth.mesh = plinth_mesh
     plinth.position.y = 0.015
     var plinth_mat := StandardMaterial3D.new()
@@ -170,10 +169,7 @@ func _build_garage() -> void:
     plinth.material_override = plinth_mat
     preview_root.add_child(plinth)
     var plinth_edge := MeshInstance3D.new()
-    var edge_mesh := CylinderMesh.new()
-    edge_mesh.top_radius = 3.17
-    edge_mesh.bottom_radius = 3.17
-    edge_mesh.height = 0.035
+    var edge_mesh := _cached_preview_cylinder(3.17, 3.17, 0.035)
     plinth_edge.mesh = edge_mesh
     plinth_edge.position.y = -0.045
     var edge_mat := StandardMaterial3D.new()
@@ -364,10 +360,7 @@ func _create_preview_car() -> Node3D:
         _add_box(root, Vector3(side * 1.01, 0.32, 0), Vector3(0.13, 0.18, 2.9), Color("#202832"))
         for z in [-1.18, 1.18]:
             var wheel := MeshInstance3D.new()
-            var wheel_mesh := CylinderMesh.new()
-            wheel_mesh.top_radius = 0.43
-            wheel_mesh.bottom_radius = 0.43
-            wheel_mesh.height = 0.24
+            var wheel_mesh := _cached_preview_cylinder(0.43, 0.43, 0.24)
             wheel.mesh = wheel_mesh
             wheel.rotation_degrees.z = 90
             wheel.position = Vector3(side * 1.02, 0.36, z)
@@ -378,10 +371,7 @@ func _create_preview_car() -> Node3D:
             _add_box(root, Vector3(side * 1.15, 0.36, z), Vector3(0.035, 0.24, 0.24), Color("#AEB9C3"))
             # Metallic alloy rim, center cap and five visible lug details.
             var rim := MeshInstance3D.new()
-            var rim_mesh := CylinderMesh.new()
-            rim_mesh.top_radius = 0.285
-            rim_mesh.bottom_radius = 0.285
-            rim_mesh.height = 0.055
+            var rim_mesh := _cached_preview_cylinder(0.285, 0.285, 0.055)
             rim.mesh = rim_mesh
             rim.rotation_degrees.z = 90
             rim.position = Vector3(side * 1.17, 0.36, z)
@@ -392,10 +382,7 @@ func _create_preview_car() -> Node3D:
             rim.material_override = rim_mat
             root.add_child(rim)
             var hub := MeshInstance3D.new()
-            var hub_mesh := CylinderMesh.new()
-            hub_mesh.top_radius = 0.105
-            hub_mesh.bottom_radius = 0.105
-            hub_mesh.height = 0.07
+            var hub_mesh := _cached_preview_cylinder(0.105, 0.105, 0.07)
             hub.mesh = hub_mesh
             hub.rotation_degrees.z = 90
             hub.position = Vector3(side * 1.215, 0.36, z)
@@ -414,9 +401,7 @@ func _create_preview_car() -> Node3D:
                 root.add_child(spoke)
 
                 var lug := MeshInstance3D.new()
-                var lug_mesh := SphereMesh.new()
-                lug_mesh.radius = 0.027
-                lug_mesh.height = 0.054
+                var lug_mesh := _cached_preview_sphere(0.027, 0.054)
                 lug.mesh = lug_mesh
                 lug.position = Vector3(side * 1.245, 0.36 + cos(angle) * 0.17, z + sin(angle) * 0.17)
                 lug.material_override = rim_mat
@@ -432,10 +417,7 @@ func _create_preview_car() -> Node3D:
     # Twin polished exhaust tips are visible at the rear of the showroom car.
     for exhaust_side in [-0.48, 0.48]:
         var exhaust_tip := MeshInstance3D.new()
-        var exhaust_mesh := CylinderMesh.new()
-        exhaust_mesh.top_radius = 0.13
-        exhaust_mesh.bottom_radius = 0.15
-        exhaust_mesh.height = 0.38
+        var exhaust_mesh := _cached_preview_cylinder(0.13, 0.15, 0.38)
         exhaust_tip.mesh = exhaust_mesh
         exhaust_tip.rotation_degrees.x = 90
         exhaust_tip.position = Vector3(exhaust_side, 0.31, 2.08)
@@ -508,6 +490,27 @@ func thirty_two() -> int:
 
 func forty() -> int:
     return 40
+
+func _cached_preview_cylinder(top_radius: float, bottom_radius: float, height: float) -> CylinderMesh:
+    var key := "%.4f|%.4f|%.4f" % [top_radius, bottom_radius, height]
+    if not preview_cylinder_mesh_cache.has(key):
+        var mesh := CylinderMesh.new()
+        mesh.top_radius = top_radius
+        mesh.bottom_radius = bottom_radius
+        mesh.height = height
+        preview_cylinder_mesh_cache[key] = mesh
+    return preview_cylinder_mesh_cache[key] as CylinderMesh
+
+
+func _cached_preview_sphere(radius: float, height: float) -> SphereMesh:
+    var key := "%.4f|%.4f" % [radius, height]
+    if not preview_sphere_mesh_cache.has(key):
+        var mesh := SphereMesh.new()
+        mesh.radius = radius
+        mesh.height = height
+        preview_sphere_mesh_cache[key] = mesh
+    return preview_sphere_mesh_cache[key] as SphereMesh
+
 
 func _add_emissive_box(parent: Node3D, pos: Vector3, dimensions: Vector3, tint: Color) -> void:
     var part := MeshInstance3D.new()
