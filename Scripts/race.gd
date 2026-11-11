@@ -1,6 +1,7 @@
 extends Node3D
 
 var car: Node3D
+var previous_car_frame_x := 0.0
 var nitro_fx: Node3D
 var speed := 0.0
 var distance := 0.0
@@ -197,6 +198,7 @@ func _process(delta: float) -> void:
         nitro_fx.scale.z = 0.85 + 0.25 * sin(Time.get_ticks_msec() * 0.035) if boosting else 1.0
 
     steer = tilt_steer
+    previous_car_frame_x = car.position.x
     car.position.x = clampf(car.position.x + steer * GameState.steering_sensitivity * delta * (3.4 + speed / 55.0), -4.0, 4.0)
     car.rotation.z = lerpf(car.rotation.z, -steer * 0.075, minf(1.0, delta * 5.0))
     distance += speed * delta / 3600.0
@@ -844,12 +846,14 @@ func _move_obstacles(delta: float) -> void:
     for obstacle in road_obstacles:
         var previous_z := obstacle.position.z
         obstacle.set_meta("previous_frame_z", previous_z)
+        obstacle.set_meta("previous_frame_x", obstacle.position.x)
         obstacle.position.z += road_movement
         if obstacle.position.z > 16.0:
             obstacle.position.z = -spawn_distance - randf_range(0.0, 60.0)
             obstacle.position.x = _spawn_lane_for(obstacle.position.z, obstacle)
             # A recycled cone must not sweep through the entire road on this frame.
             obstacle.set_meta("previous_frame_z", obstacle.position.z)
+            obstacle.set_meta("previous_frame_x", obstacle.position.x)
 
 func _check_obstacle_collision() -> void:
     if game_over or game_paused:
@@ -859,8 +863,11 @@ func _check_obstacle_collision() -> void:
         var previous_z := float(obstacle.get_meta("previous_frame_z", obstacle.position.z))
         var nearest_z := clampf(car.position.z, minf(previous_z, obstacle.position.z), maxf(previous_z, obstacle.position.z))
         var longitudinal_gap := absf(nearest_z - car.position.z)
-        var lateral_gap := absf(obstacle.position.x - car.position.x)
-        if longitudinal_gap < 1.75 and lateral_gap < 1.15:
+        var previous_x := float(obstacle.get_meta("previous_frame_x", obstacle.position.x))
+        var relative_x_start := previous_x - previous_car_frame_x
+        var relative_x_end := obstacle.position.x - car.position.x
+        var nearest_relative_x := clampf(0.0, minf(relative_x_start, relative_x_end), maxf(relative_x_start, relative_x_end))
+        if longitudinal_gap < 1.75 and absf(nearest_relative_x) < 1.15:
             _finish_race()
             return
 
@@ -872,6 +879,8 @@ func _move_traffic(delta: float) -> void:
         var lane_center := float(traffic.get_meta("lane_center_x", traffic.position.x))
         var sway_phase := float(traffic.get_meta("sway_phase", 0.0))
         var sway_rate := float(traffic.get_meta("sway_rate", 0.85))
+        var previous_x := traffic.position.x
+        traffic.set_meta("previous_frame_x", previous_x)
         var sway := sin(float(Time.get_ticks_msec()) * 0.001 * sway_rate + sway_phase) * 0.12
         traffic.position.x = lane_center + sway
         # Move traffic by its true speed difference: faster traffic pulls away,
@@ -896,6 +905,7 @@ func _move_traffic(delta: float) -> void:
             traffic.set_meta("cruise_speed", randf_range(62.0, 108.0))
             # Do not sweep the recycled car across the whole road on the next collision check.
             traffic.set_meta("previous_frame_z", traffic.position.z)
+            traffic.set_meta("previous_frame_x", traffic.position.x)
 
 
 func _show_stage_feedback(stages_gained: int = 1) -> void:
@@ -954,8 +964,11 @@ func _check_traffic_collision() -> void:
         var previous_z := float(traffic.get_meta("previous_frame_z", traffic.position.z))
         var nearest_z := clampf(car.position.z, minf(previous_z, traffic.position.z), maxf(previous_z, traffic.position.z))
         var longitudinal_gap := absf(nearest_z - car.position.z)
-        var lateral_gap := absf(traffic.position.x - car.position.x)
-        if longitudinal_gap < 3.2 and lateral_gap < 1.8:
+        var previous_x := float(traffic.get_meta("previous_frame_x", traffic.position.x))
+        var relative_x_start := previous_x - previous_car_frame_x
+        var relative_x_end := traffic.position.x - car.position.x
+        var nearest_relative_x := clampf(0.0, minf(relative_x_start, relative_x_end), maxf(relative_x_start, relative_x_end))
+        if longitudinal_gap < 3.2 and absf(nearest_relative_x) < 1.8:
             _finish_race()
             return
 
