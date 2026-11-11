@@ -11,6 +11,13 @@ func _initialize() -> void:
     call_deferred("_run_smoke_tests")
 
 
+func _count_scene_nodes(node: Node, meshes_only: bool = false) -> int:
+    var count := 1 if (not meshes_only or node is MeshInstance3D) else 0
+    for child in node.get_children():
+        count += _count_scene_nodes(child, meshes_only)
+    return count
+
+
 func _run_smoke_tests() -> void:
     for scene_path in SMOKE_SCENES:
         print("Smoke-testing ", scene_path)
@@ -35,6 +42,21 @@ func _run_smoke_tests() -> void:
                     return
             if instance.get("traffic_cars").size() < 3 or instance.get("road_segments").size() < 3:
                 push_error("Race scene did not create enough traffic or road segments.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            var race_node_count := _count_scene_nodes(instance)
+            var race_mesh_count := _count_scene_nodes(instance, true)
+            print("Race scene resource baseline: %d nodes, %d MeshInstance3D nodes, %d traffic cars, %d road segments, %d road hazards." % [
+                race_node_count,
+                race_mesh_count,
+                instance.get("traffic_cars").size(),
+                instance.get("road_segments").size(),
+                instance.get("road_obstacles").size()
+            ])
+            if race_node_count > 2400 or race_mesh_count > 1800:
+                push_error("Race scene exceeds the mobile scene complexity budget: %d nodes / %d meshes." % [race_node_count, race_mesh_count])
                 root.remove_child(instance)
                 instance.free()
                 quit(1)
