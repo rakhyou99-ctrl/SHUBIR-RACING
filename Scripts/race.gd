@@ -626,8 +626,7 @@ func _make_car() -> void:
             for spoke_index in range(5):
                 var spoke_angle := TAU * float(spoke_index) / 5.0
                 var spoke := MeshInstance3D.new()
-                var spoke_mesh := BoxMesh.new()
-                spoke_mesh.size = Vector3(0.035, 0.045, 0.18)
+                var spoke_mesh := _cached_box_mesh(Vector3(0.035, 0.045, 0.18))
                 spoke.mesh = spoke_mesh
                 spoke.rotation.x = spoke_angle
                 spoke.position = Vector3(x * 1.025, 0.22 + cos(spoke_angle) * 0.13, z + sin(spoke_angle) * 0.13)
@@ -1448,18 +1447,18 @@ func _cached_cylinder_mesh(top_radius: float, bottom_radius: float, height: floa
     return cylinder_mesh_cache[key] as CylinderMesh
 
 
-func _box(parent: Node3D, pos: Vector3, size: Vector3, color: Color) -> void:
-    var mesh_instance := MeshInstance3D.new()
-    # Box dimensions repeat throughout road segments, cars and roadside props.
-    # Share immutable BoxMesh resources instead of allocating duplicates.
-    var mesh: BoxMesh
-    if box_mesh_cache.has(size):
-        mesh = box_mesh_cache[size] as BoxMesh
-    else:
-        mesh = BoxMesh.new()
+func _cached_box_mesh(size: Vector3) -> BoxMesh:
+    # Reuse identical box geometry for body panels, road parts and wheel spokes.
+    if not box_mesh_cache.has(size):
+        var mesh := BoxMesh.new()
         mesh.size = size
         box_mesh_cache[size] = mesh
-    mesh_instance.mesh = mesh
+    return box_mesh_cache[size] as BoxMesh
+
+
+func _box(parent: Node3D, pos: Vector3, size: Vector3, color: Color) -> void:
+    var mesh_instance := MeshInstance3D.new()
+    mesh_instance.mesh = _cached_box_mesh(size)
     var material_key: int = color.to_rgba32()
     var material: StandardMaterial3D
     if box_material_cache.has(material_key):
