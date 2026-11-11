@@ -1104,6 +1104,14 @@ func _run_smoke_tests() -> void:
                 await process_frame
                 quit(1)
                 return
+            var persistent_game_state: Node = root.get_node("GameState")
+            if absf(float(saved_config.get_value("settings", "steering_sensitivity", -1.0)) - float(persistent_game_state.get("steering_sensitivity"))) > 0.001 or absf(float(saved_config.get_value("settings", "master_volume", -1.0)) - float(persistent_game_state.get("master_volume"))) > 0.001 or int(saved_config.get_value("garage", "selected_car", -1)) != int(persistent_game_state.get("selected_car")):
+                push_error("Saving a race record overwrote steering, volume, or selected-car preferences.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Race-record config isolation passed: Game Over preserves tilt, volume, and garage preferences.")
             print("Best distance and score were saved after Game Over.")
             fresh_race.queue_free()
             await process_frame
