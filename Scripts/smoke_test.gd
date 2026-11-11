@@ -40,6 +40,46 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
 
+        if scene_path.ends_with("/garage.tscn"):
+            var game_state: Node = root.get_node("GameState")
+            var original_car := int(game_state.get("selected_car"))
+            var garage_instance: Control = instance
+            var red_card: Control = garage_instance.get("red_card")
+            var red_select: Button = null
+            if red_card != null:
+                for child in red_card.get_children():
+                    if child is Button:
+                        red_select = child
+                        break
+            if red_select == null:
+                push_error("Garage red-car selection button is missing.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            red_select.pressed.emit()
+            var garage_config := ConfigFile.new()
+            if int(game_state.get("selected_car")) != 1 or garage_config.load("user://shubir_racing.cfg") != OK or int(garage_config.get_value("garage", "selected_car", -1)) != 1:
+                push_error("Selecting the BIRAJ car did not persist the garage choice.")
+                game_state.set("selected_car", original_car)
+                game_state.call("save_settings")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            game_state.call("load_settings")
+            if int(game_state.get("selected_car")) != 1:
+                push_error("The BIRAJ garage selection did not reload from persistent settings.")
+                game_state.set("selected_car", original_car)
+                game_state.call("save_settings")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            game_state.set("selected_car", original_car)
+            game_state.call("save_settings")
+            print("Garage car selection persistence passed: BIRAJ selection saved and reloaded.")
+
         # Exercise the race loop for several seconds, not just scene construction.
         var frames_to_run := 180 if scene_path.ends_with("/race.tscn") else 5
         for frame in range(frames_to_run):
@@ -317,6 +357,18 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             print("Best distance and score reload correctly in a fresh race.")
+            # A shorter subsequent run must never overwrite an existing record.
+            reloaded_race.set("distance", 0.01)
+            reloaded_race.set("bonus_score", 0)
+            reloaded_race.call("_finish_race")
+            var after_short_run := ConfigFile.new()
+            if after_short_run.load("user://shubir_racing.cfg") != OK or absf(float(after_short_run.get_value("score", "best_distance", 0.0)) - float(saved_config.get_value("score", "best_distance"))) > 0.001 or int(after_short_run.get_value("score", "best_score", 0)) != int(saved_config.get_value("score", "best_score")):
+                push_error("A shorter subsequent race overwrote the existing best records.")
+                reloaded_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("A shorter subsequent race preserved both existing records.")
             reloaded_race.queue_free()
             await process_frame
 
