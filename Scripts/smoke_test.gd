@@ -861,6 +861,40 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             print("Brake/BOOST interlock passed: brake cancels boost until the BOOST control is released.")
+
+            # An empty tank must lock a continuously held BOOST finger. It
+            # may recharge, but must not reactivate until the finger is released.
+            fresh_race.set("nitro_left", 0.1)
+            fresh_race.set("touch_accel", true)
+            fresh_race.set("touch_brake", false)
+            fresh_race.set("touch_nitro", true)
+            fresh_race.set("boost_locked", false)
+            fresh_race.call("_process", 0.2)
+            if float(fresh_race.get("nitro_left")) > 0.001 or not bool(fresh_race.get("boost_locked")):
+                push_error("An exhausted BOOST tank did not reach zero and lock.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            fresh_race.call("_process", 0.25)
+            if not bool(fresh_race.get("boost_locked")) or absf(float(fresh_race.get("nitro_left")) - 0.15) > 0.02:
+                push_error("BOOST reactivated while held during tank recharge.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            fresh_race.set("touch_nitro", false)
+            fresh_race.call("_process", 0.01)
+            fresh_race.set("touch_nitro", true)
+            var tank_before_empty_reactivation := float(fresh_race.get("nitro_left"))
+            fresh_race.call("_process", 0.1)
+            if bool(fresh_race.get("boost_locked")) or float(fresh_race.get("nitro_left")) >= tank_before_empty_reactivation:
+                push_error("BOOST did not reactivate after release and re-press with a recharged tank.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Empty BOOST tank lock passed: recharge cannot reactivate a held control.")
             # Pause must clear held pedals and BOOST; Resume must restore active play.
             var engine_audio: AudioStreamPlayer = fresh_race.get("engine_player")
             var boost_audio: AudioStreamPlayer = fresh_race.get("nitro_player")
