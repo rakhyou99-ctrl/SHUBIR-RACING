@@ -98,7 +98,7 @@ func _layout_menu_for_size(viewport_size: Vector2) -> void:
     title_label.size = Vector2(800, 90)
     subtitle_label.scale = Vector2.ONE * scale_factor
     subtitle_label.position = Vector2(0, viewport_size.y * 0.255)
-    subtitle_label.size = Vector2(viewport_size.x, 45 * scale_factor)
+    subtitle_label.size = Vector2(viewport_size.x / scale_factor, 45)
 
     var button_gap := 14.0 * scale_factor
     var heights := [76.0, 76.0, 64.0, 58.0]
@@ -114,10 +114,10 @@ func _layout_menu_for_size(viewport_size: Vector2) -> void:
         y += heights[i] * scale_factor + button_gap
     best_distance_label.scale = Vector2.ONE * scale_factor
     best_distance_label.position = Vector2(0, viewport_size.y - 82.0 * scale_factor)
-    best_distance_label.size = Vector2(viewport_size.x, 30)
+    best_distance_label.size = Vector2(viewport_size.x / scale_factor, 30)
     note_label.scale = Vector2.ONE * scale_factor
     note_label.position = Vector2(0, viewport_size.y - 42.0 * scale_factor)
-    note_label.size = Vector2(viewport_size.x, 35)
+    note_label.size = Vector2(viewport_size.x / scale_factor, 35)
 
 func _make_button(label_text: String, pos: Vector2, btn_size: Vector2) -> Button:
     var b := Button.new()
