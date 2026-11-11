@@ -392,8 +392,7 @@ func _create_preview_car() -> Node3D:
                 var angle := TAU * float(lug_index) / 5.0
                 # Five slim alloy spokes make the wheel face read as a real rim.
                 var spoke := MeshInstance3D.new()
-                var spoke_mesh := BoxMesh.new()
-                spoke_mesh.size = Vector3(0.045, 0.055, 0.205)
+                var spoke_mesh := _cached_preview_box_mesh(Vector3(0.045, 0.055, 0.205))
                 spoke.mesh = spoke_mesh
                 spoke.rotation.x = angle
                 spoke.position = Vector3(side * 1.225, 0.36 + cos(angle) * 0.135, z + sin(angle) * 0.135)
@@ -512,11 +511,17 @@ func _cached_preview_sphere(radius: float, height: float) -> SphereMesh:
     return preview_sphere_mesh_cache[key] as SphereMesh
 
 
+func _cached_preview_box_mesh(dimensions: Vector3) -> BoxMesh:
+    if not preview_mesh_cache.has(dimensions):
+        var mesh := BoxMesh.new()
+        mesh.size = dimensions
+        preview_mesh_cache[dimensions] = mesh
+    return preview_mesh_cache[dimensions] as BoxMesh
+
+
 func _add_emissive_box(parent: Node3D, pos: Vector3, dimensions: Vector3, tint: Color) -> void:
     var part := MeshInstance3D.new()
-    var mesh := BoxMesh.new()
-    mesh.size = dimensions
-    part.mesh = mesh
+    part.mesh = _cached_preview_box_mesh(dimensions)
     part.position = pos
     var mat := StandardMaterial3D.new()
     mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -530,14 +535,7 @@ func _add_emissive_box(parent: Node3D, pos: Vector3, dimensions: Vector3, tint: 
 func _add_box(parent: Node3D, pos: Vector3, dimensions: Vector3, tint: Color) -> void:
     var part := MeshInstance3D.new()
     # Reuse same-size preview geometry across both selectable showroom cars.
-    var mesh: BoxMesh
-    if preview_mesh_cache.has(dimensions):
-        mesh = preview_mesh_cache[dimensions] as BoxMesh
-    else:
-        mesh = BoxMesh.new()
-        mesh.size = dimensions
-        preview_mesh_cache[dimensions] = mesh
-    part.mesh = mesh
+    part.mesh = _cached_preview_box_mesh(dimensions)
     part.position = pos
     # Share identical showroom body materials instead of allocating one per
     # decorative box on the preview car.
