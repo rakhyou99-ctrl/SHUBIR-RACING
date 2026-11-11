@@ -842,16 +842,25 @@ func _move_obstacles(delta: float) -> void:
     var stage_progress := float(race_stage - 1) / 9.0
     var spawn_distance := lerpf(360.0, 220.0, stage_progress)
     for obstacle in road_obstacles:
+        var previous_z := obstacle.position.z
+        obstacle.set_meta("previous_frame_z", previous_z)
         obstacle.position.z += road_movement
         if obstacle.position.z > 16.0:
             obstacle.position.z = -spawn_distance - randf_range(0.0, 60.0)
             obstacle.position.x = _spawn_lane_for(obstacle.position.z, obstacle)
+            # A recycled cone must not sweep through the entire road on this frame.
+            obstacle.set_meta("previous_frame_z", obstacle.position.z)
 
 func _check_obstacle_collision() -> void:
     if game_over or game_paused:
         return
     for obstacle in road_obstacles:
-        if absf(obstacle.position.z - car.position.z) < 1.75 and absf(obstacle.position.x - car.position.x) < 1.15:
+        # Sweep the cone's movement segment to avoid tunneling at high speed.
+        var previous_z := float(obstacle.get_meta("previous_frame_z", obstacle.position.z))
+        var nearest_z := clampf(car.position.z, minf(previous_z, obstacle.position.z), maxf(previous_z, obstacle.position.z))
+        var longitudinal_gap := absf(nearest_z - car.position.z)
+        var lateral_gap := absf(obstacle.position.x - car.position.x)
+        if longitudinal_gap < 1.75 and lateral_gap < 1.15:
             _finish_race()
             return
 
