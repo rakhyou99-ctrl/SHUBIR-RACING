@@ -186,6 +186,56 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             print("Near-miss pass awarded one +250 bonus.")
+            # Drain part of the tank under Boost, then verify release-based recharge.
+            fresh_race.set("nitro_left", 1.0)
+            fresh_race.set("touch_accel", true)
+            fresh_race.set("touch_nitro", true)
+            fresh_race.set("boost_locked", false)
+            fresh_race.call("_process", 0.5)
+            if absf(float(fresh_race.get("nitro_left")) - 0.5) > 0.01:
+                push_error("Boost tank did not drain at the expected rate.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            fresh_race.set("touch_nitro", false)
+            fresh_race.set("touch_accel", false)
+            fresh_race.call("_process", 1.0)
+            if absf(float(fresh_race.get("nitro_left")) - 1.1) > 0.02:
+                push_error("Boost tank did not recharge at 0.60 seconds per second.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Boost drain and recharge rate checks passed.")
+            # Pause must clear held pedals and BOOST; Resume must restore active play.
+            fresh_race.set("touch_accel", true)
+            fresh_race.set("touch_brake", true)
+            fresh_race.set("touch_nitro", true)
+            fresh_race.call("_show_pause_menu")
+            if not fresh_race.get("game_paused") or fresh_race.get("touch_accel") or fresh_race.get("touch_brake") or fresh_race.get("touch_nitro"):
+                push_error("Pause did not stop gameplay and clear held controls.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            var pause_overlay := fresh_race.find_child("PauseOverlay", true, false)
+            var resume_button := pause_overlay.find_child("ResumeButton", true, false) if pause_overlay != null else null
+            if resume_button == null:
+                push_error("Pause overlay did not create a Resume button.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            resume_button.pressed.emit()
+            await process_frame
+            if fresh_race.get("game_paused") or fresh_race.get("touch_accel") or fresh_race.get("touch_brake") or fresh_race.get("touch_nitro"):
+                push_error("Resume did not restore play with controls safely released.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Pause and Resume navigation/control checks passed.")
             test_traffic.position = Vector3(fresh_car.position.x, test_traffic.position.y, fresh_car.position.z)
             test_traffic.set_meta("previous_frame_x", fresh_car.position.x)
             test_traffic.set_meta("previous_frame_z", fresh_car.position.z)
