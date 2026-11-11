@@ -44,6 +44,41 @@ func _run_smoke_tests() -> void:
             await process_frame
         print("Processed ", frames_to_run, " frames for ", scene_path)
 
+        if scene_path.ends_with("/race.tscn"):
+            instance.set("touch_accel", true)
+            for frame in range(30):
+                await process_frame
+            var accelerated_speed: float = instance.get("speed")
+            if accelerated_speed <= 0.0:
+                push_error("Accelerator input did not increase race speed.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+
+            instance.set("touch_brake", true)
+            for frame in range(30):
+                await process_frame
+            var braked_speed: float = instance.get("speed")
+            if braked_speed >= accelerated_speed:
+                push_error("Brake input did not reduce race speed.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+
+            instance.set("touch_brake", false)
+            instance.set("touch_nitro", true)
+            for frame in range(3):
+                await process_frame
+            if not instance.get("was_boosting"):
+                push_error("Boost did not activate with accelerator and boost input.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Race input checks passed: accelerator, brake, boost.")
+
         root.remove_child(instance)
         instance.free()
 
