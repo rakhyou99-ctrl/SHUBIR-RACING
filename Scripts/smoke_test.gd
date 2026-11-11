@@ -173,7 +173,7 @@ func _run_smoke_tests() -> void:
                             continue
                         var second_rect := second_control.get_global_rect()
                         if first_rect.intersects(second_rect):
-                            push_error("Garage elements overlap at %s: %s and %s" % [test_size, first_control.name, second_control.name])
+                            push_error("Garage elements overlap at %s: %s path=%s rect=%s parent=%s AND %s path=%s rect=%s parent=%s" % [test_size, first_control.name, first_control.get_path(), first_rect, first_control.get_parent().name if first_control.get_parent() != null else "<root>", second_control.name, second_control.get_path(), second_rect, second_control.get_parent().name if second_control.get_parent() != null else "<root>"])
                             garage_instance.call("_layout_garage")
                             game_state.set("selected_car", original_car)
                             game_state.call("save_settings")
