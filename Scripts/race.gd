@@ -1044,6 +1044,7 @@ func _show_pause_menu() -> void:
     var resume := Button.new()
     var pause_button_width := minf(260.0, screen_size.x - 48.0)
     var pause_button_height := maxf(42.0, minf(62.0, screen_size.y * 0.15))
+    resume.name = "ResumeButton"
     resume.text = "RESUME"
     resume.custom_minimum_size = Vector2(pause_button_width, pause_button_height)
     _style_overlay_button(resume, true)
