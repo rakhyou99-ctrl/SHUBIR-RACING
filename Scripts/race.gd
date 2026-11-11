@@ -972,8 +972,9 @@ func _show_pause_menu() -> void:
     panel.add_child(center)
 
     var screen_size := get_viewport().get_visible_rect().size
+    var overlay_scale := clampf(minf(screen_size.x / 1280.0, screen_size.y / 720.0), 0.55, 1.15)
     var content := VBoxContainer.new()
-    content.custom_minimum_size = Vector2(minf(430.0, screen_size.x - 32.0), minf(300.0, screen_size.y - 24.0))
+    content.custom_minimum_size = Vector2(minf(430.0 * overlay_scale, screen_size.x - 32.0), minf(300.0 * overlay_scale, screen_size.y - 24.0))
     content.add_theme_constant_override("separation", clampi(int(screen_size.y * 0.045), 12, 22))
     content.alignment = BoxContainer.ALIGNMENT_CENTER
     center.add_child(content)
@@ -981,7 +982,7 @@ func _show_pause_menu() -> void:
     var title := Label.new()
     title.text = "PAUSED"
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    title.add_theme_font_size_override("font_size", 58)
+    title.add_theme_font_size_override("font_size", roundi(58.0 * overlay_scale))
     title.add_theme_color_override("font_color", Color("#FF7518"))
     content.add_child(title)
 
@@ -1086,8 +1087,9 @@ func _finish_race() -> void:
     overlay.add_child(center)
 
     var screen_size := get_viewport().get_visible_rect().size
+    var overlay_scale := clampf(minf(screen_size.x / 1280.0, screen_size.y / 720.0), 0.55, 1.15)
     var content := VBoxContainer.new()
-    content.custom_minimum_size = Vector2(minf(540.0, screen_size.x - 32.0), minf(330.0, screen_size.y - 24.0))
+    content.custom_minimum_size = Vector2(minf(540.0 * overlay_scale, screen_size.x - 32.0), minf(330.0 * overlay_scale, screen_size.y - 24.0))
     content.add_theme_constant_override("separation", clampi(int(screen_size.y * 0.025), 10, 18))
     content.alignment = BoxContainer.ALIGNMENT_CENTER
     center.add_child(content)
@@ -1095,35 +1097,35 @@ func _finish_race() -> void:
     var title := Label.new()
     title.text = "RACE OVER"
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    title.add_theme_font_size_override("font_size", 58)
+    title.add_theme_font_size_override("font_size", roundi(58.0 * overlay_scale))
     title.add_theme_color_override("font_color", Color("#FF7518"))
     content.add_child(title)
 
     var subtitle := Label.new()
     subtitle.text = "NEW HIGH SCORE!" if new_score_record else ("NEW DISTANCE RECORD!" if new_record else "KEEP PUSHING. TRY AGAIN!")
     subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    subtitle.add_theme_font_size_override("font_size", 23)
+    subtitle.add_theme_font_size_override("font_size", roundi(23.0 * overlay_scale))
     subtitle.add_theme_color_override("font_color", Color("#FFD0AD"))
     content.add_child(subtitle)
 
     var score := Label.new()
     score.text = "DISTANCE  %.2f km   •   SCORE  %06d" % [distance, int(distance * 1000.0 + bonus_score)]
     score.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    score.add_theme_font_size_override("font_size", 30)
+    score.add_theme_font_size_override("font_size", roundi(30.0 * overlay_scale))
     score.add_theme_color_override("font_color", Color.WHITE)
     content.add_child(score)
 
     var run_stats := Label.new()
     run_stats.text = "NEAR MISSES  %02d  (+%d)   •   STAGE  %02d  (+%d)" % [near_miss_count, near_miss_bonus_score, race_stage, stage_bonus_score]
     run_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    run_stats.add_theme_font_size_override("font_size", 20)
+    run_stats.add_theme_font_size_override("font_size", roundi(20.0 * overlay_scale))
     run_stats.add_theme_color_override("font_color", Color("#FFD34E"))
     content.add_child(run_stats)
 
     var best := Label.new()
     best.text = "BEST DISTANCE  %.2f km   •   BEST SCORE  %06d" % [best_distance, best_score]
     best.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    best.add_theme_font_size_override("font_size", 22)
+    best.add_theme_font_size_override("font_size", roundi(22.0 * overlay_scale))
     best.add_theme_color_override("font_color", Color("#BFCAD4"))
     content.add_child(best)
 
