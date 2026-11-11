@@ -20,6 +20,7 @@ var side_title: Label
 var header_label: Label
 var back_button: Button
 var start_button: Button
+var preview_material_cache: Dictionary = {}
 
 func _notification(what: int) -> void:
     # Android system Back returns from the showroom to the main menu.
@@ -528,10 +529,18 @@ func _add_box(parent: Node3D, pos: Vector3, dimensions: Vector3, tint: Color) ->
     mesh.size = dimensions
     part.mesh = mesh
     part.position = pos
-    var mat := StandardMaterial3D.new()
-    mat.albedo_color = tint
-    mat.metallic = 0.42
-    mat.roughness = 0.32
+    # Share identical showroom body materials instead of allocating one per
+    # decorative box on the preview car.
+    var material_key := tint.to_rgba32()
+    var mat: StandardMaterial3D
+    if preview_material_cache.has(material_key):
+        mat = preview_material_cache[material_key]
+    else:
+        mat = StandardMaterial3D.new()
+        mat.albedo_color = tint
+        mat.metallic = 0.42
+        mat.roughness = 0.32
+        preview_material_cache[material_key] = mat
     part.material_override = mat
     parent.add_child(part)
 
