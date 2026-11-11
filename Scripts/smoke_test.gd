@@ -47,8 +47,9 @@ func _run_smoke_tests() -> void:
         print("Processed ", frames_to_run, " frames for ", scene_path)
 
         if scene_path.ends_with("/settings.tscn"):
-            var original_sensitivity := GameState.steering_sensitivity
-            var original_volume := GameState.master_volume
+            var game_state: Node = root.get_node("GameState")
+            var original_sensitivity := float(game_state.get("steering_sensitivity"))
+            var original_volume := float(game_state.get("master_volume"))
             var settings_instance: Control = instance
             var sensitivity_slider: HSlider = settings_instance.get("steering_slider")
             var volume_slider: HSlider = settings_instance.get("volume_slider")
@@ -60,19 +61,19 @@ func _run_smoke_tests() -> void:
                 return
             sensitivity_slider.value = 1.4
             volume_slider.value = 0.4
-            GameState.load_settings()
-            if absf(GameState.steering_sensitivity - 1.4) > 0.01 or absf(GameState.master_volume - 0.4) > 0.01:
+            game_state.call("load_settings")
+            if absf(float(game_state.get("steering_sensitivity")) - 1.4) > 0.01 or absf(float(game_state.get("master_volume")) - 0.4) > 0.01:
                 push_error("Settings sliders did not persist steering sensitivity and master volume.")
-                GameState.steering_sensitivity = original_sensitivity
-                GameState.master_volume = original_volume
-                GameState.save_settings()
+                game_state.set("steering_sensitivity", original_sensitivity)
+                game_state.set("master_volume", original_volume)
+                game_state.call("save_settings")
                 root.remove_child(instance)
                 instance.free()
                 quit(1)
                 return
-            GameState.steering_sensitivity = original_sensitivity
-            GameState.master_volume = original_volume
-            GameState.save_settings()
+            game_state.set("steering_sensitivity", original_sensitivity)
+            game_state.set("master_volume", original_volume)
+            game_state.call("save_settings")
             print("Settings slider persistence checks passed: tilt sensitivity and master volume.")
 
         if scene_path.ends_with("/race.tscn"):
