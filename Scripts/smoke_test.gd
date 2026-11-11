@@ -267,7 +267,7 @@ func _run_smoke_tests() -> void:
                 return
             print("Pause and Resume navigation/control checks passed.")
             # Crossing 0.50 km must award the stage-two bonus exactly once.
-            fresh_race.set("distance", 0.499)
+            fresh_race.set("distance", 0.5)
             fresh_race.set("speed", 0.0)
             fresh_race.call("_process", 0.01)
             if fresh_race.get("race_stage") != 2 or fresh_race.get("stage_bonus_score") != 500:
