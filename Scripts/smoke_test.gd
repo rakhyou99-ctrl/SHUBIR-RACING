@@ -209,6 +209,52 @@ func _run_smoke_tests() -> void:
                 return
             print("Raw multi-touch checks passed: two fingers, drag between pedals, and independent release.")
 
+            # Deterministic accelerometer tests validate calibration, dead zone,
+            # opposite steering responses, and sensor-loss recentering.
+            instance.set("tilt_calibrated", false)
+            instance.set("tilt_steer", 0.0)
+            instance.call("_update_tilt_steering", Vector3(0.0, 9.8, 0.0), 0.1)
+            if not instance.get("tilt_calibrated") or absf(float(instance.get("tilt_center_x")) - 9.8) > 0.01:
+                push_error("Tilt steering did not calibrate its neutral accelerometer baseline.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            instance.call("_update_tilt_steering", Vector3(0.0, 10.2, 0.0), 0.1)
+            if absf(float(instance.get("tilt_steer"))) > 0.01:
+                push_error("Tilt steering dead zone allowed unwanted drift.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            instance.call("_update_tilt_steering", Vector3(0.0, 12.0, 0.0), 0.5)
+            var positive_tilt := float(instance.get("tilt_steer"))
+            if positive_tilt <= 0.0:
+                push_error("Positive relative phone tilt did not produce positive steering.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            instance.set("tilt_steer", 0.0)
+            instance.set("tilt_filtered_x", 9.8)
+            instance.call("_update_tilt_steering", Vector3(0.0, 7.6, 0.0), 0.5)
+            var negative_tilt := float(instance.get("tilt_steer"))
+            if negative_tilt >= 0.0:
+                push_error("Negative relative phone tilt did not produce opposite steering.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            instance.set("tilt_steer", 1.0)
+            instance.call("_update_tilt_steering", Vector3.ZERO, 0.1)
+            if float(instance.get("tilt_steer")) >= 1.0:
+                push_error("Unavailable accelerometer sample did not recenter steering.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Tilt steering logic checks passed: calibration, dead zone, left/right response, and sensor fallback.")
+
             var obstacles: Array = instance.get("road_obstacles")
             if obstacles.is_empty():
                 push_error("Race scene did not create road collision hazards.")
