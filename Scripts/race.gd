@@ -195,9 +195,10 @@ func _process(delta: float) -> void:
     distance += speed * delta / 3600.0
     var next_stage := clampi(1 + int(distance / 0.5), 1, 10)
     if next_stage > race_stage:
+        var stages_gained := next_stage - race_stage
         race_stage = next_stage
-        bonus_score += 500
-        _show_stage_feedback()
+        bonus_score += stages_gained * 500
+        _show_stage_feedback(stages_gained)
     else:
         race_stage = next_stage
 
@@ -875,12 +876,13 @@ func _move_traffic(delta: float) -> void:
             traffic.set_meta("cruise_speed", randf_range(62.0, 108.0))
 
 
-func _show_stage_feedback() -> void:
+func _show_stage_feedback(stages_gained: int = 1) -> void:
     if not is_instance_valid(stage_feedback_label):
         return
     if is_instance_valid(stage_feedback_tween) and stage_feedback_tween.is_running():
         stage_feedback_tween.kill()
-    stage_feedback_label.text = "STAGE %02d  •  +500 BONUS" % race_stage
+    var reward := stages_gained * 500
+    stage_feedback_label.text = "STAGE %02d  •  +%d BONUS" % [race_stage, reward]
     stage_feedback_label.visible = true
     stage_feedback_label.modulate.a = 1.0
     var base_scale := Vector2.ONE * clampf(minf(get_viewport().get_visible_rect().size.x / 1280.0, get_viewport().get_visible_rect().size.y / 720.0), 0.55, 1.15)
