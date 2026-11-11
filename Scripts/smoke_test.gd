@@ -463,6 +463,47 @@ func _run_smoke_tests() -> void:
                 return
             var test_traffic: Node3D = fresh_traffic[0]
             var fresh_car: Node3D = fresh_race.get("car")
+
+            # Verify swept collision catches a high-speed pass through the player,
+            # but does not report a path that stays outside the lateral hitbox.
+            if not bool(fresh_race.call("_swept_overlap", 0.0, -8.0, 0.0, 8.0, 0.0, 0.0, 1.95, 3.6)):
+                push_error("Swept collision missed a high-speed traffic path through the player.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            if bool(fresh_race.call("_swept_overlap", 4.0, -8.0, 4.0, 8.0, 0.0, 0.0, 1.95, 3.6)):
+                push_error("Swept collision reported a false hit outside the lateral collision width.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Swept collision checks passed: high-speed hit detected and lateral false hit rejected.")
+
+            # Fill two lanes at the same spawn distance; the spawn helper must choose
+            # the remaining clear lane instead of placing a car/cone into traffic.
+            var saved_traffic_positions: Array[Vector3] = []
+            for other in fresh_traffic:
+                saved_traffic_positions.append(other.position)
+                other.position = Vector3(-3.5, other.position.y, -200.0)
+            var saved_obstacle_positions: Array[Vector3] = []
+            var fresh_obstacles: Array = fresh_race.get("road_obstacles")
+            for other in fresh_obstacles:
+                saved_obstacle_positions.append(other.position)
+                other.position = Vector3(0.0, other.position.y, -200.0)
+            var safest_spawn_lane := float(fresh_race.call("_spawn_lane_for", -200.0))
+            for i in range(fresh_traffic.size()):
+                fresh_traffic[i].position = saved_traffic_positions[i]
+            for i in range(fresh_obstacles.size()):
+                fresh_obstacles[i].position = saved_obstacle_positions[i]
+            if absf(safest_spawn_lane - 3.5) > 0.01:
+                push_error("Spawn lane safety did not select the only clear lane; selected %s." % safest_spawn_lane)
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Spawn lane safety check passed: occupied lanes avoided.")
+
             # A safe lateral pass across the player's Z must award exactly one near-miss reward.
             fresh_race.set("speed", 100.0)
             fresh_race.set("previous_car_frame_x", fresh_car.position.x)
