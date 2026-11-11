@@ -870,8 +870,10 @@ func _move_traffic(delta: float) -> void:
         var relative_speed := speed - cruise_speed
         var previous_z := traffic.position.z
         traffic.position.z += relative_speed * delta * 0.12
-        # Award a near miss only when a car passes without entering the collision zone.
-        if previous_z < car.position.z and traffic.position.z >= car.position.z:
+        # Award a near miss in either direction: the player may overtake
+        # slower traffic, or faster traffic may pass the player.
+        var crossed_player := (previous_z < car.position.z and traffic.position.z >= car.position.z) or (previous_z > car.position.z and traffic.position.z <= car.position.z)
+        if crossed_player:
             var lateral_gap := absf(traffic.position.x - car.position.x)
             if lateral_gap >= 1.8 and lateral_gap < 3.25:
                 _register_near_miss()
