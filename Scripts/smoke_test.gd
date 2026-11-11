@@ -560,6 +560,29 @@ func _run_smoke_tests() -> void:
                 return
             print("Recycle checks passed: traffic and cones reset swept history without phantom hits.")
 
+            # Long-run recycle stress: traffic, cones and road segments must reuse
+            # their existing nodes instead of allocating an ever-growing scene.
+            var recycle_node_baseline := _count_scene_nodes(fresh_race)
+            var traffic_count_baseline := fresh_traffic.size()
+            var obstacle_count_baseline := fresh_obstacles.size()
+            var road_count_baseline: int = fresh_race.get("road_segments").size()
+            for cycle in range(250):
+                for traffic in fresh_traffic:
+                    traffic.position.z = 17.0
+                for obstacle in fresh_obstacles:
+                    obstacle.position.z = 17.0
+                fresh_race.call("_move_traffic", 0.016)
+                fresh_race.call("_move_obstacles", 0.016)
+                fresh_race.call("_move_road", 0.016)
+            var recycle_node_final := _count_scene_nodes(fresh_race)
+            if recycle_node_final != recycle_node_baseline or fresh_traffic.size() != traffic_count_baseline or fresh_obstacles.size() != obstacle_count_baseline or fresh_race.get("road_segments").size() != road_count_baseline:
+                push_error("Long-run recycling changed scene/object counts: nodes %d -> %d." % [recycle_node_baseline, recycle_node_final])
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Long-run recycle stress passed: 250 cycles kept node, traffic, cone and road-segment counts constant.")
+
             # A safe lateral pass across the player's Z must award exactly one near-miss reward.
             fresh_race.set("speed", 100.0)
             fresh_race.set("previous_car_frame_x", fresh_car.position.x)
