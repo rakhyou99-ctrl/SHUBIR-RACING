@@ -1080,6 +1080,7 @@ func _show_pause_menu() -> void:
     content.add_child(restart)
 
     var menu := Button.new()
+    menu.name = "MainMenuButton"
     menu.text = "MAIN MENU"
     menu.custom_minimum_size = Vector2(pause_button_width, pause_button_height)
     _style_overlay_button(menu, false)
@@ -1192,6 +1193,7 @@ func _finish_race() -> void:
     var action_button_width := maxf(130.0, minf(190.0, (screen_size.x - 72.0) * 0.5))
     var action_button_height := maxf(44.0, minf(62.0, screen_size.y * 0.13))
     var restart := Button.new()
+    restart.name = "RaceAgainButton"
     restart.text = "RACE AGAIN"
     restart.custom_minimum_size = Vector2(action_button_width, action_button_height)
     _style_overlay_button(restart, true)
