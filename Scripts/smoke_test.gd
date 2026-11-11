@@ -157,7 +157,29 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             print("Main Menu Play navigation passed: a fresh race scene opened.")
-            current_scene.queue_free()
+            var fresh_race: Node3D = current_scene
+            var fresh_traffic: Array = fresh_race.get("traffic_cars")
+            if fresh_traffic.is_empty():
+                push_error("Fresh race did not create traffic for collision testing.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            var test_traffic: Node3D = fresh_traffic[0]
+            var fresh_car: Node3D = fresh_race.get("car")
+            test_traffic.position = Vector3(fresh_car.position.x, test_traffic.position.y, fresh_car.position.z)
+            test_traffic.set_meta("previous_frame_x", fresh_car.position.x)
+            test_traffic.set_meta("previous_frame_z", fresh_car.position.z)
+            fresh_race.set("previous_car_frame_x", fresh_car.position.x)
+            fresh_race.call("_check_traffic_collision")
+            if not fresh_race.get("game_over"):
+                push_error("Traffic collision did not trigger Game Over.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Traffic collision triggered Game Over and stopped the race.")
+            fresh_race.queue_free()
             await process_frame
 
         if is_instance_valid(instance) and instance.get_parent() != null:
