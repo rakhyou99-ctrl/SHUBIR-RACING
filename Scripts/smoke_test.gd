@@ -597,6 +597,15 @@ func _run_smoke_tests() -> void:
                 return
             print("Obstacle collision triggered Game Over and stopped the race.")
             print("Game Over navigation checks passed: Race Again and Main Menu buttons exist.")
+            # Seed non-default gameplay state before restarting and verify the
+            # replacement scene starts clean rather than inheriting old values.
+            instance.set("speed", 177.0)
+            instance.set("distance", 12.5)
+            instance.set("nitro_left", 0.4)
+            instance.set("race_stage", 8)
+            instance.set("touch_accel", true)
+            instance.set("touch_brake", true)
+            instance.set("touch_nitro", true)
             race_again_button.pressed.emit()
             await process_frame
             await process_frame
@@ -605,6 +614,11 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             print("Game Over Race Again navigation passed.")
+            if float(current_scene.get("speed")) > 0.01 or float(current_scene.get("distance")) > 0.01 or absf(float(current_scene.get("nitro_left")) - 3.0) > 0.01 or int(current_scene.get("race_stage")) != 1 or bool(current_scene.get("touch_accel")) or bool(current_scene.get("touch_brake")) or bool(current_scene.get("touch_nitro")):
+                push_error("Race Again did not reset speed, distance, BOOST, stage, and held controls.")
+                quit(1)
+                return
+            print("Race restart reset passed: speed, distance, BOOST tank, stage, and held pedals reset.")
             current_scene.call("_finish_race")
             await process_frame
             var restarted_overlay := current_scene.find_child("GameOverOverlay", true, false)
