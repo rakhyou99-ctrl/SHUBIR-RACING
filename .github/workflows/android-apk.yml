@@ -36,7 +36,7 @@ jobs:
           fi
           echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
           yes | "$SDKMANAGER" --licenses || true
-          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          "$SDKMANAGER" "cmdline-tools;latest" "platform-tools" "platforms;android-35" "build-tools;35.0.1"
 
       - name: Install Godot 4.7.2 and export templates
         uses: chickensoft-games/setup-godot@v2
