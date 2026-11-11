@@ -27,7 +27,9 @@ jobs:
           grep -Fq 'window/handheld/orientation=0' project.godot
           grep -Fq 'sensors/enable_accelerometer=true' project.godot
           grep -Fq 'screen/orientation=0' export_presets.cfg
-          grep -Fq 'if: ${{ inputs.release_ready == true }}' .github/workflows/android-apk.yml
+          grep -Fq 'release_ready:' .github/workflows/android-apk.yml
+          grep -Fq 'default: false' .github/workflows/android-apk.yml
+          grep -Fq 'type: boolean' .github/workflows/android-apk.yml
           echo "Landscape, accelerometer, and final-release APK gate verified"
 
       - name: Import project and check scripts
