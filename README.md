@@ -35,3 +35,19 @@ The physical direction/calibration of tilt steering, touch-coordinate mapping fo
 - `Scenes/`: main menu, garage, race, and settings scenes.
 - `Scripts/`: game state and screen/gameplay scripts.
 - `.github/workflows/`: project validation and manually gated Android export workflows.
+
+
+## Final Android release signing
+
+The final APK workflow uses a permanent, developer-owned release keystore; it does not use the temporary Android debug key. Never commit the keystore or share its passwords in chat.
+
+1. Generate and securely back up a release keystore on a trusted computer. Keep the keystore password and key password identical for Godot Android export:
+   `keytool -genkeypair -v -keystore shubir-racing-release.keystore -storetype JKS -alias shubir-racing -keyalg RSA -keysize 2048 -validity 10000`
+2. Encode the keystore file as one Base64 line (Linux/macOS: `base64 -w 0 shubir-racing-release.keystore`; on macOS use `base64 shubir-racing-release.keystore | tr -d '\\n'`).
+3. In the GitHub repository, add these **Actions repository secrets**:
+   - `SHUBIR_RELEASE_KEYSTORE_BASE64`: the Base64 keystore contents.
+   - `SHUBIR_RELEASE_KEYSTORE_PASSWORD`: the keystore/key password.
+   - `SHUBIR_RELEASE_KEY_ALIAS`: the alias (default command above: `shubir-racing`).
+4. Only after the game is complete and tested, manually run the Android workflow with `release_ready=true`.
+
+The workflow validates the keystore and exports with Godot's release signing environment variables. Do not lose the keystore: future updates to the same Android package must use the same signing identity.
