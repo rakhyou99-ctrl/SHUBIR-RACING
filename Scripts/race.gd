@@ -46,6 +46,8 @@ var chase_camera: Camera3D
 var brake_lights: Array[MeshInstance3D] = []
 # Share immutable box materials by color to reduce duplicated GPU resources.
 var box_material_cache: Dictionary = {}
+var environment_mesh_cache: Dictionary = {}
+var environment_material_cache: Dictionary = {}
 var near_miss_label: Label
 var near_miss_count := 0
 var near_miss_feedback_timer := 0.0
@@ -476,14 +478,19 @@ func _build_road_segment(parent: Node3D) -> void:
 
 func _make_bush(parent: Node3D, bush_position: Vector3, bush_color: Color) -> void:
     var bush := MeshInstance3D.new()
-    var bush_mesh := SphereMesh.new()
-    bush_mesh.radius = 0.72
-    bush_mesh.height = 0.95
-    bush.mesh = bush_mesh
-    var bush_material := StandardMaterial3D.new()
-    bush_material.albedo_color = bush_color
-    bush_material.roughness = 0.92
-    bush.material_override = bush_material
+    if not environment_mesh_cache.has("bush"):
+        var bush_mesh := SphereMesh.new()
+        bush_mesh.radius = 0.72
+        bush_mesh.height = 0.95
+        environment_mesh_cache["bush"] = bush_mesh
+    bush.mesh = environment_mesh_cache["bush"]
+    var material_key := "bush_%d" % bush_color.to_rgba32()
+    if not environment_material_cache.has(material_key):
+        var bush_material := StandardMaterial3D.new()
+        bush_material.albedo_color = bush_color
+        bush_material.roughness = 0.92
+        environment_material_cache[material_key] = bush_material
+    bush.material_override = environment_material_cache[material_key]
     bush.position = bush_position + Vector3(0, 0.42, 0)
     parent.add_child(bush)
 
@@ -492,30 +499,42 @@ func _make_tree(parent: Node3D, tree_position: Vector3) -> void:
     tree.position = tree_position
     parent.add_child(tree)
 
+    # Reuse immutable primitive meshes and materials across all looping road segments.
+    if not environment_mesh_cache.has("tree_trunk"):
+        var trunk_mesh := CylinderMesh.new()
+        trunk_mesh.top_radius = 0.16
+        trunk_mesh.bottom_radius = 0.23
+        trunk_mesh.height = 1.8
+        environment_mesh_cache["tree_trunk"] = trunk_mesh
     var trunk := MeshInstance3D.new()
-    var trunk_mesh := CylinderMesh.new()
-    trunk_mesh.top_radius = 0.16
-    trunk_mesh.bottom_radius = 0.23
-    trunk_mesh.height = 1.8
-    trunk.mesh = trunk_mesh
-    var trunk_material := StandardMaterial3D.new()
-    trunk_material.albedo_color = Color("#76502E")
-    trunk.material_override = trunk_material
+    trunk.mesh = environment_mesh_cache["tree_trunk"]
+    if not environment_material_cache.has("tree_trunk"):
+        var trunk_material := StandardMaterial3D.new()
+        trunk_material.albedo_color = Color("#76502E")
+        environment_material_cache["tree_trunk"] = trunk_material
+    trunk.material_override = environment_material_cache["tree_trunk"]
     trunk.position.y = 0.9
     tree.add_child(trunk)
 
-    # Layered foliage clusters give roadside trees a fuller silhouette.
+    # Layered foliage clusters keep their original shape and varied green palette.
     var foliage_colors := [Color("#236B3A"), Color("#2D7A42"), Color("#1D6035"), Color("#34864A")]
     for cluster in range(3):
+        var mesh_key := "foliage_large" if cluster == 0 else "foliage_small"
+        if not environment_mesh_cache.has(mesh_key):
+            var leaves_mesh := SphereMesh.new()
+            leaves_mesh.radius = 0.72 if cluster == 0 else 0.58
+            leaves_mesh.height = leaves_mesh.radius * 2.0
+            environment_mesh_cache[mesh_key] = leaves_mesh
         var leaves := MeshInstance3D.new()
-        var leaves_mesh := SphereMesh.new()
-        leaves_mesh.radius = 0.72 if cluster == 0 else 0.58
-        leaves_mesh.height = leaves_mesh.radius * 2.0
-        leaves.mesh = leaves_mesh
-        var leaves_material := StandardMaterial3D.new()
-        leaves_material.albedo_color = foliage_colors[randi_range(0, foliage_colors.size() - 1)]
-        leaves_material.roughness = 0.95
-        leaves.material_override = leaves_material
+        leaves.mesh = environment_mesh_cache[mesh_key]
+        var foliage_color: Color = foliage_colors[randi_range(0, foliage_colors.size() - 1)]
+        var material_key := "foliage_%d" % foliage_color.to_rgba32()
+        if not environment_material_cache.has(material_key):
+            var leaves_material := StandardMaterial3D.new()
+            leaves_material.albedo_color = foliage_color
+            leaves_material.roughness = 0.95
+            environment_material_cache[material_key] = leaves_material
+        leaves.material_override = environment_material_cache[material_key]
         if cluster == 0:
             leaves.position = Vector3(0, 2.25, 0)
         elif cluster == 1:
