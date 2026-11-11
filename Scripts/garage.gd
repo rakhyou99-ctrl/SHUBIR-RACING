@@ -276,14 +276,14 @@ func _layout_garage_for_size(viewport_size: Vector2) -> void:
     var red_card_y := 325.0 if compact_layout else 365.0
     var selected_label_y := 510.0 if compact_layout else 575.0
     side_title.scale = Vector2.ONE * scale_factor
-    side_title.position = Vector2(side_x, 105.0 * scale_factor)
+    side_title.position = Vector2(side_x * scale_factor, 105.0 * scale_factor)
     side_title.size = Vector2(340, 42)
     blue_card.scale = Vector2.ONE * scale_factor * card_compact_scale
-    blue_card.position = Vector2(side_x, blue_card_y * scale_factor)
+    blue_card.position = Vector2(side_x * scale_factor, blue_card_y * scale_factor)
     red_card.scale = Vector2.ONE * scale_factor * card_compact_scale
-    red_card.position = Vector2(side_x, red_card_y * scale_factor)
+    red_card.position = Vector2(side_x * scale_factor, red_card_y * scale_factor)
     selected_label.scale = Vector2.ONE * scale_factor
-    selected_label.position = Vector2(side_x, selected_label_y * scale_factor)
+    selected_label.position = Vector2(side_x * scale_factor, selected_label_y * scale_factor)
     selected_label.size = Vector2(350, 34)
 
     back_button.scale = Vector2.ONE * scale_factor
