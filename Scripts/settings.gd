@@ -91,7 +91,10 @@ func _build_ui() -> void:
     add_child(back)
 
 func _layout_settings() -> void:
-    var viewport_size := get_viewport().get_visible_rect().size
+    _layout_settings_for_size(get_viewport().get_visible_rect().size)
+
+
+func _layout_settings_for_size(viewport_size: Vector2) -> void:
     var scale_factor := clampf(minf(viewport_size.x / 1280.0, viewport_size.y / 720.0), 0.55, 1.15)
     var center_x := viewport_size.x * 0.5
 
