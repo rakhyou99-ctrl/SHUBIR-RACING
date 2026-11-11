@@ -284,23 +284,25 @@ func _run_smoke_tests() -> void:
                 instance.free()
                 quit(1)
                 return
-            var active_brake_material := test_brake_lights[0].material_override as StandardMaterial3D
-            if active_brake_material == null or active_brake_material.emission_energy_multiplier < 2.7 or active_brake_material.albedo_color.r < 0.9:
-                push_error("Brake lamps did not brighten red while braking.")
-                root.remove_child(instance)
-                instance.free()
-                quit(1)
-                return
+            for brake_lamp in test_brake_lights:
+                var active_brake_material := brake_lamp.material_override as StandardMaterial3D
+                if active_brake_material == null or active_brake_material.emission_energy_multiplier < 2.7 or active_brake_material.albedo_color.r < 0.9:
+                    push_error("Both brake lamps must brighten red while braking.")
+                    root.remove_child(instance)
+                    instance.free()
+                    quit(1)
+                    return
 
             instance.set("touch_brake", false)
             await process_frame
-            var released_brake_material := test_brake_lights[0].material_override as StandardMaterial3D
-            if released_brake_material == null or released_brake_material.emission_energy_multiplier > 1.1:
-                push_error("Brake lamps did not return to their normal state after release.")
-                root.remove_child(instance)
-                instance.free()
-                quit(1)
-                return
+            for brake_lamp in test_brake_lights:
+                var released_brake_material := brake_lamp.material_override as StandardMaterial3D
+                if released_brake_material == null or released_brake_material.emission_energy_multiplier > 1.1:
+                    push_error("Both brake lamps must return to normal glow after release.")
+                    root.remove_child(instance)
+                    instance.free()
+                    quit(1)
+                    return
             print("Brake lamp response passed: bright red under braking and normal glow after release.")
 
             # Brake intentionally locks Boost until the Boost control is released.
