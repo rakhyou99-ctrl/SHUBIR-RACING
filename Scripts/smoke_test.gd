@@ -1155,7 +1155,7 @@ func _run_smoke_tests() -> void:
                 return
             var pause_overlay := fresh_race.find_child("PauseOverlay", true, false)
             await process_frame
-            if not _overlay_controls_fit(pause_overlay, ["ResumeButton", "Restart", "MainMenuButton"], "Pause overlay"):
+            if not _overlay_controls_fit(pause_overlay, ["ResumeButton", "RestartButton", "MainMenuButton"], "Pause overlay"):
                 fresh_race.queue_free()
                 await process_frame
                 quit(1)
