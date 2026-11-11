@@ -504,6 +504,40 @@ func _run_smoke_tests() -> void:
                 return
             print("Spawn lane safety check passed: occupied lanes avoided.")
 
+            # Recycled objects must reset their swept-history metadata to their new
+            # spawn position, otherwise a teleport can create a phantom collision.
+            fresh_race.set("speed", 100.0)
+            test_traffic.position = Vector3(3.5, test_traffic.position.y, 17.0)
+            test_traffic.set_meta("previous_frame_x", 3.5)
+            test_traffic.set_meta("previous_frame_z", 17.0)
+            fresh_race.call("_move_traffic", 0.016)
+            if absf(float(test_traffic.get_meta("previous_frame_z")) - test_traffic.position.z) > 0.001 or test_traffic.position.z > -180.0:
+                push_error("Traffic recycle did not reset swept collision history at the new spawn point.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            var recycle_obstacle: Node3D = fresh_obstacles[0]
+            recycle_obstacle.position = Vector3(3.5, recycle_obstacle.position.y, 17.0)
+            recycle_obstacle.set_meta("previous_frame_x", 3.5)
+            recycle_obstacle.set_meta("previous_frame_z", 17.0)
+            fresh_race.call("_move_obstacles", 0.016)
+            if absf(float(recycle_obstacle.get_meta("previous_frame_z")) - recycle_obstacle.position.z) > 0.001 or recycle_obstacle.position.z > -200.0:
+                push_error("Obstacle recycle did not reset swept collision history at the new spawn point.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            fresh_race.call("_check_traffic_collision")
+            fresh_race.call("_check_obstacle_collision")
+            if fresh_race.get("game_over"):
+                push_error("Recycled traffic or obstacle caused a phantom collision at its new spawn point.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Recycle checks passed: traffic and cones reset swept history without phantom hits.")
+
             # A safe lateral pass across the player's Z must award exactly one near-miss reward.
             fresh_race.set("speed", 100.0)
             fresh_race.set("previous_car_frame_x", fresh_car.position.x)
