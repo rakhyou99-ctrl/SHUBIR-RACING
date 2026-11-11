@@ -68,6 +68,9 @@ func _run_smoke_tests() -> void:
                 return
 
             instance.set("touch_brake", false)
+            # Brake intentionally locks Boost until the Boost control is released.
+            instance.set("touch_nitro", false)
+            await process_frame
             instance.set("touch_nitro", true)
             for frame in range(3):
                 await process_frame
