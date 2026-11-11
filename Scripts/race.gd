@@ -869,6 +869,7 @@ func _move_traffic(delta: float) -> void:
         # while the player catches slower traffic naturally.
         var relative_speed := speed - cruise_speed
         var previous_z := traffic.position.z
+        traffic.set_meta("previous_frame_z", previous_z)
         traffic.position.z += relative_speed * delta * 0.12
         # Award a near miss in either direction: the player may overtake
         # slower traffic, or faster traffic may pass the player.
@@ -884,6 +885,8 @@ func _move_traffic(delta: float) -> void:
             traffic.set_meta("sway_phase", randf_range(0.0, TAU))
             traffic.set_meta("sway_rate", randf_range(0.65, 1.15))
             traffic.set_meta("cruise_speed", randf_range(62.0, 108.0))
+            # Do not sweep the recycled car across the whole road on the next collision check.
+            traffic.set_meta("previous_frame_z", traffic.position.z)
 
 
 func _show_stage_feedback(stages_gained: int = 1) -> void:
@@ -937,8 +940,13 @@ func _check_traffic_collision() -> void:
     if game_over or game_paused:
         return
     for traffic in traffic_cars:
-        # Match the collision window to the visible car body dimensions.
-        if absf(traffic.position.z - car.position.z) < 3.2 and absf(traffic.position.x - car.position.x) < 1.8:
+        # Sweep the traffic car's previous-to-current Z movement so a fast frame
+        # cannot skip through the player's collision window between physics updates.
+        var previous_z := float(traffic.get_meta("previous_frame_z", traffic.position.z))
+        var nearest_z := clampf(car.position.z, minf(previous_z, traffic.position.z), maxf(previous_z, traffic.position.z))
+        var longitudinal_gap := absf(nearest_z - car.position.z)
+        var lateral_gap := absf(traffic.position.x - car.position.x)
+        if longitudinal_gap < 3.2 and lateral_gap < 1.8:
             _finish_race()
             return
 
