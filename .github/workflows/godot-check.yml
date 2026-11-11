@@ -81,7 +81,7 @@ jobs:
         run: |
           set -euo pipefail
           LOG_FILE="$RUNNER_TEMP/game-screen-smoke.log"
-          if ! godot --verbose --headless --path . --script Scripts/smoke_test.gd >"$LOG_FILE" 2>&1; then
+          if ! timeout --signal=TERM --kill-after=15s 300s godot --verbose --headless --path . --script Scripts/smoke_test.gd >"$LOG_FILE" 2>&1; then
             cat "$LOG_FILE"
             exit 1
           fi
