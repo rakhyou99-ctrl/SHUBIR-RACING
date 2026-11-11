@@ -1,0 +1,22 @@
+# Godot editor/import cache
+.godot/
+
+# Android build outputs
+/build/
+/exported/
+*.apk
+*.aab
+
+# Private signing material — never commit release keys or credentials
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.pem
+*.key
+
+# Local editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
