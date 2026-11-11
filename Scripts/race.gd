@@ -6,6 +6,7 @@ var speed := 0.0
 var distance := 0.0
 var bonus_score := 0
 var score_label: Label
+var near_miss_total_label: Label
 var steer := 0.0
 var nitro_left := 3.0
 var road_segments: Array[Node3D] = []
@@ -202,9 +203,10 @@ func _process(delta: float) -> void:
         return
 
     score_label.text = "SCORE  %06d" % int(distance * 1000.0 + bonus_score)
+    near_miss_total_label.text = "NEAR MISSES  %02d  •  BONUS  +%d" % [near_miss_count, bonus_score]
     speed_label.text = "SPEED  %03d km/h" % int(speed)
     distance_label.text = "DISTANCE  %.2f km" % distance
-    best_label.text = "BEST  %.2f km" % best_distance
+    best_label.text = "BEST  %.2f km  •  %06d" % [best_distance, best_score]
     race_stage_label.text = "STAGE  %02d" % race_stage
     if boosting:
         nitro_label.text = "BOOST ACTIVE  %.1f s" % nitro_left
@@ -1288,6 +1290,8 @@ func _layout_race_ui() -> void:
     near_miss_label.size = Vector2(360, 38)
     score_label.position = Vector2(22, 198) * scale_factor
     score_label.scale = Vector2.ONE * scale_factor
+    near_miss_total_label.position = Vector2(22, 224) * scale_factor
+    near_miss_total_label.scale = Vector2.ONE * scale_factor
     speed_label.position = Vector2(22, 16) * scale_factor
     distance_label.position = Vector2(22, 54) * scale_factor
     best_label.position = Vector2(22, 86) * scale_factor
