@@ -99,7 +99,7 @@ func _layout_menu() -> void:
 
     var button_gap := 14.0 * scale_factor
     var heights := [76.0, 76.0, 64.0, 58.0]
-    var total_height := (heights[0] + heights[1] + heights[2] + heights[3]) * scale_factor + button_gap * 3.0
+    var total_height: float = (heights[0] + heights[1] + heights[2] + heights[3]) * scale_factor + button_gap * 3.0
     var start_y := maxf(viewport_size.y * 0.39, (viewport_size.y - total_height) * 0.53)
     var buttons := [play_button, garage_button, settings_button, exit_button]
     var y := start_y
