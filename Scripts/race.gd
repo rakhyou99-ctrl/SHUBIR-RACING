@@ -1050,7 +1050,7 @@ func _finish_race() -> void:
     content.add_child(title)
 
     var subtitle := Label.new()
-    subtitle.text = "NEW PERSONAL BEST!" if new_record else "KEEP PUSHING. TRY AGAIN!"
+    subtitle.text = "NEW HIGH SCORE!" if new_score_record else ("NEW DISTANCE RECORD!" if new_record else "KEEP PUSHING. TRY AGAIN!")
     subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     subtitle.add_theme_font_size_override("font_size", 23)
     subtitle.add_theme_color_override("font_color", Color("#FFD0AD"))
@@ -1062,6 +1062,13 @@ func _finish_race() -> void:
     score.add_theme_font_size_override("font_size", 30)
     score.add_theme_color_override("font_color", Color.WHITE)
     content.add_child(score)
+
+    var run_stats := Label.new()
+    run_stats.text = "NEAR MISSES  %02d  (+%d BONUS)   •   STAGE  %02d" % [near_miss_count, bonus_score, race_stage]
+    run_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    run_stats.add_theme_font_size_override("font_size", 20)
+    run_stats.add_theme_color_override("font_color", Color("#FFD34E"))
+    content.add_child(run_stats)
 
     var best := Label.new()
     best.text = "BEST DISTANCE  %.2f km   •   BEST SCORE  %06d" % [best_distance, best_score]
