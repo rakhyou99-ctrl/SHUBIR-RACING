@@ -202,6 +202,17 @@ func _run_smoke_tests() -> void:
             var game_state: Node = root.get_node("GameState")
             var original_sensitivity := float(game_state.get("steering_sensitivity"))
             var original_volume := float(game_state.get("master_volume"))
+            # Settings writes must preserve existing race records in the shared config.
+            var preservation_config := ConfigFile.new()
+            preservation_config.load("user://shubir_racing.cfg")
+            preservation_config.set_value("score", "best_distance", 12.34)
+            preservation_config.set_value("score", "best_score", 56789)
+            if preservation_config.save("user://shubir_racing.cfg") != OK:
+                push_error("Could not prepare config preservation test.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
             var settings_instance: Control = instance
             var sensitivity_slider: HSlider = settings_instance.get("steering_slider")
             var volume_slider: HSlider = settings_instance.get("volume_slider")
@@ -226,6 +237,14 @@ func _run_smoke_tests() -> void:
             game_state.set("steering_sensitivity", original_sensitivity)
             game_state.set("master_volume", original_volume)
             game_state.call("save_settings")
+            var preserved_config := ConfigFile.new()
+            if preserved_config.load("user://shubir_racing.cfg") != OK or absf(float(preserved_config.get_value("score", "best_distance", 0.0)) - 12.34) > 0.001 or int(preserved_config.get_value("score", "best_score", 0)) != 56789:
+                push_error("Saving settings overwrote existing best distance or score records.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Settings/score config isolation passed: preference saves preserve existing race records.")
             print("Settings slider persistence checks passed: tilt sensitivity and master volume.")
 
             for test_size in [Vector2(640, 360), Vector2(800, 360), Vector2(2340, 1080)]:
