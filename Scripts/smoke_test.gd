@@ -154,6 +154,61 @@ func _run_smoke_tests() -> void:
                 return
             print("Race input checks passed: accelerator, brake, boost.")
 
+            # Simulate Android-style independent finger IDs against the live pedal rectangles.
+            # This exercises the raw ScreenTouch/ScreenDrag path, not only the Button callbacks.
+            instance.set("touch_accel", false)
+            instance.set("touch_brake", false)
+            instance.set("touch_nitro", false)
+            var accel_control: Control = instance.get("accel_button")
+            var boost_control: Control = instance.get("boost_button")
+            var brake_control: Control = instance.get("brake_button")
+            var accel_center := accel_control.get_global_rect().get_center()
+            var boost_center := boost_control.get_global_rect().get_center()
+            var brake_center := brake_control.get_global_rect().get_center()
+            var accel_finger := InputEventScreenTouch.new()
+            accel_finger.index = 0
+            accel_finger.position = accel_center
+            accel_finger.pressed = true
+            instance.call("_input", accel_finger)
+            var boost_finger := InputEventScreenTouch.new()
+            boost_finger.index = 1
+            boost_finger.position = boost_center
+            boost_finger.pressed = true
+            instance.call("_input", boost_finger)
+            if not instance.get("touch_accel") or not instance.get("touch_nitro"):
+                push_error("Two-finger Accelerator + Boost touch input was not detected.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            var boost_drag := InputEventScreenDrag.new()
+            boost_drag.index = 1
+            boost_drag.position = brake_center
+            instance.call("_input", boost_drag)
+            if not instance.get("touch_accel") or not instance.get("touch_brake") or instance.get("touch_nitro"):
+                push_error("Multi-touch drag did not transfer the second finger to the Brake pedal.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            var accel_release := InputEventScreenTouch.new()
+            accel_release.index = 0
+            accel_release.position = accel_center
+            accel_release.pressed = false
+            instance.call("_input", accel_release)
+            var brake_release := InputEventScreenTouch.new()
+            brake_release.index = 1
+            brake_release.position = brake_center
+            brake_release.pressed = false
+            instance.call("_input", brake_release)
+            if instance.get("touch_accel") or instance.get("touch_brake") or instance.get("touch_nitro"):
+                push_error("Multi-touch release left a pedal or Boost control stuck.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Raw multi-touch checks passed: two fingers, drag between pedals, and independent release.")
+
             var obstacles: Array = instance.get("road_obstacles")
             if obstacles.is_empty():
                 push_error("Race scene did not create road collision hazards.")
