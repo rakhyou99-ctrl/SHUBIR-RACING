@@ -2,6 +2,7 @@ config_version=5
 
 [application]
 config/name="SHUBIR RACING"
+config/icon="res://Assets/icon.png"
 run/main_scene="res://Scenes/main_menu.tscn"
 
 [autoload]
