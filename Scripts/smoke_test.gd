@@ -366,7 +366,7 @@ func _run_smoke_tests() -> void:
         if scene_path.ends_with("/race.tscn"):
             # Verify all driving controls remain visible and independently tappable
             # across compact, standard and high-resolution landscape viewports.
-            var race_instance: Control = instance
+            var race_instance: Node3D = instance
             var race_controls: Array = [
                 race_instance.get("brake_button"),
                 race_instance.get("boost_button"),
