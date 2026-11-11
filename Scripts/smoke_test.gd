@@ -926,6 +926,10 @@ func _run_smoke_tests() -> void:
             fresh_race.set("touch_accel", true)
             fresh_race.set("touch_brake", true)
             fresh_race.set("touch_nitro", true)
+            fresh_race.set("tilt_calibrated", true)
+            fresh_race.set("tilt_center_x", 11.2)
+            fresh_race.set("tilt_filtered_x", 12.0)
+            fresh_race.set("tilt_steer", 0.8)
             fresh_race.call("_show_pause_menu")
             if not fresh_race.get("game_paused") or fresh_race.get("touch_accel") or fresh_race.get("touch_brake") or fresh_race.get("touch_nitro"):
                 push_error("Pause did not stop gameplay and clear held controls.")
@@ -955,6 +959,13 @@ func _run_smoke_tests() -> void:
                 await process_frame
                 quit(1)
                 return
+            if bool(fresh_race.get("tilt_calibrated")) or absf(float(fresh_race.get("tilt_center_x"))) > 0.001 or absf(float(fresh_race.get("tilt_filtered_x"))) > 0.001 or absf(float(fresh_race.get("tilt_steer"))) > 0.001:
+                push_error("Resume did not reset tilt calibration and steering to prevent a sudden steering jump.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Pause/Resume tilt recalibration passed: steering returns to neutral until a fresh sensor sample.")
             if engine_audio.stream_paused or boost_audio.stream_paused or brake_audio.stream_paused or near_miss_audio.stream_paused:
                 push_error("Resume did not restore gameplay audio playback.")
                 fresh_race.queue_free()
