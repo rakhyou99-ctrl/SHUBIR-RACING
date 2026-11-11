@@ -96,7 +96,9 @@ func _build_garage() -> void:
     fill_light.position = Vector3(-3, 3, 2)
     fill_light.light_energy = 1.0
     fill_light.omni_range = 12.0
-    fill_light.shadow_enabled = true
+    # Keep the key light's shadows; the fill light is only for soft visibility.
+    # Disabling its shadow map reduces the 3D showroom cost on Android GPUs.
+    fill_light.shadow_enabled = false
     preview_root.add_child(fill_light)
 
     # Soft front and overhead fills keep the grille, bonnet and roof readable
