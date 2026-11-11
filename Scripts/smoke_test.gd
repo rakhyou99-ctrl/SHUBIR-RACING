@@ -266,6 +266,17 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             print("Pause and Resume navigation/control checks passed.")
+            # Crossing 0.50 km must award the stage-two bonus exactly once.
+            fresh_race.set("distance", 0.499)
+            fresh_race.set("speed", 0.0)
+            fresh_race.call("_process", 0.01)
+            if fresh_race.get("race_stage") != 2 or fresh_race.get("stage_bonus_score") != 500:
+                push_error("Crossing the first stage threshold did not award +500.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Stage progression awarded the expected +500 bonus.")
             test_traffic.position = Vector3(fresh_car.position.x, test_traffic.position.y, fresh_car.position.z)
             test_traffic.set_meta("previous_frame_x", fresh_car.position.x)
             test_traffic.set_meta("previous_frame_z", fresh_car.position.z)
@@ -278,7 +289,35 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             print("Traffic collision triggered Game Over and stopped the race.")
+            if absf(float(fresh_race.get("best_distance")) - float(fresh_race.get("distance"))) > 0.001 or int(fresh_race.get("best_score")) <= 0:
+                push_error("Game Over did not update the best distance and score records.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            var saved_config := ConfigFile.new()
+            if saved_config.load("user://shubir_racing.cfg") != OK or absf(float(saved_config.get_value("score", "best_distance", 0.0)) - float(fresh_race.get("best_distance"))) > 0.001 or int(saved_config.get_value("score", "best_score", 0)) != int(fresh_race.get("best_score")):
+                push_error("Best distance and score were not written to the persistent config.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Best distance and score were saved after Game Over.")
             fresh_race.queue_free()
+            await process_frame
+            var reload_scene := load("res://Scenes/race.tscn") as PackedScene
+            var reloaded_race: Node3D = reload_scene.instantiate()
+            root.add_child(reloaded_race)
+            current_scene = reloaded_race
+            await process_frame
+            if absf(float(reloaded_race.get("best_distance")) - float(saved_config.get_value("score", "best_distance"))) > 0.001 or int(reloaded_race.get("best_score")) != int(saved_config.get_value("score", "best_score")):
+                push_error("A new race scene did not reload the saved best records.")
+                reloaded_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Best distance and score reload correctly in a fresh race.")
+            reloaded_race.queue_free()
             await process_frame
 
         if is_instance_valid(instance) and instance.get_parent() != null:
