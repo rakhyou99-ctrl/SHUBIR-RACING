@@ -865,7 +865,7 @@ func _check_obstacle_collision() -> void:
         # Sweep the cone's movement segment to avoid tunneling at high speed.
         var previous_z := float(obstacle.get_meta("previous_frame_z", obstacle.position.z))
         var previous_x := float(obstacle.get_meta("previous_frame_x", obstacle.position.x))
-        if _swept_overlap(previous_x, previous_z, obstacle.position.x, obstacle.position.z, previous_car_frame_x, car.position.x, 1.15, 1.75):
+        if _swept_overlap(previous_x, previous_z, obstacle.position.x, obstacle.position.z, previous_car_frame_x, car.position.x, 1.45, 2.35):
             _finish_race()
             return
 
@@ -898,7 +898,7 @@ func _move_traffic(delta: float) -> void:
             var traffic_x_at_crossing := lerpf(previous_x, traffic.position.x, crossing_t)
             var car_x_at_crossing := lerpf(previous_car_frame_x, car.position.x, crossing_t)
             var lateral_gap := absf(traffic_x_at_crossing - car_x_at_crossing)
-            if lateral_gap >= 1.8 and lateral_gap < 3.25 and not bool(traffic.get_meta("near_miss_awarded", false)):
+            if lateral_gap >= 1.95 and lateral_gap < 3.25 and not bool(traffic.get_meta("near_miss_awarded", false)):
                 traffic.set_meta("near_miss_awarded", true)
                 _register_near_miss()
         if traffic.position.z > 16.0 or traffic.position.z < -360.0:
@@ -983,7 +983,7 @@ func _check_traffic_collision() -> void:
         # cannot skip through the player's collision window between physics updates.
         var previous_z := float(traffic.get_meta("previous_frame_z", traffic.position.z))
         var previous_x := float(traffic.get_meta("previous_frame_x", traffic.position.x))
-        if _swept_overlap(previous_x, previous_z, traffic.position.x, traffic.position.z, previous_car_frame_x, car.position.x, 1.8, 3.2):
+        if _swept_overlap(previous_x, previous_z, traffic.position.x, traffic.position.z, previous_car_frame_x, car.position.x, 1.95, 3.6):
             _finish_race()
             return
 
