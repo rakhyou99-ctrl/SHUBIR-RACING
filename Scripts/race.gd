@@ -32,6 +32,7 @@ var touch_points: Dictionary = {}
 var game_over := false
 var game_paused := false
 var best_distance := 0.0
+var best_score := 0
 var engine_player: AudioStreamPlayer
 var nitro_player: AudioStreamPlayer
 var crash_player: AudioStreamPlayer
@@ -1012,9 +1013,14 @@ func _finish_race() -> void:
         impact_tween.tween_property(chase_camera, "position", camera_home + Vector3(0.08, 0.03, 0.0), 0.07)
         impact_tween.tween_property(chase_camera, "position", camera_home, 0.10)
 
+    var final_score := int(distance * 1000.0 + bonus_score)
     var new_record := distance > best_distance
+    var new_score_record := final_score > best_score
     if new_record:
         best_distance = distance
+    if new_score_record:
+        best_score = final_score
+    if new_record or new_score_record:
         _save_best_distance()
 
     # Full-screen dim layer with a centered layout that adapts to landscape sizes.
@@ -1058,7 +1064,7 @@ func _finish_race() -> void:
     content.add_child(score)
 
     var best := Label.new()
-    best.text = "BEST  %.2f km" % best_distance
+    best.text = "BEST DISTANCE  %.2f km   •   BEST SCORE  %06d" % [best_distance, best_score]
     best.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     best.add_theme_font_size_override("font_size", 22)
     best.add_theme_color_override("font_color", Color("#BFCAD4"))
@@ -1109,12 +1115,14 @@ func _load_best_distance() -> void:
     var save := ConfigFile.new()
     if save.load("user://shubir_racing.cfg") == OK:
         best_distance = float(save.get_value("score", "best_distance", 0.0))
+        best_score = int(save.get_value("score", "best_score", 0))
 
 func _save_best_distance() -> void:
     # Preserve player settings stored in the same config file when saving a new record.
     var save := ConfigFile.new()
     save.load("user://shubir_racing.cfg")
     save.set_value("score", "best_distance", best_distance)
+    save.set_value("score", "best_score", best_score)
     save.save("user://shubir_racing.cfg")
 
 func _make_ui() -> void:
