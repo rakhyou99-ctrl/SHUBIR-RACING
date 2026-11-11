@@ -512,6 +512,21 @@ func _run_smoke_tests() -> void:
                     instance.free()
                     quit(1)
                     return
+            for pedal in [brake_control, accel_control]:
+                var grip_ribs := 0
+                var metal_fasteners := 0
+                for detail in pedal.get_children():
+                    if detail is ColorRect and detail.size.x > 20.0 and detail.size.y <= 6.0:
+                        grip_ribs += 1
+                    elif detail is ColorRect and detail.size.x <= 8.0 and detail.size.y <= 8.0:
+                        metal_fasteners += 1
+                if grip_ribs != 5 or metal_fasteners != 4:
+                    push_error("Each metal pedal must show five rubber grip ribs and four metal fasteners.")
+                    instance.call("_layout_race_ui")
+                    root.remove_child(instance)
+                    instance.free()
+                    quit(1)
+                    return
             var boost_style := boost_control.get_theme_stylebox("normal") as StyleBoxFlat
             if boost_style == null or boost_style.get_corner_radius(0) < 15:
                 push_error("BOOST must remain visually separate from the rectangular pedals.")
@@ -520,7 +535,7 @@ func _run_smoke_tests() -> void:
                 instance.free()
                 quit(1)
                 return
-            print("Pedal design checks passed: rectangular metal Brake/Accelerator and separate rounded BOOST.")
+            print("Pedal design checks passed: rectangular metal plates, five grip ribs, four fasteners, and separate rounded BOOST.")
 
             var obstacles: Array = instance.get("road_obstacles")
             if obstacles.is_empty():
