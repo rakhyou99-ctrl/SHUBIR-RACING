@@ -861,13 +861,8 @@ func _check_obstacle_collision() -> void:
     for obstacle in road_obstacles:
         # Sweep the cone's movement segment to avoid tunneling at high speed.
         var previous_z := float(obstacle.get_meta("previous_frame_z", obstacle.position.z))
-        var nearest_z := clampf(car.position.z, minf(previous_z, obstacle.position.z), maxf(previous_z, obstacle.position.z))
-        var longitudinal_gap := absf(nearest_z - car.position.z)
         var previous_x := float(obstacle.get_meta("previous_frame_x", obstacle.position.x))
-        var relative_x_start := previous_x - previous_car_frame_x
-        var relative_x_end := obstacle.position.x - car.position.x
-        var nearest_relative_x := clampf(0.0, minf(relative_x_start, relative_x_end), maxf(relative_x_start, relative_x_end))
-        if longitudinal_gap < 1.75 and absf(nearest_relative_x) < 1.15:
+        if _swept_overlap(previous_x, previous_z, obstacle.position.x, obstacle.position.z, previous_car_frame_x, car.position.x, 1.15, 1.75):
             _finish_race()
             return
 
@@ -961,6 +956,20 @@ func _register_near_miss() -> void:
         near_miss_tween.tween_property(near_miss_label, "modulate:a", 0.0, 0.35)
 
 
+func _swept_overlap(previous_x: float, previous_z: float, current_x: float, current_z: float, car_previous_x: float, car_current_x: float, lateral_limit: float, longitudinal_limit: float) -> bool:
+    # Find the closest point along the relative 2D movement segment. Evaluating
+    # both axes at the same time avoids false hits from unrelated X/Z minima.
+    var relative_start := Vector2(previous_x - car_previous_x, previous_z - car.position.z)
+    var relative_end := Vector2(current_x - car_current_x, current_z - car.position.z)
+    var movement := relative_end - relative_start
+    var movement_length_sq := movement.length_squared()
+    var closest_t := 0.0
+    if movement_length_sq > 0.000001:
+        closest_t = clampf(-relative_start.dot(movement) / movement_length_sq, 0.0, 1.0)
+    var closest := relative_start + movement * closest_t
+    return absf(closest.x) < lateral_limit and absf(closest.y) < longitudinal_limit
+
+
 func _check_traffic_collision() -> void:
     if game_over or game_paused:
         return
@@ -968,13 +977,8 @@ func _check_traffic_collision() -> void:
         # Sweep the traffic car's previous-to-current Z movement so a fast frame
         # cannot skip through the player's collision window between physics updates.
         var previous_z := float(traffic.get_meta("previous_frame_z", traffic.position.z))
-        var nearest_z := clampf(car.position.z, minf(previous_z, traffic.position.z), maxf(previous_z, traffic.position.z))
-        var longitudinal_gap := absf(nearest_z - car.position.z)
         var previous_x := float(traffic.get_meta("previous_frame_x", traffic.position.x))
-        var relative_x_start := previous_x - previous_car_frame_x
-        var relative_x_end := traffic.position.x - car.position.x
-        var nearest_relative_x := clampf(0.0, minf(relative_x_start, relative_x_end), maxf(relative_x_start, relative_x_end))
-        if longitudinal_gap < 3.2 and absf(nearest_relative_x) < 1.8:
+        if _swept_overlap(previous_x, previous_z, traffic.position.x, traffic.position.z, previous_car_frame_x, car.position.x, 1.8, 3.2):
             _finish_race()
             return
 
