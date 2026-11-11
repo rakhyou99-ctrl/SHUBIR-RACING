@@ -138,6 +138,25 @@ func _ready() -> void:
     # Wait for a valid live sensor sample before calibrating neutral tilt.
     tilt_calibrated = false
 
+
+func _update_tilt_steering(accel_reading: Vector3, delta: float) -> void:
+    # Gravity magnitude confirms a live accelerometer sample is available.
+    if accel_reading.length() > 6.0:
+        if not tilt_calibrated:
+            tilt_center_x = accel_reading.y
+            tilt_filtered_x = accel_reading.y
+            tilt_calibrated = true
+        # Low-pass filter reduces sensor jitter before converting tilt to steering.
+        tilt_filtered_x = lerpf(tilt_filtered_x, accel_reading.y, minf(1.0, delta * 10.0))
+        var tilt_delta := tilt_filtered_x - tilt_center_x
+        # A small dead zone prevents unwanted lane drift while held nearly level.
+        if absf(tilt_delta) < 0.75:
+            tilt_delta = 0.0
+        var target_tilt := clampf(tilt_delta / 3.5, -1.0, 1.0)
+        tilt_steer = move_toward(tilt_steer, target_tilt, delta * 4.5)
+    else:
+        tilt_steer = move_toward(tilt_steer, 0.0, delta * 3.5)
+
 func _process(delta: float) -> void:
     if game_over or game_paused:
         return
@@ -162,23 +181,8 @@ func _process(delta: float) -> void:
         boost_locked = true
     var boosting := touch_nitro and accel and not braking and not boost_locked and nitro_left > 0.0
 
-    # Landscape phone tilt steering. Ignore tiny sensor movement to prevent drift.
-    var accel_reading := Input.get_accelerometer()
-    if accel_reading.length() > 6.0:
-        if not tilt_calibrated:
-            tilt_center_x = accel_reading.y
-            tilt_filtered_x = accel_reading.y
-            tilt_calibrated = true
-        # Low-pass filter reduces sensor jitter before converting tilt to steering.
-        tilt_filtered_x = lerpf(tilt_filtered_x, accel_reading.y, minf(1.0, delta * 10.0))
-        var tilt_delta := tilt_filtered_x - tilt_center_x
-        # A small dead zone prevents unwanted lane drift while held nearly level.
-        if absf(tilt_delta) < 0.75:
-            tilt_delta = 0.0
-        var target_tilt := clampf(tilt_delta / 3.5, -1.0, 1.0)
-        tilt_steer = move_toward(tilt_steer, target_tilt, delta * 4.5)
-    else:
-        tilt_steer = move_toward(tilt_steer, 0.0, delta * 3.5)
+    # Landscape phone tilt steering; isolated in a helper for deterministic sensor tests.
+    _update_tilt_steering(Input.get_accelerometer(), delta)
 
     if braking:
         speed = move_toward(speed, 0.0, 150.0 * delta)
