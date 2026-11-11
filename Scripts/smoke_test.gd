@@ -431,6 +431,47 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             print("Pause and Resume navigation/control checks passed.")
+
+            # Godot Node notifications: 201 = application paused, 1007 = Android Back request.
+            # Exercise the same lifecycle entry points Android sends while the race is active.
+            fresh_race.set("touch_accel", true)
+            fresh_race.set("touch_nitro", true)
+            fresh_race.call("_notification", 201)
+            if not fresh_race.get("game_paused") or fresh_race.get("touch_accel") or fresh_race.get("touch_nitro"):
+                push_error("Application-paused notification did not safely pause the race.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            var background_overlay := fresh_race.find_child("PauseOverlay", true, false)
+            var background_resume := background_overlay.find_child("ResumeButton", true, false) if background_overlay != null else null
+            if background_resume == null:
+                push_error("Background pause did not provide a Resume action.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            background_resume.pressed.emit()
+            await process_frame
+            if fresh_race.get("game_paused"):
+                push_error("Race remained paused after resuming from application background.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            fresh_race.call("_notification", 1007)
+            if not fresh_race.get("game_paused"):
+                push_error("Android Back notification did not open the race pause menu.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Android lifecycle checks passed: background pause/resume and system Back.")
+            var back_overlay := fresh_race.find_child("PauseOverlay", true, false)
+            var back_resume := back_overlay.find_child("ResumeButton", true, false) if back_overlay != null else null
+            if back_resume != null:
+                back_resume.pressed.emit()
+                await process_frame
             # Crossing 0.50 km must award the stage-two bonus exactly once.
             fresh_race.set("distance", 0.5)
             fresh_race.set("speed", 0.0)
