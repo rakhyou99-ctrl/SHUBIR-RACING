@@ -63,6 +63,7 @@ var tilt_center_x := 0.0
 var tilt_filtered_x := 0.0
 var tilt_steer := 0.0
 var tilt_calibrated := false
+var tilt_direction_sign := 1.0
 
 func _exit_tree() -> void:
     # Stop playback and detach generated streams before releasing audio players.
@@ -147,27 +148,32 @@ func _ready() -> void:
 func _update_tilt_steering(accel_reading: Vector3, delta: float) -> void:
     # Gravity magnitude confirms a live accelerometer sample is available.
     if accel_reading.length() > 6.0:
+        # Android reports accelerometer axes in the handset's natural
+        # orientation. In reverse-landscape the horizontal steering axis flips.
+        tilt_direction_sign = -1.0 if DisplayServer.screen_get_orientation() == DisplayServer.SCREEN_REVERSE_LANDSCAPE else 1.0
         if not tilt_calibrated:
             tilt_center_x = accel_reading.y
             tilt_filtered_x = accel_reading.y
             tilt_calibrated = true
-        # Low-pass filter reduces sensor jitter before converting tilt to steering.
-        tilt_filtered_x = lerpf(tilt_filtered_x, accel_reading.y, minf(1.0, delta * 10.0))
-        var tilt_delta := tilt_filtered_x - tilt_center_x
-        # A small dead zone prevents unwanted lane drift while held nearly level.
-        if absf(tilt_delta) < 0.75:
+        # Filter small sensor fluctuations without making steering feel delayed.
+        tilt_filtered_x = lerpf(tilt_filtered_x, accel_reading.y, minf(1.0, delta * 14.0))
+        var tilt_delta := (tilt_filtered_x - tilt_center_x) * tilt_direction_sign
+        # Lower dead-zone and a stronger response make ordinary wrist movement register.
+        if absf(tilt_delta) < 0.35:
             tilt_delta = 0.0
-        var target_tilt := clampf(tilt_delta / 3.5, -1.0, 1.0)
-        tilt_steer = move_toward(tilt_steer, target_tilt, delta * 4.5)
+        var target_tilt := clampf(tilt_delta / 2.0, -1.0, 1.0)
+        tilt_steer = move_toward(tilt_steer, target_tilt, delta * 8.0)
     else:
-        tilt_steer = move_toward(tilt_steer, 0.0, delta * 3.5)
+        tilt_steer = move_toward(tilt_steer, 0.0, delta * 5.0)
 
 
 func _apply_player_steering(delta: float) -> void:
     steer = tilt_steer
     previous_car_frame_x = car.position.x
-    car.position.x = clampf(car.position.x + steer * GameState.steering_sensitivity * delta * (3.4 + speed / 55.0), -4.0, 4.0)
-    car.rotation.z = lerpf(car.rotation.z, -steer * 0.075, minf(1.0, delta * 5.0))
+    # Stronger lateral response lets a normal phone tilt move between lanes
+    # in a controlled, predictable time instead of barely nudging the car.
+    car.position.x = clampf(car.position.x + steer * GameState.steering_sensitivity * delta * (5.2 + speed / 35.0), -4.0, 4.0)
+    car.rotation.z = lerpf(car.rotation.z, -steer * 0.11, minf(1.0, delta * 7.0))
 
 func _process(delta: float) -> void:
     if game_over or game_paused:
@@ -571,13 +577,34 @@ func _make_tree(parent: Node3D, tree_position: Vector3) -> void:
             leaves.position = Vector3(0.40, 2.42, -0.10)
         tree.add_child(leaves)
 
+func _ellipsoid(parent: Node3D, pos: Vector3, radii: Vector3, tint: Color) -> MeshInstance3D:
+    var part := MeshInstance3D.new()
+    var sphere := SphereMesh.new()
+    sphere.radius = 1.0
+    sphere.height = 2.0
+    sphere.radial_segments = 24
+    sphere.rings = 12
+    part.mesh = sphere
+    part.position = pos
+    part.scale = radii
+    var material := StandardMaterial3D.new()
+    material.albedo_color = tint
+    material.metallic = 0.48
+    material.roughness = 0.28
+    part.material_override = material
+    parent.add_child(part)
+    return part
+
+
 func _make_car() -> void:
     car = Node3D.new()
     car.position = Vector3(0, 0.45, 3)
     add_child(car)
     var body_color := Color("#1677E8") if GameState.selected_car == 0 else Color("#D83232")
-    _box(car, Vector3(0, 0.45, 0), Vector3(1.8, 0.55, 3.4), body_color)
-    _box(car, Vector3(0, 0.9, -0.25), Vector3(1.35, 0.55, 1.55), Color("#17212E"))
+    # Smooth ellipsoid shell replaces the old square slab body and gives the
+    # silhouette rounded shoulders and a lower sports-car stance.
+    _ellipsoid(car, Vector3(0, 0.45, 0), Vector3(1.0, 0.31, 1.88), body_color)
+    _ellipsoid(car, Vector3(0, 0.91, -0.22), Vector3(0.72, 0.28, 0.83), Color("#17212E"))
 
     # Sport-car body details: hood, roof glass, side skirts and front splitter.
     _box(car, Vector3(0, 0.735, -1.05), Vector3(1.42, 0.045, 1.05), body_color.lightened(0.10))
