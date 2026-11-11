@@ -22,7 +22,9 @@ func _run_smoke_tests() -> void:
 
         var instance := packed_scene.instantiate()
         root.add_child(instance)
-        for frame in range(5):
+        # Exercise the race loop for several seconds, not just scene construction.
+        var frames_to_run := 180 if scene_path.ends_with("/race.tscn") else 5
+        for frame in range(frames_to_run):
             await process_frame
 
         root.remove_child(instance)
