@@ -881,6 +881,19 @@ func _run_smoke_tests() -> void:
             test_traffic.set_meta("previous_frame_x", fresh_car.position.x)
             test_traffic.set_meta("previous_frame_z", fresh_car.position.z)
             fresh_race.set("previous_car_frame_x", fresh_car.position.x)
+            # Overlapping traffic and hazards must not end a race while its pause
+            # overlay is active; the same collision must still count after resume.
+            fresh_race.set("game_paused", true)
+            fresh_race.call("_check_traffic_collision")
+            fresh_race.call("_check_obstacle_collision")
+            if fresh_race.get("game_over"):
+                push_error("A traffic or road-hazard overlap ended the race while paused.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            fresh_race.set("game_paused", false)
+            print("Paused collision suppression passed for traffic and road hazards.")
             fresh_race.call("_check_traffic_collision")
             if not fresh_race.get("game_over"):
                 push_error("Traffic collision did not trigger Game Over.")
