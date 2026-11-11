@@ -67,6 +67,11 @@ func _notification(what: int) -> void:
 
 
 func _input(event: InputEvent) -> void:
+    # Ignore raw gameplay touches while an overlay is active. This prevents a
+    # pause-menu tap from being carried into the race as a held pedal/BOOST.
+    if game_paused or game_over:
+        touch_points.clear()
+        return
     # Track raw touch indices so accelerator + BOOST can be held with two fingers.
     if event is InputEventScreenTouch:
         if event.pressed:
