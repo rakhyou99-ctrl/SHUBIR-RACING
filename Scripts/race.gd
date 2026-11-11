@@ -65,11 +65,12 @@ var tilt_steer := 0.0
 var tilt_calibrated := false
 
 func _exit_tree() -> void:
-    # Stop active playback before the generated WAV streams and players are released.
-    # This also covers abrupt scene shutdowns used by CI and Android navigation.
+    # Stop playback and detach generated streams before releasing audio players.
+    # Clearing stream references lets Godot release the WAV and its playback object.
     for audio_player in [engine_player, nitro_player, crash_player, brake_player, near_miss_player]:
         if is_instance_valid(audio_player):
             audio_player.stop()
+            audio_player.stream = null
 
 func _notification(what: int) -> void:
     # Android Back is delivered as a window notification on mobile.
