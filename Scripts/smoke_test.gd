@@ -459,6 +459,28 @@ func _run_smoke_tests() -> void:
                 return
             print("Tilt steering logic checks passed: calibration, dead zone, left/right response, and sensor fallback.")
 
+            # Large sensor offsets must saturate at full steering rather than
+            # exceeding the normalized control range.
+            instance.set("tilt_steer", 0.0)
+            instance.set("tilt_filtered_x", 9.8)
+            instance.call("_update_tilt_steering", Vector3(0.0, 30.0, 0.0), 0.5)
+            if absf(float(instance.get("tilt_steer")) - 1.0) > 0.001:
+                push_error("Large positive phone tilt did not clamp to full steering.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            instance.set("tilt_steer", 0.0)
+            instance.set("tilt_filtered_x", 9.8)
+            instance.call("_update_tilt_steering", Vector3(0.0, -10.0, 0.0), 0.5)
+            if absf(float(instance.get("tilt_steer")) + 1.0) > 0.001:
+                push_error("Large negative phone tilt did not clamp to full opposite steering.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Tilt steering limit checks passed: extreme sensor offsets clamp to both full steering directions.")
+
             # Confirm the Settings sensitivity multiplier changes actual car movement.
             var steering_game_state: Node = root.get_node("GameState")
             var saved_sensitivity := float(steering_game_state.get("steering_sensitivity"))
