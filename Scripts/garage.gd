@@ -98,8 +98,9 @@ func _build_garage() -> void:
     var key_light := DirectionalLight3D.new()
     key_light.rotation_degrees = Vector3(-48, -32, 0)
     key_light.light_energy = 1.75
-    key_light.shadow_enabled = true
-    key_light.directional_shadow_max_distance = 18.0
+    # The showroom uses layered fill lighting; skip a realtime shadow map on
+    # mobile GPUs while keeping the car's shape readable from every angle.
+    key_light.shadow_enabled = false
     preview_root.add_child(key_light)
     var fill_light := OmniLight3D.new()
     fill_light.position = Vector3(-3, 3, 2)
