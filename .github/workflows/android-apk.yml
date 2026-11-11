@@ -63,14 +63,34 @@ jobs:
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> "$GITHUB_ENV"
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android" >> "$GITHUB_ENV"
 
+      - name: Configure permanent release signing
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.SHUBIR_RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.SHUBIR_RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.SHUBIR_RELEASE_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          if [ -z "$RELEASE_KEYSTORE_BASE64" ] || [ -z "$RELEASE_KEYSTORE_PASSWORD" ] || [ -z "$RELEASE_KEY_ALIAS" ]; then
+            echo "Missing release signing secrets. Add SHUBIR_RELEASE_KEYSTORE_BASE64, SHUBIR_RELEASE_KEYSTORE_PASSWORD, and SHUBIR_RELEASE_KEY_ALIAS in GitHub Actions secrets."
+            exit 1
+          fi
+          KEYSTORE_PATH="$RUNNER_TEMP/shubir-racing-release.keystore"
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          test -s "$KEYSTORE_PATH"
+          keytool -list -keystore "$KEYSTORE_PATH" -storepass "$RELEASE_KEYSTORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" >/dev/null
+          echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
+          echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=$RELEASE_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=$RELEASE_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+
       - name: Import project
         run: godot --headless --editor --path . --quit
 
-      - name: Export Android APK
+      - name: Export signed Android APK
         shell: bash
         run: |
           mkdir -p build
-          godot --headless --path . --export-debug "Android" build/SHUBIR-RACING.apk
+          godot --headless --path . --export-release "Android" build/SHUBIR-RACING.apk
           test -s build/SHUBIR-RACING.apk
 
       - name: Upload APK
