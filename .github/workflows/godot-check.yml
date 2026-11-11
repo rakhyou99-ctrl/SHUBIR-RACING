@@ -42,3 +42,6 @@ jobs:
             echo "Smoke-testing res://Scenes/${scene}.tscn"
             godot --headless --path . "res://Scenes/${scene}.tscn" --quit-after 5
           done
+
+      - name: Run gameplay collision logic tests
+        run: godot --headless --path . --script res://Tests/gameplay_logic_test.gd
