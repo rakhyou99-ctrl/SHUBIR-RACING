@@ -68,7 +68,9 @@ func _build_garage() -> void:
     viewport_box = SubViewportContainer.new()
     viewport_box.position = Vector2(10, 10)
     viewport_box.size = Vector2(800, 500)
-    viewport_box.stretch = true
+    # The viewport is resized explicitly in _layout_garage; disabling stretch
+    # avoids Godot rejecting SubViewport.size updates on mobile aspect changes.
+    viewport_box.stretch = false
     viewport_box.mouse_filter = Control.MOUSE_FILTER_STOP
     preview_frame.add_child(viewport_box)
     viewport_box.gui_input.connect(_on_preview_input)
@@ -141,9 +143,9 @@ func _build_garage() -> void:
     camera.fov = 66.0
     camera.near = 0.1
     camera.far = 100.0
+    preview_root.add_child(camera)
     camera.look_at(Vector3(0, 0.68, 0), Vector3.UP)
     camera.current = true
-    preview_root.add_child(camera)
 
     var floor := MeshInstance3D.new()
     var floor_mesh := PlaneMesh.new()
