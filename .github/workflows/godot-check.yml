@@ -30,7 +30,7 @@ jobs:
           grep -Fq 'config/icon="res://Assets/icon.png"' project.godot
           grep -Fq 'launcher_icons/main_192x192="res://Assets/icon.png"' export_presets.cfg
           test -s Assets/icon.png
-          ruby -e 'data = File.binread("Assets/icon.png"); abort "Assets/icon.png is not a PNG" unless data.start_with?("\\x89PNG\\r\\n\\x1a\\n".b); width, height = data.byteslice(16, 8).unpack("N2"); puts "Launcher icon: #{width}x#{height}"; abort "Launcher icon must be at least 192x192" if width < 192 || height < 192'
+          ruby -e 'data = File.binread("Assets/icon.png"); abort "Assets/icon.png is not a PNG" unless data.start_with?([137, 80, 78, 71, 13, 10, 26, 10].pack("C*")); width, height = data.byteslice(16, 8).unpack("N2"); puts "Launcher icon: #{width}x#{height}"; abort "Launcher icon must be at least 192x192" if width < 192 || height < 192'
           grep -Fq 'package/unique_name="com.shubir.racing"' export_presets.cfg
           grep -Fq 'architectures/arm64-v8a=true' export_presets.cfg
           grep -Fq 'architectures/armeabi-v7a=false' export_presets.cfg
