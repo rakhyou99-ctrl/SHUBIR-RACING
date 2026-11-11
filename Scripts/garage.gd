@@ -235,7 +235,10 @@ func _build_garage() -> void:
     add_child(play)
 
 func _layout_garage() -> void:
-    var viewport_size := get_viewport().get_visible_rect().size
+    _layout_garage_for_size(get_viewport().get_visible_rect().size)
+
+
+func _layout_garage_for_size(viewport_size: Vector2) -> void:
     var scale_factor := clampf(minf(viewport_size.x / 1280.0, viewport_size.y / 720.0), 0.55, 1.15)
     var w := viewport_size.x
     var h := viewport_size.y
