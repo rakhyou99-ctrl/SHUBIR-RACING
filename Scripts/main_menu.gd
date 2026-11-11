@@ -69,7 +69,8 @@ func _build_ui() -> void:
     var best_record := ConfigFile.new()
     best_record.load("user://shubir_racing.cfg")
     var best_distance := float(best_record.get_value("score", "best_distance", 0.0))
-    best_distance_label.text = "PERSONAL BEST  %.2f KM" % best_distance
+    var best_score := int(best_record.get_value("score", "best_score", 0))
+    best_distance_label.text = "PERSONAL BEST  %.2f KM   •   SCORE  %06d" % [best_distance, best_score]
     best_distance_label.add_theme_font_size_override("font_size", 19)
     best_distance_label.add_theme_color_override("font_color", Color("#FFCCAA"))
     best_distance_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
