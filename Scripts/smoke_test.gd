@@ -84,7 +84,20 @@ func _run_smoke_tests() -> void:
                 return
             print("Race input checks passed: accelerator, brake, boost.")
 
-            instance.call("_finish_race")
+            var obstacles: Array = instance.get("road_obstacles")
+            if obstacles.is_empty():
+                push_error("Race scene did not create road collision hazards.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            var test_obstacle: Node3D = obstacles[0]
+            var player_car: Node3D = instance.get("car")
+            test_obstacle.position = Vector3(player_car.position.x, 0.0, player_car.position.z)
+            test_obstacle.set_meta("previous_frame_x", player_car.position.x)
+            test_obstacle.set_meta("previous_frame_z", player_car.position.z)
+            instance.set("previous_car_frame_x", player_car.position.x)
+            instance.call("_check_obstacle_collision")
             await process_frame
             if not instance.get("game_over") or instance.get("speed") != 0.0:
                 push_error("Game Over did not stop the race correctly.")
@@ -107,6 +120,7 @@ func _run_smoke_tests() -> void:
                 instance.free()
                 quit(1)
                 return
+            print("Obstacle collision triggered Game Over and stopped the race.")
             print("Game Over navigation checks passed: Race Again and Main Menu buttons exist.")
             race_again_button.pressed.emit()
             await process_frame
