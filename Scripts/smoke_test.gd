@@ -90,7 +90,7 @@ func _run_smoke_tests() -> void:
                 instance.free()
                 quit(1)
                 return
-            if instance.get_node_or_null("CanvasLayer/GameOverOverlay") == null:
+            if instance.find_child("GameOverOverlay", true, false) == null:
                 push_error("Game Over results overlay was not created.")
                 root.remove_child(instance)
                 instance.free()
