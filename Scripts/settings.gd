@@ -10,6 +10,7 @@ var steering_slider: HSlider
 var volume_heading: Label
 var volume_slider: HSlider
 var save_button: Button
+var tilt_hint: Label
 
 func _notification(what: int) -> void:
     # Save changed preferences and return when Android system Back is pressed.
@@ -73,6 +74,13 @@ func _build_ui() -> void:
     add_child(volume_label)
     _update_volume_label()
 
+    tilt_hint = Label.new()
+    tilt_hint.text = "Hold phone level at race start  •  Tilt LEFT / RIGHT to steer"
+    tilt_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    tilt_hint.add_theme_font_size_override("font_size", 15)
+    tilt_hint.add_theme_color_override("font_color", Color("#AFC0D4"))
+    add_child(tilt_hint)
+
     save_button = Button.new()
     var back := save_button
     back.text = "SAVE & BACK"
@@ -110,6 +118,9 @@ func _layout_settings() -> void:
     volume_label.scale = Vector2.ONE * scale_factor
     volume_label.position = Vector2(0, viewport_size.y * 0.715)
     volume_label.size = Vector2(viewport_size.x, 35)
+    tilt_hint.scale = Vector2.ONE * scale_factor
+    tilt_hint.position = Vector2(0, viewport_size.y * 0.795)
+    tilt_hint.size = Vector2(viewport_size.x, 28)
     save_button.scale = Vector2.ONE * scale_factor
     save_button.position = Vector2(center_x - 200.0 * scale_factor, viewport_size.y - 82.0 * scale_factor)
     save_button.size = Vector2(400, 65)
