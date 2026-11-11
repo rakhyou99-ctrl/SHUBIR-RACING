@@ -51,12 +51,34 @@ jobs:
           echo "Landscape, accelerometer, Android package/ABI, SDK, signing, and final-release APK gate verified"
 
       - name: Import project and check scripts
-        run: godot --headless --editor --path . --quit
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOG_FILE="$RUNNER_TEMP/godot-import.log"
+          if ! godot --headless --editor --path . --quit >"$LOG_FILE" 2>&1; then
+            cat "$LOG_FILE"
+            exit 1
+          fi
+          cat "$LOG_FILE"
+          if grep -Eq 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR: Failed to' "$LOG_FILE"; then
+            echo "Godot reported script/import errors."
+            exit 1
+          fi
 
       - name: Smoke-test every game screen
         shell: bash
         run: |
+          set -euo pipefail
           for scene in main_menu garage settings race; do
             echo "Smoke-testing res://Scenes/${scene}.tscn"
-            godot --headless --path . "res://Scenes/${scene}.tscn" --quit-after 5
+            LOG_FILE="$RUNNER_TEMP/${scene}-smoke.log"
+            if ! godot --headless --path . "res://Scenes/${scene}.tscn" --quit-after 5 >"$LOG_FILE" 2>&1; then
+              cat "$LOG_FILE"
+              exit 1
+            fi
+            cat "$LOG_FILE"
+            if grep -Eq 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR: Failed to' "$LOG_FILE"; then
+              echo "Godot reported errors while loading ${scene}."
+              exit 1
+            fi
           done
