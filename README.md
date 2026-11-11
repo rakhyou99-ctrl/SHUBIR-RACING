@@ -8,7 +8,9 @@ SHUBIR RACING is an offline, landscape-oriented endless highway racing game buil
 - Blue SUBHOJIT and red BIRAJ car liveries, with custom body details and no third-party brand logos.
 - Endless multi-lane highway with lane markings, guardrails, roadside scenery, lights, speed signs, and overhead gantries.
 - Traffic vehicles with varied paint, speeds, and subtle lane movement.
-- Cone hazards, collision detection, race-over screen, restart, and personal-best saving.
+- Cone hazards, collision detection, race-over screen, restart, and personal-best distance/score saving.
+- Near-miss detection with animated feedback, reward sound, and bonus score.
+- Progressive 10-stage difficulty with a +500 score reward for each 0.5 km stage milestone (including multiple milestones crossed in one update).
 - Phone-tilt steering; touch accelerator, brake, and separate Boost controls.
 - Multi-touch input handling for simultaneous driving controls.
 - Boost charge, recharge, exhaust flame effects, speed-responsive chase camera, and braking lights.
