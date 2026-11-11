@@ -346,6 +346,26 @@ func _run_smoke_tests() -> void:
                 instance.free()
                 quit(1)
                 return
+            # Releasing one finger must not cancel the other finger's held control.
+            var first_accel_release := InputEventScreenTouch.new()
+            first_accel_release.index = 0
+            first_accel_release.position = accel_center
+            first_accel_release.pressed = false
+            instance.call("_input", first_accel_release)
+            if instance.get("touch_accel") or not instance.get("touch_nitro"):
+                push_error("Releasing the Accelerator finger incorrectly cancelled the independent Boost finger.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            accel_finger.pressed = true
+            instance.call("_input", accel_finger)
+            if not instance.get("touch_accel") or not instance.get("touch_nitro"):
+                push_error("Re-pressing Accelerator did not preserve the independent Boost finger.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
             var boost_drag := InputEventScreenDrag.new()
             boost_drag.index = 1
             boost_drag.position = brake_center
