@@ -22,10 +22,27 @@ func _run_smoke_tests() -> void:
 
         var instance := packed_scene.instantiate()
         root.add_child(instance)
+        # Verify the live race scene has its core gameplay nodes and controls.
+        if scene_path.ends_with("/race.tscn"):
+            for property_name in ["car", "chase_camera", "engine_player", "brake_button", "boost_button", "accel_button"]:
+                if instance.get(property_name) == null:
+                    push_error("Race scene is missing required runtime node: " + property_name)
+                    root.remove_child(instance)
+                    instance.free()
+                    quit(1)
+                    return
+            if instance.get("traffic_cars").size() < 3 or instance.get("road_segments").size() < 3:
+                push_error("Race scene did not create enough traffic or road segments.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+
         # Exercise the race loop for several seconds, not just scene construction.
         var frames_to_run := 180 if scene_path.ends_with("/race.tscn") else 5
         for frame in range(frames_to_run):
             await process_frame
+        print("Processed ", frames_to_run, " frames for ", scene_path)
 
         root.remove_child(instance)
         instance.free()
