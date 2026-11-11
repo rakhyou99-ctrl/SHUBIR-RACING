@@ -566,6 +566,11 @@ func _run_smoke_tests() -> void:
             var traffic_count_baseline := fresh_traffic.size()
             var obstacle_count_baseline := fresh_obstacles.size()
             var road_count_baseline: int = fresh_race.get("road_segments").size()
+            var box_mesh_cache_baseline: int = fresh_race.get("box_mesh_cache").size()
+            var cylinder_mesh_cache_baseline: int = fresh_race.get("cylinder_mesh_cache").size()
+            var box_material_cache_baseline: int = fresh_race.get("box_material_cache").size()
+            var environment_mesh_cache_baseline: int = fresh_race.get("environment_mesh_cache").size()
+            var environment_material_cache_baseline: int = fresh_race.get("environment_material_cache").size()
             for cycle in range(250):
                 for traffic in fresh_traffic:
                     traffic.position.z = 17.0
@@ -582,6 +587,13 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             print("Long-run recycle stress passed: 250 cycles kept node, traffic, cone and road-segment counts constant.")
+            if int(fresh_race.get("box_mesh_cache").size()) != box_mesh_cache_baseline or int(fresh_race.get("cylinder_mesh_cache").size()) != cylinder_mesh_cache_baseline or int(fresh_race.get("box_material_cache").size()) != box_material_cache_baseline or int(fresh_race.get("environment_mesh_cache").size()) != environment_mesh_cache_baseline or int(fresh_race.get("environment_material_cache").size()) != environment_material_cache_baseline:
+                push_error("Long-run recycle unexpectedly grew a geometry or material cache.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Resource cache stability passed: mesh/material cache sizes stayed fixed through 250 recycle cycles.")
 
             # A safe lateral pass across the player's Z must award exactly one near-miss reward.
             fresh_race.set("speed", 100.0)
