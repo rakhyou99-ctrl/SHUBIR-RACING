@@ -27,10 +27,19 @@ jobs:
           grep -Fq 'window/handheld/orientation=0' project.godot
           grep -Fq 'sensors/enable_accelerometer=true' project.godot
           grep -Fq 'screen/orientation=0' export_presets.cfg
+          grep -Fq 'package/unique_name="com.shubir.racing"' export_presets.cfg
+          grep -Fq 'architectures/arm64-v8a=true' export_presets.cfg
+          grep -Fq 'architectures/armeabi-v7a=false' export_presets.cfg
           grep -Fq 'release_ready:' .github/workflows/android-apk.yml
           grep -Fq 'default: false' .github/workflows/android-apk.yml
           grep -Fq 'type: boolean' .github/workflows/android-apk.yml
-          echo "Landscape, accelerometer, and final-release APK gate verified"
+          grep -Fq 'inputs.release_ready == true' .github/workflows/android-apk.yml
+          grep -Fq 'cmdline-tools;latest' .github/workflows/android-apk.yml
+          grep -Fq 'build-tools;35.0.1' .github/workflows/android-apk.yml
+          grep -Fq 'GODOT_ANDROID_KEYSTORE_DEBUG_PATH=' .github/workflows/android-apk.yml
+          grep -Fq 'GODOT_ANDROID_KEYSTORE_DEBUG_USER=' .github/workflows/android-apk.yml
+          grep -Fq 'GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=' .github/workflows/android-apk.yml
+          echo "Landscape, accelerometer, Android package/ABI, SDK, signing, and final-release APK gate verified"
 
       - name: Import project and check scripts
         run: godot --headless --editor --path . --quit
