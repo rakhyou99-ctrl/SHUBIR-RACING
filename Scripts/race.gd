@@ -410,6 +410,9 @@ func _make_world() -> void:
     var sun := DirectionalLight3D.new()
     sun.rotation_degrees = Vector3(-55, -25, 0)
     sun.light_energy = 1.2
+    # The moving highway has no baked shadow receivers; avoid a costly
+    # real-time directional shadow map on mobile GPUs.
+    sun.shadow_enabled = false
     add_child(sun)
 
     for i in range(12):
