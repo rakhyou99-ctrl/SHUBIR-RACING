@@ -1057,6 +1057,24 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             print("Stage progression awarded the expected +500 bonus.")
+            # A clean near miss must award exactly +250, update both counters,
+            # refresh the score HUD, and show the short-lived feedback label.
+            fresh_race.call("_register_near_miss")
+            var near_miss_feedback: Label = fresh_race.get("near_miss_label")
+            var near_miss_score: Label = fresh_race.get("score_label")
+            if int(fresh_race.get("near_miss_count")) != 1 or int(fresh_race.get("near_miss_bonus_score")) != 250 or int(fresh_race.get("bonus_score")) != 750:
+                push_error("Near miss did not award exactly +250 and update its counters.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            if near_miss_feedback == null or not near_miss_feedback.visible or not near_miss_feedback.text.contains("×01") or near_miss_score == null or near_miss_score.text != "SCORE 001250":
+                push_error("Near miss feedback or score HUD did not reflect the +250 reward.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Near-miss reward checks passed: +250 score, counter, HUD popup, and feedback timer.")
             test_traffic.position = Vector3(fresh_car.position.x, test_traffic.position.y, fresh_car.position.z)
             test_traffic.set_meta("previous_frame_x", fresh_car.position.x)
             test_traffic.set_meta("previous_frame_z", fresh_car.position.z)
