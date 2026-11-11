@@ -260,8 +260,10 @@ func _layout_garage_for_size(viewport_size: Vector2) -> void:
     # and car cards keep their gap on narrow landscape screens.
     var side_x := maxf(24.0, w / scale_factor - 380.0 - 28.0)
     var preview_width := clampf(side_x - 38.0 - 20.0 - 28.0, 400.0, 800.0)
-    # Preserve a widescreen showroom viewport on compact landscape phones.
-    # A fixed 500px height made the car preview too narrow on smaller devices.
+    # Keep the showroom clear of the bottom-left BACK action on short screens.
+    # Preserve the preview aspect ratio while fitting its frame above that action.
+    var max_preview_height := maxf(240.0, h / scale_factor - 200.0)
+    preview_width = minf(preview_width, max_preview_height / 0.625)
     var preview_height := preview_width * 0.625
     viewport_box.size = Vector2(preview_width, preview_height)
     if is_instance_valid(preview_viewport):
