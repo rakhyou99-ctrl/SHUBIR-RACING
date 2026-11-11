@@ -36,6 +36,7 @@ var engine_player: AudioStreamPlayer
 var nitro_player: AudioStreamPlayer
 var crash_player: AudioStreamPlayer
 var brake_player: AudioStreamPlayer
+var near_miss_player: AudioStreamPlayer
 var chase_camera: Camera3D
 var brake_lights: Array[MeshInstance3D] = []
 var near_miss_label: Label
@@ -272,6 +273,33 @@ func _make_effect_audio() -> void:
     brake_player.stream = _create_brake_stream()
     brake_player.volume_db = -7.0
     add_child(brake_player)
+
+    near_miss_player = AudioStreamPlayer.new()
+    near_miss_player.stream = _create_near_miss_stream()
+    near_miss_player.volume_db = -8.0
+    add_child(near_miss_player)
+
+func _create_near_miss_stream() -> AudioStreamWAV:
+    # A short, soft two-note reward chime keeps near-miss feedback distinct from Boost and crash audio.
+    var sample_rate := 16000
+    var sample_count := 4800
+    var samples := PackedByteArray()
+    samples.resize(sample_count * 2)
+    for i in range(sample_count):
+        var progress := float(i) / float(sample_count)
+        var t := float(i) / float(sample_rate)
+        var frequency := 880.0 if progress < 0.48 else 1174.0
+        var envelope := sin(PI * progress) * (1.0 - progress * 0.22)
+        var wave := sin(TAU * frequency * t) * 0.62
+        wave += sin(TAU * frequency * 2.0 * t) * 0.12
+        var sample := int(clampf(wave * envelope, -1.0, 1.0) * 6800.0)
+        samples.encode_s16(i * 2, sample)
+    var stream := AudioStreamWAV.new()
+    stream.format = AudioStreamWAV.FORMAT_16_BITS
+    stream.mix_rate = sample_rate
+    stream.stereo = false
+    stream.data = samples
+    return stream
 
 func _create_brake_stream() -> AudioStreamWAV:
     var sample_rate := 16000
@@ -838,6 +866,8 @@ func _register_near_miss() -> void:
     near_miss_count += 1
     bonus_score += 250
     near_miss_feedback_timer = 1.35
+    if is_instance_valid(near_miss_player):
+        near_miss_player.play()
     if is_instance_valid(score_label):
         score_label.text = "SCORE  %06d" % int(distance * 1000.0 + bonus_score)
     if is_instance_valid(near_miss_label):
@@ -876,6 +906,8 @@ func _show_pause_menu() -> void:
         nitro_player.stream_paused = true
     if is_instance_valid(brake_player):
         brake_player.stream_paused = true
+    if is_instance_valid(near_miss_player):
+        near_miss_player.stream_paused = true
 
     var panel := ColorRect.new()
     panel.name = "PauseOverlay"
@@ -927,6 +959,8 @@ func _show_pause_menu() -> void:
             nitro_player.stream_paused = false
         if is_instance_valid(brake_player):
             brake_player.stream_paused = false
+        if is_instance_valid(near_miss_player):
+            near_miss_player.stream_paused = false
         panel.queue_free()
     )
     content.add_child(resume)
@@ -965,6 +999,8 @@ func _finish_race() -> void:
         nitro_player.stop()
     if is_instance_valid(brake_player):
         brake_player.stop()
+    if is_instance_valid(near_miss_player):
+        near_miss_player.stop()
     if is_instance_valid(crash_player):
         crash_player.play()
     # Brief camera impact shake makes a collision feel immediate before the results overlay.
