@@ -2,6 +2,11 @@ extends Control
 
 var preview_root: Node3D
 var preview_car: Node3D
+var preview_camera: Camera3D
+var zoom_in_button: Button
+var zoom_out_button: Button
+var preview_touch_points: Dictionary = {}
+var last_pinch_distance := 0.0
 var drag_active := false
 var mouse_drag_active := false
 var preview_touch_index := -1
@@ -140,16 +145,15 @@ func _build_garage() -> void:
     warm_rim.omni_range = 7.0
     preview_root.add_child(warm_rim)
 
-    var camera := Camera3D.new()
-    # A slightly wider, higher three-quarter framing keeps the complete car
-    # in view while giving the roof, wheels and front/rear bodywork clear depth.
-    camera.position = Vector3(4.8, 3.15, -8.0)
-    camera.fov = 66.0
-    camera.near = 0.1
-    camera.far = 100.0
-    preview_root.add_child(camera)
-    camera.look_at(Vector3(0, 0.68, 0), Vector3.UP)
-    camera.current = true
+    preview_camera = Camera3D.new()
+    # Bring the vehicle closer and use a tighter showroom lens by default.
+    preview_camera.position = Vector3(3.8, 2.35, -6.1)
+    preview_camera.fov = 49.0
+    preview_camera.near = 0.1
+    preview_camera.far = 100.0
+    preview_root.add_child(preview_camera)
+    preview_camera.look_at(Vector3(0, 0.68, 0), Vector3.UP)
+    preview_camera.current = true
 
     var floor := MeshInstance3D.new()
     var floor_mesh := PlaneMesh.new()
@@ -272,7 +276,8 @@ func _layout_garage_for_size(viewport_size: Vector2) -> void:
     swipe_hint.scale = Vector2.ONE
     swipe_hint.position = Vector2(0, preview_height + 10.0)
     swipe_hint.size = Vector2(preview_width + 20.0, 24)
-
+    zoom_in_button.position = Vector2(preview_width - 104.0, 18.0)
+    zoom_out_button.position = Vector2(preview_width - 54.0, 18.0)
 
     # On short landscape displays, compress the selection column vertically
     # so the selected-car status never collides with the bottom action buttons.
@@ -351,8 +356,8 @@ func _make_car_option(heading: String, decal: String, paint: Color, car_id: int,
 func _create_preview_car() -> Node3D:
     var root := Node3D.new()
     var paint := Color("#1677E8") if GameState.selected_car == 0 else Color("#D83232")
-    _add_box(root, Vector3(0, 0.55, 0), Vector3(2.0, 0.58, 3.8), paint)
-    _add_box(root, Vector3(0, 0.99, -0.22), Vector3(1.48, 0.62, 1.8), Color("#172638"))
+    _add_ellipsoid(root, Vector3(0, 0.55, 0), Vector3(1.0, 0.29, 1.9), paint)
+    _add_ellipsoid(root, Vector3(0, 1.00, -0.22), Vector3(0.74, 0.30, 0.88), Color("#172638"))
     _add_box(root, Vector3(0, 0.88, -1.25), Vector3(1.55, 0.10, 1.0), paint.lightened(0.12))
     # Twin subtle hood creases catch the showroom key light.
     for crease_x in [-0.52, 0.52]:
@@ -530,6 +535,19 @@ func _cached_preview_box_mesh(dimensions: Vector3) -> BoxMesh:
     return preview_mesh_cache[dimensions] as BoxMesh
 
 
+func _add_ellipsoid(parent: Node3D, pos: Vector3, radii: Vector3, tint: Color) -> void:
+    var part := MeshInstance3D.new()
+    part.mesh = _cached_preview_sphere(1.0, 2.0)
+    part.position = pos
+    part.scale = radii
+    var material := StandardMaterial3D.new()
+    material.albedo_color = tint
+    material.metallic = 0.48
+    material.roughness = 0.28
+    part.material_override = material
+    parent.add_child(part)
+
+
 func _add_emissive_box(parent: Node3D, pos: Vector3, dimensions: Vector3, tint: Color) -> void:
     var part := MeshInstance3D.new()
     part.mesh = _cached_preview_box_mesh(dimensions)
@@ -563,28 +581,76 @@ func _add_box(parent: Node3D, pos: Vector3, dimensions: Vector3, tint: Color) ->
     part.material_override = mat
     parent.add_child(part)
 
+func _make_zoom_button(caption: String, is_primary: bool) -> Button:
+    var button := Button.new()
+    button.text = caption
+    button.size = Vector2(42, 42)
+    button.add_theme_font_size_override("font_size", 27)
+    _style_button(button, is_primary)
+    button.z_index = 5
+    return button
+
+
+func _change_preview_zoom(fov_delta: float) -> void:
+    if not is_instance_valid(preview_camera):
+        return
+    preview_camera.fov = clampf(preview_camera.fov + fov_delta, 32.0, 62.0)
+
+
+func _apply_pinch_zoom(distance_delta: float) -> void:
+    # Moving two fingers apart zooms in; bringing them together zooms out.
+    _change_preview_zoom(-distance_delta * 0.075)
+
+
 func _on_preview_input(event: InputEvent) -> void:
     if not is_instance_valid(preview_car):
         return
-    if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-        mouse_drag_active = event.pressed
-        drag_active = mouse_drag_active or preview_touch_index >= 0
-        last_drag_x = event.position.x
+    if event is InputEventMouseButton:
+        if event.button_index == MOUSE_BUTTON_LEFT:
+            mouse_drag_active = event.pressed
+            drag_active = mouse_drag_active or not preview_touch_points.is_empty()
+            last_drag_x = event.position.x
+        elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_UP:
+            _change_preview_zoom(-3.0)
+        elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+            _change_preview_zoom(3.0)
     elif event is InputEventMouseMotion and mouse_drag_active:
         var drag_delta: float = event.position.x - last_drag_x
         preview_car.rotation.y += drag_delta * 0.012
         preview_spin_velocity = clampf(drag_delta * 0.045, -5.0, 5.0)
         last_drag_x = event.position.x
     elif event is InputEventScreenTouch:
-        if event.pressed and preview_touch_index < 0:
-            preview_touch_index = event.index
-            last_drag_x = event.position.x
-        elif not event.pressed and event.index == preview_touch_index:
+        if event.pressed:
+            preview_touch_points[event.index] = event.position
+            if preview_touch_points.size() == 1:
+                preview_touch_index = event.index
+                last_drag_x = event.position.x
+            else:
+                preview_touch_index = -1
+            if preview_touch_points.size() == 2:
+                var points: Array = preview_touch_points.values()
+                last_pinch_distance = (points[0] as Vector2).distance_to(points[1] as Vector2)
+        else:
+            preview_touch_points.erase(event.index)
             preview_touch_index = -1
-        drag_active = mouse_drag_active or preview_touch_index >= 0
-    elif event is InputEventScreenDrag and event.index == preview_touch_index:
-        preview_car.rotation.y += event.relative.x * 0.012
-        preview_spin_velocity = clampf(event.relative.x * 0.045, -5.0, 5.0)
+            last_pinch_distance = 0.0
+            if preview_touch_points.size() == 1:
+                var remaining_index = preview_touch_points.keys()[0]
+                preview_touch_index = int(remaining_index)
+                last_drag_x = (preview_touch_points[remaining_index] as Vector2).x
+        drag_active = mouse_drag_active or not preview_touch_points.is_empty()
+    elif event is InputEventScreenDrag:
+        if preview_touch_points.has(event.index):
+            preview_touch_points[event.index] = event.position
+        if preview_touch_points.size() >= 2:
+            var points: Array = preview_touch_points.values()
+            var pinch_distance := (points[0] as Vector2).distance_to(points[1] as Vector2)
+            if last_pinch_distance > 0.0:
+                _apply_pinch_zoom(pinch_distance - last_pinch_distance)
+            last_pinch_distance = pinch_distance
+        elif event.index == preview_touch_index:
+            preview_car.rotation.y += event.relative.x * 0.012
+            preview_spin_velocity = clampf(event.relative.x * 0.045, -5.0, 5.0)
 
 func _show_selected_car() -> void:
     # Keep the current showroom angle and swipe momentum when swapping paint
