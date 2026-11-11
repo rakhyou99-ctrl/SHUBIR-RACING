@@ -629,7 +629,9 @@ func _on_preview_input(event: InputEvent) -> void:
                 preview_touch_index = -1
             if preview_touch_points.size() == 2:
                 var points: Array = preview_touch_points.values()
-                last_pinch_distance = (points[0] as Vector2).distance_to(points[1] as Vector2)
+                var first_point: Vector2 = points[0]
+                var second_point: Vector2 = points[1]
+                last_pinch_distance = first_point.distance_to(second_point)
         else:
             preview_touch_points.erase(event.index)
             preview_touch_index = -1
@@ -644,7 +646,9 @@ func _on_preview_input(event: InputEvent) -> void:
             preview_touch_points[event.index] = event.position
         if preview_touch_points.size() >= 2:
             var points: Array = preview_touch_points.values()
-            var pinch_distance := (points[0] as Vector2).distance_to(points[1] as Vector2)
+            var first_point: Vector2 = points[0]
+            var second_point: Vector2 = points[1]
+            var pinch_distance := first_point.distance_to(second_point)
             if last_pinch_distance > 0.0:
                 _apply_pinch_zoom(pinch_distance - last_pinch_distance)
             last_pinch_distance = pinch_distance
