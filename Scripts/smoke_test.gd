@@ -297,6 +297,21 @@ func _run_smoke_tests() -> void:
                         instance.free()
                         quit(1)
                         return
+                # Settings labels, sliders and action button must remain
+                # separate and tappable on compact landscape screens.
+                for first_index in range(settings_controls.size()):
+                    var first_control: Control = settings_controls[first_index]
+                    var first_rect := first_control.get_global_rect()
+                    for second_index in range(first_index + 1, settings_controls.size()):
+                        var second_control: Control = settings_controls[second_index]
+                        var second_rect := second_control.get_global_rect()
+                        if first_rect.intersects(second_rect):
+                            push_error("Settings elements overlap at %s: %s and %s" % [test_size, first_control.name, second_control.name])
+                            settings_instance.call("_layout_settings")
+                            root.remove_child(instance)
+                            instance.free()
+                            quit(1)
+                            return
             settings_instance.call("_layout_settings")
             await process_frame
             print("Settings responsive bounds passed: 640x360, 800x360, and 2340x1080.")
