@@ -279,24 +279,20 @@ func _run_smoke_tests() -> void:
             steering_car.position.x = 0.0
             print("Steering sensitivity checks passed: low and high settings change car movement.")
 
-            # Exercise the live race HUD layout at compact, wide-short, and large
-            # landscape viewports; all four touch targets must remain on-screen.
-            var original_viewport_size: Vector2i = root.get_viewport().size
-            for test_size in [Vector2i(640, 360), Vector2i(800, 360), Vector2i(2340, 1080)]:
-                root.get_viewport().size = test_size
-                instance.call("_layout_race_ui")
+            # Exercise the same layout function with compact, wide-short, and large
+            # landscape sizes without changing the CI window's actual viewport.
+            for test_size in [Vector2(640, 360), Vector2(800, 360), Vector2(2340, 1080)]:
+                instance.call("_layout_race_ui_for_size", test_size)
                 await process_frame
                 for control in [brake_control, accel_control, boost_control, instance.get("pause_button")]:
                     var control_rect: Rect2 = control.get_global_rect()
-                    if control_rect.position.x < -1.0 or control_rect.position.y < -1.0 or control_rect.end.x > float(test_size.x) + 1.0 or control_rect.end.y > float(test_size.y) + 1.0:
-                        push_error("Race HUD control is outside the viewport at %s: %s rect=%s viewport=%s" % [test_size, control.name, control_rect, root.get_viewport().get_visible_rect().size])
-                        root.get_viewport().size = original_viewport_size
+                    if control_rect.position.x < -1.0 or control_rect.position.y < -1.0 or control_rect.end.x > test_size.x + 1.0 or control_rect.end.y > test_size.y + 1.0:
+                        push_error("Race HUD control is outside the viewport at %s: %s rect=%s" % [test_size, control.name, control_rect])
                         instance.call("_layout_race_ui")
                         root.remove_child(instance)
                         instance.free()
                         quit(1)
                         return
-            root.get_viewport().size = original_viewport_size
             instance.call("_layout_race_ui")
             await process_frame
             print("Landscape HUD layout checks passed: 640x360, 800x360, and 2340x1080.")
