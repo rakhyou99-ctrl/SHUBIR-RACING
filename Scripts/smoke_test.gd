@@ -462,6 +462,27 @@ func _run_smoke_tests() -> void:
             await process_frame
             print("Landscape HUD layout checks passed: 640x360, 800x360, and 2340x1080.")
 
+            # Confirm the two driving pedals retain a broad metal-plate style,
+            # while BOOST remains a separate rounded control.
+            for pedal in [brake_control, accel_control]:
+                var pedal_style := pedal.get_theme_stylebox("normal") as StyleBoxFlat
+                if pedal_style == null or pedal.size.x < 140.0 or pedal.size.y < 120.0 or pedal_style.get_corner_radius(0) > 8:
+                    push_error("Brake and Accelerator must remain large rectangular metal pedals.")
+                    instance.call("_layout_race_ui")
+                    root.remove_child(instance)
+                    instance.free()
+                    quit(1)
+                    return
+            var boost_style := boost_control.get_theme_stylebox("normal") as StyleBoxFlat
+            if boost_style == null or boost_style.get_corner_radius(0) < 15:
+                push_error("BOOST must remain visually separate from the rectangular pedals.")
+                instance.call("_layout_race_ui")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Pedal design checks passed: rectangular metal Brake/Accelerator and separate rounded BOOST.")
+
             var obstacles: Array = instance.get("road_obstacles")
             if obstacles.is_empty():
                 push_error("Race scene did not create road collision hazards.")
