@@ -1,0 +1,109 @@
+name: Build Android Test APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shubir-test-apk
+  cancel-in-progress: false
+
+jobs:
+  test-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configure Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+          SDKMANAGER="$(find "$ANDROID_HOME" -type f -name sdkmanager 2>/dev/null | head -n 1)"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "sdkmanager was not found under ANDROID_HOME=$ANDROID_HOME"
+            exit 1
+          fi
+          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
+          yes | "$SDKMANAGER" --licenses || true
+          "$SDKMANAGER" "cmdline-tools;latest" "platform-tools" "platforms;android-35" "build-tools;35.0.1"
+
+      - name: Install Godot 4.7.2 and export templates
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+
+      - name: Configure temporary Android debug signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.config/godot" "$HOME/.android"
+          cat > "$HOME/.config/godot/editor_settings-4.7.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOF
+          keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PATH=$HOME/.android/debug.keystore" >> "$GITHUB_ENV"
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> "$GITHUB_ENV"
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android" >> "$GITHUB_ENV"
+
+      - name: Import project and validate scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOG_FILE="$RUNNER_TEMP/godot-import.log"
+          if ! godot --headless --editor --path . --quit >"$LOG_FILE" 2>&1; then
+            cat "$LOG_FILE"
+            exit 1
+          fi
+          cat "$LOG_FILE"
+          if grep -Eq 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' "$LOG_FILE"; then
+            exit 1
+          fi
+
+      - name: Run gameplay smoke tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOG_FILE="$RUNNER_TEMP/game-screen-smoke.log"
+          if ! timeout --signal=TERM --kill-after=15s 300s godot --verbose --headless --path . --script Scripts/smoke_test.gd >"$LOG_FILE" 2>&1; then
+            cat "$LOG_FILE"
+            exit 1
+          fi
+          cat "$LOG_FILE"
+          if grep -Eq 'SCRIPT ERROR:|Parse Error:|Failed to load script|ERROR:' "$LOG_FILE"; then
+            exit 1
+          fi
+
+      - name: Export debug-signed Android test APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          godot --headless --path . --export-debug "Android" build/SHUBIR-RACING-TEST.apk
+          test -s build/SHUBIR-RACING-TEST.apk
+          file build/SHUBIR-RACING-TEST.apk
+
+      - name: Upload test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SHUBIR-RACING-TEST-APK
+          path: build/SHUBIR-RACING-TEST.apk
+          if-no-files-found: error
+          retention-days: 14
