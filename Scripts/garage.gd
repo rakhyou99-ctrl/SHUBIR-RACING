@@ -253,12 +253,15 @@ func _layout_garage() -> void:
     # and car cards keep their gap on narrow landscape screens.
     var side_x := maxf(24.0, w / scale_factor - 380.0 - 28.0)
     var preview_width := clampf(side_x - 38.0 - 20.0 - 28.0, 400.0, 800.0)
-    viewport_box.size = Vector2(preview_width, 500.0)
+    # Preserve a widescreen showroom viewport on compact landscape phones.
+    # A fixed 500px height made the car preview too narrow on smaller devices.
+    var preview_height := preview_width * 0.625
+    viewport_box.size = Vector2(preview_width, preview_height)
     if is_instance_valid(preview_viewport):
-        preview_viewport.size = Vector2i(maxi(1, roundi(preview_width)), 500)
-    preview_frame.size = Vector2(preview_width + 20.0, 540.0)
+        preview_viewport.size = Vector2i(maxi(1, roundi(preview_width)), maxi(1, roundi(preview_height)))
+    preview_frame.size = Vector2(preview_width + 20.0, preview_height + 40.0)
     swipe_hint.scale = Vector2.ONE
-    swipe_hint.position = Vector2(0, 510)
+    swipe_hint.position = Vector2(0, preview_height + 10.0)
     swipe_hint.size = Vector2(preview_width + 20.0, 24)
 
 
