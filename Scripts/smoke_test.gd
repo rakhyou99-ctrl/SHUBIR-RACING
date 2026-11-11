@@ -804,6 +804,41 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             print("Boost drain and recharge rate checks passed.")
+
+            # Braking must cancel BOOST and require the BOOST finger to be
+            # released before another activation can drain the tank.
+            fresh_race.set("nitro_left", 2.0)
+            fresh_race.set("touch_accel", true)
+            fresh_race.set("touch_nitro", true)
+            fresh_race.set("touch_brake", true)
+            fresh_race.set("boost_locked", false)
+            fresh_race.call("_process", 0.25)
+            if not bool(fresh_race.get("boost_locked")) or absf(float(fresh_race.get("nitro_left")) - 2.15) > 0.02:
+                push_error("Brake did not cancel BOOST and lock the held BOOST control.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            fresh_race.set("touch_brake", false)
+            fresh_race.call("_process", 0.25)
+            if not bool(fresh_race.get("boost_locked")) or absf(float(fresh_race.get("nitro_left")) - 2.30) > 0.02:
+                push_error("BOOST reactivated without releasing the BOOST control after braking.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            fresh_race.set("touch_nitro", false)
+            fresh_race.call("_process", 0.01)
+            fresh_race.set("touch_nitro", true)
+            var tank_before_reactivation := float(fresh_race.get("nitro_left"))
+            fresh_race.call("_process", 0.25)
+            if bool(fresh_race.get("boost_locked")) or absf(float(fresh_race.get("nitro_left")) - (tank_before_reactivation - 0.25)) > 0.02:
+                push_error("BOOST did not reactivate after a deliberate release and re-press.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Brake/BOOST interlock passed: brake cancels boost until the BOOST control is released.")
             # Pause must clear held pedals and BOOST; Resume must restore active play.
             var engine_audio: AudioStreamPlayer = fresh_race.get("engine_player")
             var boost_audio: AudioStreamPlayer = fresh_race.get("nitro_player")
