@@ -1158,6 +1158,11 @@ func _make_ui() -> void:
     score_label.add_theme_color_override("font_color", Color("#FFD34E"))
     ui_layer.add_child(score_label)
 
+    near_miss_total_label = Label.new()
+    near_miss_total_label.add_theme_font_size_override("font_size", 15)
+    near_miss_total_label.add_theme_color_override("font_color", Color("#FFD34E"))
+    ui_layer.add_child(near_miss_total_label)
+
     speed_label = Label.new()
     speed_label.position = Vector2(25, 20)
     speed_label.add_theme_font_size_override("font_size", 28)
