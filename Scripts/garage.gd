@@ -247,8 +247,10 @@ func _layout_garage() -> void:
 
     # Keep the showroom preview and the selection column side-by-side on
     # compact landscape phones instead of letting the cards run off-screen.
-    var side_x := maxf(24.0 * scale_factor, w - 380.0 * scale_factor)
-    var preview_width := clampf(side_x / scale_factor - 38.0 - 20.0 - 28.0 / scale_factor, 400.0, 800.0)
+    # Work in the garage's unscaled design coordinates so the showroom
+    # and car cards keep their gap on narrow landscape screens.
+    var side_x := maxf(24.0, w / scale_factor - 380.0 - 28.0)
+    var preview_width := clampf(side_x - 38.0 - 20.0 - 28.0, 400.0, 800.0)
     viewport_box.size = Vector2(preview_width, 500.0)
     if is_instance_valid(preview_viewport):
         preview_viewport.size = Vector2i(maxi(1, roundi(preview_width)), 500)
