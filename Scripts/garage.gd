@@ -21,6 +21,7 @@ var header_label: Label
 var back_button: Button
 var start_button: Button
 var preview_material_cache: Dictionary = {}
+var preview_mesh_cache: Dictionary = {}
 
 func _notification(what: int) -> void:
     # Android system Back returns from the showroom to the main menu.
@@ -525,8 +526,14 @@ func _add_emissive_box(parent: Node3D, pos: Vector3, dimensions: Vector3, tint: 
 
 func _add_box(parent: Node3D, pos: Vector3, dimensions: Vector3, tint: Color) -> void:
     var part := MeshInstance3D.new()
-    var mesh := BoxMesh.new()
-    mesh.size = dimensions
+    # Reuse same-size preview geometry across both selectable showroom cars.
+    var mesh: BoxMesh
+    if preview_mesh_cache.has(dimensions):
+        mesh = preview_mesh_cache[dimensions] as BoxMesh
+    else:
+        mesh = BoxMesh.new()
+        mesh.size = dimensions
+        preview_mesh_cache[dimensions] = mesh
     part.mesh = mesh
     part.position = pos
     # Share identical showroom body materials instead of allocating one per
