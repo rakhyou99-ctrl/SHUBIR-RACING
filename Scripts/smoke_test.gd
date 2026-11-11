@@ -82,6 +82,22 @@ func _run_smoke_tests() -> void:
                 return
             print("Race input checks passed: accelerator, brake, boost.")
 
+            instance.call("_finish_race")
+            await process_frame
+            if not instance.get("game_over") or instance.get("speed") != 0.0:
+                push_error("Game Over did not stop the race correctly.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            if instance.get_node_or_null("CanvasLayer/GameOverOverlay") == null:
+                push_error("Game Over results overlay was not created.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Game Over checks passed: race stopped and results overlay created.")
+
         root.remove_child(instance)
         instance.free()
 
