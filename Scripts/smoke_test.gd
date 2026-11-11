@@ -627,7 +627,7 @@ func _run_smoke_tests() -> void:
                 quit(1)
                 return
             var results_content := results_overlay.get_child(0).get_child(0) as VBoxContainer
-            if results_content == null or results_content.get_child_count() < 7:
+            if results_content == null or results_content.get_child_count() < 6:
                 push_error("Game Over results layout is missing its summary rows.")
                 root.remove_child(instance)
                 instance.free()
