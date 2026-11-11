@@ -40,6 +40,18 @@ func _run_smoke_tests() -> void:
                     instance.free()
                     quit(1)
                     return
+            var race_sun: DirectionalLight3D = null
+            for child in instance.get_children():
+                if child is DirectionalLight3D:
+                    race_sun = child
+                    break
+            if race_sun == null or race_sun.shadow_enabled:
+                push_error("Race mobile lighting must use a directional sun without a real-time shadow map.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Race render efficiency passed: directional sun shadow map is disabled.")
             if instance.get("traffic_cars").size() < 3 or instance.get("road_segments").size() < 3:
                 push_error("Race scene did not create enough traffic or road segments.")
                 root.remove_child(instance)
