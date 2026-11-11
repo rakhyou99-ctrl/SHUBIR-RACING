@@ -515,6 +515,9 @@ func _run_smoke_tests() -> void:
                 await process_frame
                 quit(1)
                 return
+            # Keep the one-shot brake effect active so Pause tests an in-flight effect,
+            # not only idle AudioStreamPlayer instances.
+            brake_audio.play()
             fresh_race.set("touch_accel", true)
             fresh_race.set("touch_brake", true)
             fresh_race.set("touch_nitro", true)
