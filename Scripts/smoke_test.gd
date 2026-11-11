@@ -194,6 +194,21 @@ func _run_smoke_tests() -> void:
                         instance.free()
                         quit(1)
                         return
+                # Visible menu elements must not overlap, even when the UI is
+                # compressed for a short landscape phone.
+                for first_index in range(menu_controls.size()):
+                    var first_control: Control = menu_controls[first_index]
+                    var first_rect := first_control.get_global_rect()
+                    for second_index in range(first_index + 1, menu_controls.size()):
+                        var second_control: Control = menu_controls[second_index]
+                        var second_rect := second_control.get_global_rect()
+                        if first_rect.intersects(second_rect):
+                            push_error("Main Menu elements overlap at %s: %s and %s" % [test_size, first_control.name, second_control.name])
+                            menu_instance.call("_layout_menu")
+                            root.remove_child(instance)
+                            instance.free()
+                            quit(1)
+                            return
             menu_instance.call("_layout_menu")
             await process_frame
             print("Main Menu responsive bounds passed: 640x360, 800x360, and 2340x1080.")
