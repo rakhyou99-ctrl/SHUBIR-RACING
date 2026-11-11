@@ -22,6 +22,8 @@ func _run_smoke_tests() -> void:
 
         var instance := packed_scene.instantiate()
         root.add_child(instance)
+        if scene_path.ends_with("/race.tscn"):
+            current_scene = instance
         # Verify the live race scene has its core gameplay nodes and controls.
         if scene_path.ends_with("/race.tscn"):
             for property_name in ["car", "chase_camera", "engine_player", "brake_button", "boost_button", "accel_button"]:
@@ -144,8 +146,9 @@ func _run_smoke_tests() -> void:
             current_scene.queue_free()
             await process_frame
 
-        root.remove_child(instance)
-        instance.free()
+        if is_instance_valid(instance) and instance.get_parent() != null:
+            root.remove_child(instance)
+            instance.free()
 
         # AudioServer releases stopped playback streams asynchronously.
         # Give its mixer time to process the stop before shutting down.
