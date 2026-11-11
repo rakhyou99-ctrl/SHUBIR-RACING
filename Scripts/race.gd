@@ -893,7 +893,13 @@ func _move_traffic(delta: float) -> void:
         # slower traffic, or faster traffic may pass the player.
         var crossed_player := (previous_z < car.position.z and traffic.position.z >= car.position.z) or (previous_z > car.position.z and traffic.position.z <= car.position.z)
         if crossed_player:
-            var lateral_gap := absf(traffic.position.x - car.position.x)
+            # Evaluate lateral spacing at the exact point the vehicles pass,
+            # not at the end of the frame, so high-speed diagonal passes count fairly.
+            var travel_z := traffic.position.z - previous_z
+            var crossing_t := clampf((car.position.z - previous_z) / travel_z, 0.0, 1.0) if absf(travel_z) > 0.0001 else 1.0
+            var traffic_x_at_crossing := lerpf(previous_x, traffic.position.x, crossing_t)
+            var car_x_at_crossing := lerpf(previous_car_frame_x, car.position.x, crossing_t)
+            var lateral_gap := absf(traffic_x_at_crossing - car_x_at_crossing)
             if lateral_gap >= 1.8 and lateral_gap < 3.25:
                 _register_near_miss()
         if traffic.position.z > 16.0 or traffic.position.z < -360.0:
