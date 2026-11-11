@@ -80,6 +80,34 @@ func _run_smoke_tests() -> void:
             game_state.call("save_settings")
             print("Garage car selection persistence passed: BIRAJ selection saved and reloaded.")
 
+            for test_size in [Vector2(640, 360), Vector2(800, 360), Vector2(2340, 1080)]:
+                garage_instance.call("_layout_garage_for_size", test_size)
+                await process_frame
+                var garage_controls: Array = [
+                    garage_instance.get("header_label"),
+                    garage_instance.get("preview_frame"),
+                    garage_instance.get("side_title"),
+                    garage_instance.get("blue_card"),
+                    garage_instance.get("red_card"),
+                    garage_instance.get("selected_label"),
+                    garage_instance.get("back_button"),
+                    garage_instance.get("start_button")
+                ]
+                for control in garage_controls:
+                    var bounds: Rect2 = control.get_global_rect()
+                    if bounds.position.x < -1.0 or bounds.position.y < -1.0 or bounds.end.x > test_size.x + 1.0 or bounds.end.y > test_size.y + 1.0:
+                        push_error("Garage element is outside %s: %s rect=%s" % [test_size, control.name, bounds])
+                        garage_instance.call("_layout_garage")
+                        game_state.set("selected_car", original_car)
+                        game_state.call("save_settings")
+                        root.remove_child(instance)
+                        instance.free()
+                        quit(1)
+                        return
+            garage_instance.call("_layout_garage")
+            await process_frame
+            print("Garage responsive bounds passed: 640x360, 800x360, and 2340x1080.")
+
         # Exercise the race loop for several seconds, not just scene construction.
         var frames_to_run := 180 if scene_path.ends_with("/race.tscn") else 5
         for frame in range(frames_to_run):
