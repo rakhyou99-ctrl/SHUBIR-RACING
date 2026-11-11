@@ -157,6 +157,13 @@ func _update_tilt_steering(accel_reading: Vector3, delta: float) -> void:
     else:
         tilt_steer = move_toward(tilt_steer, 0.0, delta * 3.5)
 
+
+func _apply_player_steering(delta: float) -> void:
+    steer = tilt_steer
+    previous_car_frame_x = car.position.x
+    car.position.x = clampf(car.position.x + steer * GameState.steering_sensitivity * delta * (3.4 + speed / 55.0), -4.0, 4.0)
+    car.rotation.z = lerpf(car.rotation.z, -steer * 0.075, minf(1.0, delta * 5.0))
+
 func _process(delta: float) -> void:
     if game_over or game_paused:
         return
@@ -217,10 +224,7 @@ func _process(delta: float) -> void:
         nitro_fx.visible = boosting
         nitro_fx.scale.z = 0.85 + 0.25 * sin(Time.get_ticks_msec() * 0.035) if boosting else 1.0
 
-    steer = tilt_steer
-    previous_car_frame_x = car.position.x
-    car.position.x = clampf(car.position.x + steer * GameState.steering_sensitivity * delta * (3.4 + speed / 55.0), -4.0, 4.0)
-    car.rotation.z = lerpf(car.rotation.z, -steer * 0.075, minf(1.0, delta * 5.0))
+    _apply_player_steering(delta)
     distance += speed * delta / 3600.0
     var next_stage := clampi(1 + int(distance / 0.5), 1, 10)
     if next_stage > race_stage:
