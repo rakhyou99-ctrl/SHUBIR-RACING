@@ -211,13 +211,15 @@ func _process(delta: float) -> void:
         nitro_left = minf(3.0, nitro_left + delta * 0.60)
     if braking and not was_braking and is_instance_valid(brake_player):
         brake_player.play()
-    # Rear brake lamps brighten while the brake pedal is held.
-    for brake_light in brake_lights:
-        if is_instance_valid(brake_light) and brake_light.material_override is StandardMaterial3D:
-            var brake_material := brake_light.material_override as StandardMaterial3D
-            brake_material.emission_energy_multiplier = 2.8 if braking else 1.0
-            brake_material.albedo_color = Color("#FF1728") if braking else Color("#E53935")
-            brake_material.emission = Color("#FF1728") if braking else Color("#E53935")
+    # Update brake-lamp materials only when the pedal state changes.
+    # Rewriting shared material properties every frame is unnecessary work.
+    if braking != was_braking:
+        for brake_light in brake_lights:
+            if is_instance_valid(brake_light) and brake_light.material_override is StandardMaterial3D:
+                var brake_material := brake_light.material_override as StandardMaterial3D
+                brake_material.emission_energy_multiplier = 2.8 if braking else 1.0
+                brake_material.albedo_color = Color("#FF1728") if braking else Color("#E53935")
+                brake_material.emission = Color("#FF1728") if braking else Color("#E53935")
     was_braking = braking
     was_boosting = boosting
     if is_instance_valid(nitro_fx):
