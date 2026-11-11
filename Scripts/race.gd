@@ -113,12 +113,17 @@ func _refresh_multitouch_controls() -> void:
     var accel_held := false
     var brake_held := false
     var boost_held := false
+    # The pedal layout is stable during a race; resolve each rectangle once per
+    # touch event instead of recalculating it for every finger.
+    var accel_rect := accel_button.get_global_rect()
+    var brake_rect := brake_button.get_global_rect()
+    var boost_rect := boost_button.get_global_rect()
     for point in touch_points.values():
-        if accel_button.get_global_rect().has_point(point):
+        if accel_rect.has_point(point):
             accel_held = true
-        if brake_button.get_global_rect().has_point(point):
+        if brake_rect.has_point(point):
             brake_held = true
-        if boost_button.get_global_rect().has_point(point):
+        if boost_rect.has_point(point):
             boost_held = true
     touch_accel = accel_held
     touch_brake = brake_held
@@ -167,8 +172,6 @@ func _apply_player_steering(delta: float) -> void:
 func _process(delta: float) -> void:
     if game_over or game_paused:
         return
-    if not touch_points.is_empty():
-        _refresh_multitouch_controls()
     if near_miss_feedback_timer > 0.0:
         near_miss_feedback_timer = maxf(0.0, near_miss_feedback_timer - delta)
         if near_miss_feedback_timer <= 0.0 and is_instance_valid(near_miss_label):
