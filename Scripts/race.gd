@@ -781,8 +781,8 @@ func _random_lane() -> float:
 
 func _spawn_lane_for(spawn_z: float, excluded: Node3D = null) -> float:
     # Avoid nearby traffic and cones, but never score the respawning object against itself.
-    var lanes := [-3.5, 0.0, 3.5]
-    var safest_lane := lanes[0]
+    var lanes: Array[float] = [-3.5, 0.0, 3.5]
+    var safest_lane: float = lanes[0]
     var best_clearance := -1.0
     lanes.shuffle()
     for lane in lanes:
