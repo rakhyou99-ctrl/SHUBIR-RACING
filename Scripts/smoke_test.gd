@@ -626,6 +626,37 @@ func _run_smoke_tests() -> void:
                 instance.free()
                 quit(1)
                 return
+            var results_content := results_overlay.get_child(0).get_child(0) as VBoxContainer
+            if results_content == null or results_content.get_child_count() < 7:
+                push_error("Game Over results layout is missing its summary rows.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            var results_title := results_content.get_child(0) as Label
+            var results_subtitle := results_content.get_child(1) as Label
+            var results_score := results_content.get_child(2) as Label
+            var results_stats := results_content.get_child(3) as Label
+            var results_best := results_content.get_child(4) as Label
+            if results_title == null or results_title.text != "RACE OVER" or results_subtitle == null or results_subtitle.text.is_empty():
+                push_error("Game Over title or record subtitle is missing.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            if results_score == null or not results_score.text.contains("DISTANCE") or not results_score.text.contains("SCORE"):
+                push_error("Game Over summary does not show final distance and score.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            if results_stats == null or not results_stats.text.contains("NEAR MISSES") or not results_stats.text.contains("STAGE") or results_best == null or not results_best.text.contains("BEST DISTANCE") or not results_best.text.contains("BEST SCORE"):
+                push_error("Game Over results are missing near-miss, stage, or best-record stats.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Game Over results UI passed: title, record message, distance, score, near misses, stage, and best records.")
             print("Obstacle collision triggered Game Over and stopped the race.")
             print("Game Over navigation checks passed: Race Again and Main Menu buttons exist.")
             # Seed non-default gameplay state before restarting and verify the
