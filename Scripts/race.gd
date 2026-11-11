@@ -1090,6 +1090,7 @@ func _show_pause_menu() -> void:
     content.add_child(resume)
 
     var restart := Button.new()
+    restart.name = "RestartButton"
     restart.text = "RESTART"
     restart.custom_minimum_size = Vector2(pause_button_width, pause_button_height)
     _style_overlay_button(restart, false)
