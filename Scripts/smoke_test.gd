@@ -289,7 +289,7 @@ func _run_smoke_tests() -> void:
                 for control in [brake_control, accel_control, boost_control, instance.get("pause_button")]:
                     var control_rect: Rect2 = control.get_global_rect()
                     if control_rect.position.x < -1.0 or control_rect.position.y < -1.0 or control_rect.end.x > float(test_size.x) + 1.0 or control_rect.end.y > float(test_size.y) + 1.0:
-                        push_error("Race HUD control is outside the viewport at %s: %s" % [test_size, control.name])
+                        push_error("Race HUD control is outside the viewport at %s: %s rect=%s viewport=%s" % [test_size, control.name, control_rect, root.get_viewport().get_visible_rect().size])
                         root.get_viewport().size = original_viewport_size
                         instance.call("_layout_race_ui")
                         root.remove_child(instance)
