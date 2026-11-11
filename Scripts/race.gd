@@ -1405,7 +1405,10 @@ func _add_hold_button(label_text: String, pos: Vector2, btn_size: Vector2, actio
     return b
 
 func _layout_race_ui() -> void:
-    var viewport_size := get_viewport().get_visible_rect().size
+    _layout_race_ui_for_size(get_viewport().get_visible_rect().size)
+
+
+func _layout_race_ui_for_size(viewport_size: Vector2) -> void:
     var scale_factor := minf(viewport_size.x / 1280.0, viewport_size.y / 720.0)
     scale_factor = clampf(scale_factor, 0.55, 1.15)
     var w := viewport_size.x
