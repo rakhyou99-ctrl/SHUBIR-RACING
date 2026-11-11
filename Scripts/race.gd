@@ -46,6 +46,7 @@ var chase_camera: Camera3D
 var brake_lights: Array[MeshInstance3D] = []
 # Share immutable box materials by color to reduce duplicated GPU resources.
 var box_material_cache: Dictionary = {}
+var box_mesh_cache: Dictionary = {}
 var environment_mesh_cache: Dictionary = {}
 var environment_material_cache: Dictionary = {}
 var near_miss_label: Label
@@ -1463,8 +1464,15 @@ func _move_road(delta: float) -> void:
 
 func _box(parent: Node3D, pos: Vector3, size: Vector3, color: Color) -> void:
     var mesh_instance := MeshInstance3D.new()
-    var mesh := BoxMesh.new()
-    mesh.size = size
+    # Box dimensions repeat throughout road segments, cars and roadside props.
+    # Share immutable BoxMesh resources instead of allocating duplicates.
+    var mesh: BoxMesh
+    if box_mesh_cache.has(size):
+        mesh = box_mesh_cache[size] as BoxMesh
+    else:
+        mesh = BoxMesh.new()
+        mesh.size = size
+        box_mesh_cache[size] = mesh
     mesh_instance.mesh = mesh
     var material_key: int = color.to_rgba32()
     var material: StandardMaterial3D
