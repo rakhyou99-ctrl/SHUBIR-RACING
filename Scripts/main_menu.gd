@@ -26,7 +26,7 @@ func _build_ui() -> void:
     title.add_theme_font_size_override("font_size", 64)
     title.add_theme_color_override("font_color", Color("#FF7518"))
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    title.set_anchors_preset(Control.PRESET_CENTER_TOP)
+    title.set_anchors_preset(Control.PRESET_TOP_LEFT)
     title.position = Vector2(-400, 90)
     title.size = Vector2(800, 90)
     add_child(title)
