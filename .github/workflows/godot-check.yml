@@ -31,6 +31,12 @@ jobs:
           grep -Fq 'launcher_icons/main_192x192="res://Assets/icon.png"' export_presets.cfg
           test -s Assets/icon.png
           ruby -e 'data = File.binread("Assets/icon.png"); abort "Assets/icon.png is not a PNG" unless data.start_with?([137, 80, 78, 71, 13, 10, 26, 10].pack("C*")); width, height = data.byteslice(16, 8).unpack("N2"); puts "Launcher icon: #{width}x#{height}"; abort "Launcher icon must be at least 192x192" if width < 192 || height < 192'
+          grep -Fq 'config/name="SHUBIR RACING"' project.godot
+          grep -Fq 'run/main_scene="res://Scenes/main_menu.tscn"' project.godot
+          grep -Fq 'renderer/rendering_method.mobile="gl_compatibility"' project.godot
+          for required_file in Scenes/main_menu.tscn Scenes/garage.tscn Scenes/settings.tscn Scenes/race.tscn Scripts/main_menu.gd Scripts/garage.gd Scripts/settings.gd Scripts/race.gd Scripts/game_state.gd; do
+            test -s "$required_file" || { echo "Missing required game file: $required_file"; exit 1; }
+          done
           grep -Fq 'package/unique_name="com.shubir.racing"' export_presets.cfg
           grep -Fq 'architectures/arm64-v8a=true' export_presets.cfg
           grep -Fq 'architectures/armeabi-v7a=false' export_presets.cfg
@@ -76,7 +82,7 @@ jobs:
           for scene in main_menu garage settings race; do
             echo "Smoke-testing res://Scenes/${scene}.tscn"
             LOG_FILE="$RUNNER_TEMP/${scene}-smoke.log"
-            if ! godot --headless --path . "res://Scenes/${scene}.tscn" --quit-after 5 >"$LOG_FILE" 2>&1; then
+            if ! godot --headless --path . "res://Scenes/${scene}.tscn" --quit-after 120 >"$LOG_FILE" 2>&1; then
               cat "$LOG_FILE"
               exit 1
             fi
