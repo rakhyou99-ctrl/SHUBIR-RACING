@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/android-test-apk.yml'
+      - 'Scripts/race.gd'
+      - 'Scripts/garage.gd'
+      - 'Scripts/smoke_test.gd'
   workflow_dispatch:
 
 permissions:
