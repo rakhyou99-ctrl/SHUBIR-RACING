@@ -96,7 +96,37 @@ func _run_smoke_tests() -> void:
                 instance.free()
                 quit(1)
                 return
-            print("Game Over checks passed: race stopped and results overlay created.")
+            var results_overlay := instance.find_child("GameOverOverlay", true, false)
+            var race_again_button := results_overlay.find_child("RaceAgainButton", true, false)
+            var main_menu_button := results_overlay.find_child("MainMenuButton", true, false)
+            if race_again_button == null or main_menu_button == null:
+                push_error("Game Over navigation buttons are missing.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Game Over navigation checks passed: Race Again and Main Menu buttons exist.")
+            main_menu_button.pressed.emit()
+            await process_frame
+            if current_scene == null or current_scene.scene_file_path != "res://Scenes/main_menu.tscn":
+                push_error("Game Over Main Menu button did not open the main menu.")
+                quit(1)
+                return
+            print("Game Over Main Menu navigation passed.")
+            var menu_play_button: Button = current_scene.get("play_button")
+            if menu_play_button == null:
+                push_error("Main Menu Play button is missing after Game Over navigation.")
+                quit(1)
+                return
+            menu_play_button.pressed.emit()
+            await process_frame
+            if current_scene == null or current_scene.scene_file_path != "res://Scenes/race.tscn":
+                push_error("Main Menu Play button did not start a new race.")
+                quit(1)
+                return
+            print("Main Menu Play navigation passed: a fresh race scene opened.")
+            current_scene.queue_free()
+            await process_frame
 
         root.remove_child(instance)
         instance.free()
