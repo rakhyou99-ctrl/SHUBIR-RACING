@@ -5,6 +5,8 @@ var nitro_fx: Node3D
 var speed := 0.0
 var distance := 0.0
 var bonus_score := 0
+var near_miss_bonus_score := 0
+var stage_bonus_score := 0
 var score_label: Label
 var near_miss_total_label: Label
 var steer := 0.0
@@ -198,6 +200,7 @@ func _process(delta: float) -> void:
         var stages_gained := next_stage - race_stage
         race_stage = next_stage
         bonus_score += stages_gained * 500
+        stage_bonus_score += stages_gained * 500
         _show_stage_feedback(stages_gained)
     else:
         race_stage = next_stage
@@ -899,6 +902,7 @@ func _show_stage_feedback(stages_gained: int = 1) -> void:
 func _register_near_miss() -> void:
     near_miss_count += 1
     bonus_score += 250
+    near_miss_bonus_score += 250
     near_miss_feedback_timer = 1.35
     if is_instance_valid(near_miss_player):
         near_miss_player.play()
@@ -1110,7 +1114,7 @@ func _finish_race() -> void:
     content.add_child(score)
 
     var run_stats := Label.new()
-    run_stats.text = "NEAR MISSES  %02d  (+%d BONUS)   •   STAGE  %02d" % [near_miss_count, bonus_score, race_stage]
+    run_stats.text = "NEAR MISSES  %02d  (+%d)   •   STAGE  %02d  (+%d)" % [near_miss_count, near_miss_bonus_score, race_stage, stage_bonus_score]
     run_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     run_stats.add_theme_font_size_override("font_size", 20)
     run_stats.add_theme_color_override("font_color", Color("#FFD34E"))
