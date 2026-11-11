@@ -505,12 +505,28 @@ func _run_smoke_tests() -> void:
                 return
             print("Boost drain and recharge rate checks passed.")
             # Pause must clear held pedals and BOOST; Resume must restore active play.
+            var engine_audio: AudioStreamPlayer = fresh_race.get("engine_player")
+            var boost_audio: AudioStreamPlayer = fresh_race.get("nitro_player")
+            var brake_audio: AudioStreamPlayer = fresh_race.get("brake_player")
+            var near_miss_audio: AudioStreamPlayer = fresh_race.get("near_miss_player")
+            if engine_audio == null or boost_audio == null or brake_audio == null or near_miss_audio == null or not engine_audio.playing:
+                push_error("Race audio players were not initialized or the engine loop was not started.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
             fresh_race.set("touch_accel", true)
             fresh_race.set("touch_brake", true)
             fresh_race.set("touch_nitro", true)
             fresh_race.call("_show_pause_menu")
             if not fresh_race.get("game_paused") or fresh_race.get("touch_accel") or fresh_race.get("touch_brake") or fresh_race.get("touch_nitro"):
                 push_error("Pause did not stop gameplay and clear held controls.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            if not engine_audio.stream_paused or not boost_audio.stream_paused or not brake_audio.stream_paused or not near_miss_audio.stream_paused:
+                push_error("Pause did not suspend all active gameplay audio streams.")
                 fresh_race.queue_free()
                 await process_frame
                 quit(1)
@@ -531,6 +547,13 @@ func _run_smoke_tests() -> void:
                 await process_frame
                 quit(1)
                 return
+            if engine_audio.stream_paused or boost_audio.stream_paused or brake_audio.stream_paused or near_miss_audio.stream_paused:
+                push_error("Resume did not restore gameplay audio playback.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Pause/Resume audio checks passed: all gameplay streams suspend and resume.")
             print("Pause and Resume navigation/control checks passed.")
 
             # Godot Node notifications: 201 = application paused, 1007 = Android Back request.
@@ -595,6 +618,15 @@ func _run_smoke_tests() -> void:
                 await process_frame
                 quit(1)
                 return
+            var stopped_engine: AudioStreamPlayer = fresh_race.get("engine_player")
+            var crash_effect: AudioStreamPlayer = fresh_race.get("crash_player")
+            if stopped_engine.playing or crash_effect == null or not crash_effect.playing:
+                push_error("Game Over did not stop the engine loop and play the crash effect.")
+                fresh_race.queue_free()
+                await process_frame
+                quit(1)
+                return
+            print("Game Over audio checks passed: engine stopped and crash effect triggered.")
             print("Traffic collision triggered Game Over and stopped the race.")
             if absf(float(fresh_race.get("best_distance")) - float(fresh_race.get("distance"))) > 0.001 or int(fresh_race.get("best_score")) <= 0:
                 push_error("Game Over did not update the best distance and score records.")
