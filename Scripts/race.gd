@@ -177,7 +177,9 @@ func _process(delta: float) -> void:
     elif accel:
         speed = move_toward(speed, 190.0 if boosting else 130.0, 65.0 * delta)
     else:
-        speed = move_toward(speed, 55.0, 18.0 * delta)
+        # Releasing the accelerator lets the car coast down naturally instead of
+        # silently maintaining an automatic 55 km/h without pedal input.
+        speed = move_toward(speed, 0.0, 24.0 * delta)
 
     if boosting:
         nitro_left = maxf(0.0, nitro_left - delta)
