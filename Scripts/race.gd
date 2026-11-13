@@ -59,8 +59,9 @@ var stage_feedback_tween: Tween
 var was_boosting := false
 var boost_locked := false
 var was_braking := false
-var tilt_center_x := 0.0
-var tilt_filtered_x := 0.0
+var tilt_center_x := 0.0 # Calibrated tilt angle in degrees.
+var tilt_filtered_x := 0.0 # Filtered tilt angle in degrees.
+var tilt_horizontal_axis := 0 # 0 = sensor X, 1 = sensor Y.
 var tilt_steer := 0.0
 var tilt_calibrated := false
 var tilt_direction_sign := 1.0
@@ -145,29 +146,39 @@ func _ready() -> void:
     tilt_calibrated = false
 
 
+func _get_device_tilt_angle(accel_reading: Vector3) -> float:
+    # Android sensor axes follow the handset's natural orientation. Identify
+    # the vertical gravity axis at calibration, then use the other screen-plane
+    # axis for steering. This supports portrait-natural phones and landscape-
+    # natural devices without assuming accelerometer Y is always horizontal.
+    var horizontal_component := accel_reading.x if tilt_horizontal_axis == 0 else accel_reading.y
+    var vertical_component := accel_reading.y if tilt_horizontal_axis == 0 else accel_reading.x
+    return rad_to_deg(atan2(horizontal_component, absf(vertical_component)))
+
+
 func _update_tilt_steering(accel_reading: Vector3, delta: float) -> void:
     # Gravity magnitude confirms a live accelerometer sample is available.
     if accel_reading.length() > 6.0:
-        # Android reports accelerometer axes in the handset's natural
-        # orientation. In reverse-landscape the horizontal steering axis flips.
         tilt_direction_sign = -1.0 if DisplayServer.screen_get_orientation() == DisplayServer.SCREEN_REVERSE_LANDSCAPE else 1.0
         if not tilt_calibrated:
-            tilt_center_x = accel_reading.y
-            tilt_filtered_x = accel_reading.y
+            # The axis carrying most gravity is vertical; the other X/Y axis
+            # measures left/right roll in the current landscape orientation.
+            tilt_horizontal_axis = 1 if absf(accel_reading.x) >= absf(accel_reading.y) else 0
+            tilt_center_x = _get_device_tilt_angle(accel_reading)
+            tilt_filtered_x = tilt_center_x
             tilt_calibrated = true
-        # Filter small sensor fluctuations without making steering feel delayed.
-        tilt_filtered_x = lerpf(tilt_filtered_x, accel_reading.y, minf(1.0, delta * 14.0))
+        var current_angle := _get_device_tilt_angle(accel_reading)
+        tilt_filtered_x = lerpf(tilt_filtered_x, current_angle, minf(1.0, delta * 10.0))
         var tilt_delta := (tilt_filtered_x - tilt_center_x) * tilt_direction_sign
-        # A small symmetric dead-zone lets both directions register with a
-        # gentle wrist movement. Normalize both signs identically so left and
-        # right have matching response around the calibrated neutral position.
-        var dead_zone := 0.16
+        # Symmetric 2-degree dead zone and progressive steering to full lock
+        # at 35 degrees; both signs use the same curve and filter.
+        var dead_zone := 2.0
         if absf(tilt_delta) <= dead_zone:
             tilt_delta = 0.0
         else:
             tilt_delta = signf(tilt_delta) * (absf(tilt_delta) - dead_zone)
-        var target_tilt := clampf(tilt_delta / 1.15, -1.0, 1.0)
-        tilt_steer = move_toward(tilt_steer, target_tilt, delta * 12.0)
+        var target_tilt := clampf(tilt_delta / 33.0, -1.0, 1.0)
+        tilt_steer = move_toward(tilt_steer, target_tilt, delta * 10.0)
     else:
         tilt_steer = move_toward(tilt_steer, 0.0, delta * 5.0)
 
@@ -1171,6 +1182,7 @@ func _show_pause_menu() -> void:
         tilt_calibrated = false
         tilt_center_x = 0.0
         tilt_filtered_x = 0.0
+        tilt_horizontal_axis = 0
         tilt_steer = 0.0
         game_paused = false
         if is_instance_valid(engine_player):
