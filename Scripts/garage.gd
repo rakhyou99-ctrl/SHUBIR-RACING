@@ -558,7 +558,6 @@ func _create_preview_car() -> Node3D:
         _add_box(root, Vector3(side * 1.055, 0.39, -1.82), Vector3(0.10, 0.045, 0.22), paint.darkened(0.12))
 
     # Custom owner decal on both doors and bonnet.
-    var brand_text := "SUBHOJIT" if GameState.selected_car == 0 else "BIRAJ"
     for side in [-1.0, 1.0]:
         var door_mark := Label3D.new()
         door_mark.text = brand_text
