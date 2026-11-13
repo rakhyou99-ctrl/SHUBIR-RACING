@@ -429,7 +429,7 @@ func _add_sports_body(parent: Node3D, tint: Color, center_y: float) -> void:
 func _create_preview_car() -> Node3D:
     var paint := Color("#1677E8") if GameState.selected_car == 0 else Color("#D83232")
     var brand_text := "SUBHOJIT" if GameState.selected_car == 0 else "BIRAJ"
-    var imported_car := CarModelFactory.create_car(paint, brand_text, 0.02)
+    var imported_car := CarModelFactory.create_car(paint, brand_text, 0.075)
     if imported_car != null:
         return imported_car
 
