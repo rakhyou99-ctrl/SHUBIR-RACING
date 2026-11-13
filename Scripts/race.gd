@@ -596,14 +596,78 @@ func _ellipsoid(parent: Node3D, pos: Vector3, radii: Vector3, tint: Color) -> Me
     return part
 
 
+func _sports_body_mesh(parent: Node3D, tint: Color, center_y: float) -> MeshInstance3D:
+    # A tapered multi-section shell gives the car a shaped nose, broad doors,
+    # curved shoulders and a narrowed rear instead of a single box/sphere.
+    var profile := [
+        [-1.98, 0.56, center_y - 0.015, 0.17],
+        [-1.72, 0.82, center_y, 0.25],
+        [-1.25, 0.96, center_y, 0.30],
+        [-0.55, 1.00, center_y, 0.31],
+        [0.45, 0.98, center_y - 0.01, 0.30],
+        [1.20, 0.91, center_y - 0.015, 0.28],
+        [1.68, 0.78, center_y - 0.02, 0.24],
+        [1.96, 0.59, center_y - 0.025, 0.17]
+    ]
+    const RING_STEPS := 20
+    var surface := SurfaceTool.new()
+    surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+    for section_index in range(profile.size() - 1):
+        var first: Array = profile[section_index]
+        var second: Array = profile[section_index + 1]
+        for ring_index in range(RING_STEPS):
+            var a0 := TAU * float(ring_index) / float(RING_STEPS)
+            var a1 := TAU * float(ring_index + 1) / float(RING_STEPS)
+            var p00 := Vector3(cos(a0) * first[1], first[2] + sin(a0) * first[3], first[0])
+            var p01 := Vector3(cos(a1) * first[1], first[2] + sin(a1) * first[3], first[0])
+            var p10 := Vector3(cos(a0) * second[1], second[2] + sin(a0) * second[3], second[0])
+            var p11 := Vector3(cos(a1) * second[1], second[2] + sin(a1) * second[3], second[0])
+            surface.add_vertex(p00)
+            surface.add_vertex(p11)
+            surface.add_vertex(p10)
+            surface.add_vertex(p00)
+            surface.add_vertex(p01)
+            surface.add_vertex(p11)
+    # Close the nose and tail so the shell has no visible open ends.
+    var front: Array = profile[0]
+    var front_center := Vector3(0, front[2], front[0])
+    var rear: Array = profile[profile.size() - 1]
+    var rear_center := Vector3(0, rear[2], rear[0])
+    for ring_index in range(RING_STEPS):
+        var a0 := TAU * float(ring_index) / float(RING_STEPS)
+        var a1 := TAU * float(ring_index + 1) / float(RING_STEPS)
+        var f0 := Vector3(cos(a0) * front[1], front[2] + sin(a0) * front[3], front[0])
+        var f1 := Vector3(cos(a1) * front[1], front[2] + sin(a1) * front[3], front[0])
+        var r0 := Vector3(cos(a0) * rear[1], rear[2] + sin(a0) * rear[3], rear[0])
+        var r1 := Vector3(cos(a1) * rear[1], rear[2] + sin(a1) * rear[3], rear[0])
+        surface.add_vertex(front_center)
+        surface.add_vertex(f1)
+        surface.add_vertex(f0)
+        surface.add_vertex(rear_center)
+        surface.add_vertex(r0)
+        surface.add_vertex(r1)
+    surface.generate_normals()
+    var shell := MeshInstance3D.new()
+    shell.name = "SportsBodyShell"
+    shell.mesh = surface.commit()
+    var material := StandardMaterial3D.new()
+    material.albedo_color = tint
+    material.metallic = 0.52
+    material.roughness = 0.24
+    material.clearcoat_enabled = true
+    material.clearcoat = 0.65
+    shell.material_override = material
+    parent.add_child(shell)
+    return shell
+
+
 func _make_car() -> void:
     car = Node3D.new()
     car.position = Vector3(0, 0.45, 3)
     add_child(car)
     var body_color := Color("#1677E8") if GameState.selected_car == 0 else Color("#D83232")
-    # Smooth ellipsoid shell replaces the old square slab body and gives the
-    # silhouette rounded shoulders and a lower sports-car stance.
-    _ellipsoid(car, Vector3(0, 0.45, 0), Vector3(1.0, 0.31, 1.88), body_color)
+    # Tapered smooth shell replaces the former oval slab with shaped front/rear bodywork.
+    _sports_body_mesh(car, body_color, 0.45)
     _ellipsoid(car, Vector3(0, 0.91, -0.22), Vector3(0.72, 0.28, 0.83), Color("#17212E"))
 
     # Sport-car body details: hood, roof glass, side skirts and front splitter.
