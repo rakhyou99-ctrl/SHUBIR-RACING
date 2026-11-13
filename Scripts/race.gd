@@ -158,11 +158,16 @@ func _update_tilt_steering(accel_reading: Vector3, delta: float) -> void:
         # Filter small sensor fluctuations without making steering feel delayed.
         tilt_filtered_x = lerpf(tilt_filtered_x, accel_reading.y, minf(1.0, delta * 14.0))
         var tilt_delta := (tilt_filtered_x - tilt_center_x) * tilt_direction_sign
-        # Lower dead-zone and a stronger response make ordinary wrist movement register.
-        if absf(tilt_delta) < 0.55:
+        # A small symmetric dead-zone lets both directions register with a
+        # gentle wrist movement. Normalize both signs identically so left and
+        # right have matching response around the calibrated neutral position.
+        var dead_zone := 0.16
+        if absf(tilt_delta) <= dead_zone:
             tilt_delta = 0.0
-        var target_tilt := clampf(tilt_delta / 2.0, -1.0, 1.0)
-        tilt_steer = move_toward(tilt_steer, target_tilt, delta * 8.0)
+        else:
+            tilt_delta = signf(tilt_delta) * (absf(tilt_delta) - dead_zone)
+        var target_tilt := clampf(tilt_delta / 1.15, -1.0, 1.0)
+        tilt_steer = move_toward(tilt_steer, target_tilt, delta * 12.0)
     else:
         tilt_steer = move_toward(tilt_steer, 0.0, delta * 5.0)
 
