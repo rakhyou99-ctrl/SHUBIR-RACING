@@ -1,5 +1,7 @@
 extends Control
 
+const CarModelFactory = preload("res://Scripts/car_model_factory.gd")
+
 var preview_root: Node3D
 var preview_car: Node3D
 var preview_camera: Camera3D
@@ -425,8 +427,15 @@ func _add_sports_body(parent: Node3D, tint: Color, center_y: float) -> void:
 
 
 func _create_preview_car() -> Node3D:
-    var root := Node3D.new()
     var paint := Color("#1677E8") if GameState.selected_car == 0 else Color("#D83232")
+    var brand_text := "SUBHOJIT" if GameState.selected_car == 0 else "BIRAJ"
+    var imported_car := CarModelFactory.create_car(paint, brand_text, 0.02)
+    if imported_car != null:
+        return imported_car
+
+    # Keep the previous procedural preview as a safe fallback until the GLB
+    # asset has been added to Assets/Cars in the project repository.
+    var root := Node3D.new()
     _add_sports_body(root, paint, 0.55)
     _add_ellipsoid(root, Vector3(0, 1.00, -0.22), Vector3(0.74, 0.30, 0.88), Color("#172638"))
     _add_box(root, Vector3(0, 0.88, -1.25), Vector3(1.55, 0.10, 1.0), paint.lightened(0.12))
