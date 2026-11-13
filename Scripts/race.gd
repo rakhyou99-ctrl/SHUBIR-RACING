@@ -179,8 +179,13 @@ func _update_tilt_steering(accel_reading: Vector3, delta: float) -> void:
             tilt_delta = 0.0
         else:
             tilt_delta = signf(tilt_delta) * (absf(tilt_delta) - dead_zone)
-        var target_tilt := clampf(tilt_delta / 41.0, -1.0, 1.0)
-        tilt_steer = move_toward(tilt_steer, target_tilt, delta * 5.5)
+        var normalized_tilt := clampf(absf(tilt_delta) / 41.0, 0.0, 1.0)
+        # Smoothstep gives a gentle response near centre and progressively
+        # stronger steering only when the player deliberately tilts farther.
+        var eased_tilt := normalized_tilt * normalized_tilt * (3.0 - 2.0 * normalized_tilt)
+        var target_tilt := signf(tilt_delta) * eased_tilt
+        # Frame-rate-independent exponential smoothing avoids a stepped feel.
+        tilt_steer = lerpf(tilt_steer, target_tilt, 1.0 - exp(-delta * 5.0))
     else:
         tilt_steer = move_toward(tilt_steer, 0.0, delta * 5.0)
 
