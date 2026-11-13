@@ -660,6 +660,8 @@ func _run_smoke_tests() -> void:
             # Extreme roll must clamp symmetrically at full steering lock.
             instance.set("tilt_calibrated", false)
             instance.set("tilt_steer", 0.0)
+            # Calibrate with gravity on Y (portrait-natural phone held landscape),
+            # then apply maximum opposite roll on X, the horizontal sensor axis.
             instance.call("_update_tilt_steering", Vector3(0.0, 9.8, 0.0), 0.1)
             instance.call("_update_tilt_steering", Vector3(9.8, 0.0, 0.0), 0.5)
             var full_right := float(instance.get("tilt_steer"))
