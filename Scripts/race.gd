@@ -1,5 +1,7 @@
 extends Node3D
 
+const CarModelFactory = preload("res://Scripts/car_model_factory.gd")
+
 var car: Node3D
 var previous_car_frame_x := 0.0
 var nitro_fx: Node3D
@@ -685,6 +687,56 @@ func _sports_body_mesh(parent: Node3D, tint: Color, center_y: float) -> MeshInst
 
 
 func _make_car() -> void:
+    var body_color := Color("#1677E8") if GameState.selected_car == 0 else Color("#D83232")
+    var brand_text := "SUBHOJIT" if GameState.selected_car == 0 else "BIRAJ"
+    car = CarModelFactory.create_car(body_color, brand_text, -0.36)
+    if car == null:
+        _make_procedural_car()
+        return
+
+    car.position = Vector3(0, 0.45, 3)
+    add_child(car)
+
+    # Reuse the imported model's real rear light bars for brake-light feedback.
+    for candidate in car.find_children("*", "MeshInstance3D", true, false):
+        if String(candidate.name).begins_with("Tail_Light_Bar"):
+            var brake_material := StandardMaterial3D.new()
+            brake_material.albedo_color = Color("#E53935")
+            brake_material.emission_enabled = true
+            brake_material.emission = Color("#E53935")
+            brake_material.emission_energy_multiplier = 1.0
+            candidate.material_override = brake_material
+            brake_lights.append(candidate)
+
+    chase_camera = Camera3D.new()
+    chase_camera.position = Vector3(0, 5.2, 10.5)
+    chase_camera.rotation_degrees = Vector3(-20, 0, 0)
+    chase_camera.fov = 70.0
+    chase_camera.current = true
+    car.add_child(chase_camera)
+
+    # Boost flames extend behind the imported exhaust outlets.
+    nitro_fx = Node3D.new()
+    nitro_fx.position = Vector3(0, 0.28, 1.48)
+    nitro_fx.visible = false
+    car.add_child(nitro_fx)
+    for flame_x in [-0.34, 0.34]:
+        var flame := MeshInstance3D.new()
+        var flame_mesh := _cached_cylinder_mesh(0.025, 0.16, 0.72)
+        flame.mesh = flame_mesh
+        flame.rotation_degrees.x = 90
+        flame.position = Vector3(flame_x, 0.0, 0.28)
+        var flame_material := StandardMaterial3D.new()
+        flame_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+        flame_material.albedo_color = Color("#36CFFF")
+        flame_material.emission_enabled = true
+        flame_material.emission = Color("#168DFF")
+        flame_material.emission_energy_multiplier = 2.2
+        flame.material_override = flame_material
+        nitro_fx.add_child(flame)
+
+
+func _make_procedural_car() -> void:
     car = Node3D.new()
     car.position = Vector3(0, 0.45, 3)
     add_child(car)
