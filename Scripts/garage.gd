@@ -147,8 +147,8 @@ func _build_garage() -> void:
 
     preview_camera = Camera3D.new()
     # Bring the vehicle closer and use a tighter showroom lens by default.
-    preview_camera.position = Vector3(3.8, 2.35, -6.1)
-    preview_camera.fov = 49.0
+    preview_camera.position = Vector3(3.2, 2.0, -5.2)
+    preview_camera.fov = 43.0
     preview_camera.near = 0.1
     preview_camera.far = 100.0
     preview_root.add_child(preview_camera)
@@ -665,7 +665,7 @@ func _make_zoom_button(caption: String, is_primary: bool) -> Button:
 func _change_preview_zoom(fov_delta: float) -> void:
     if not is_instance_valid(preview_camera):
         return
-    preview_camera.fov = clampf(preview_camera.fov + fov_delta, 32.0, 62.0)
+    preview_camera.fov = clampf(preview_camera.fov + fov_delta, 28.0, 62.0)
 
 
 func _apply_pinch_zoom(distance_delta: float) -> void:
