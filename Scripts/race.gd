@@ -699,14 +699,15 @@ func _make_car() -> void:
 
     # Reuse the imported model's real rear light bars for brake-light feedback.
     for candidate in car.find_children("*", "MeshInstance3D", true, false):
-        if String(candidate.name).begins_with("Tail_Light_Bar"):
+        var brake_light := candidate as MeshInstance3D
+        if brake_light != null and String(brake_light.name).begins_with("Tail_Light_Bar"):
             var brake_material := StandardMaterial3D.new()
             brake_material.albedo_color = Color("#E53935")
             brake_material.emission_enabled = true
             brake_material.emission = Color("#E53935")
             brake_material.emission_energy_multiplier = 1.0
-            candidate.material_override = brake_material
-            brake_lights.append(candidate)
+            brake_light.material_override = brake_material
+            brake_lights.append(brake_light)
 
     chase_camera = Camera3D.new()
     chase_camera.position = Vector3(0, 5.2, 10.5)
