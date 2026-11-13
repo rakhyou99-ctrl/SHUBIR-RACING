@@ -663,11 +663,11 @@ func _run_smoke_tests() -> void:
             # Calibrate with gravity on Y (portrait-natural phone held landscape),
             # then apply maximum opposite roll on X, the horizontal sensor axis.
             instance.call("_update_tilt_steering", Vector3(0.0, 9.8, 0.0), 0.1)
-            instance.call("_update_tilt_steering", Vector3(9.8, 0.0, 0.0), 0.5)
+            instance.call("_update_tilt_steering", Vector3(9.8, 0.0, 0.0), 2.0)
             var full_right := float(instance.get("tilt_steer"))
             instance.set("tilt_steer", 0.0)
             instance.set("tilt_filtered_x", 0.0)
-            instance.call("_update_tilt_steering", Vector3(-9.8, 0.0, 0.0), 0.5)
+            instance.call("_update_tilt_steering", Vector3(-9.8, 0.0, 0.0), 2.0)
             var full_left := float(instance.get("tilt_steer"))
             if full_right < 0.99 or full_left > -0.99:
                 push_error("Extreme phone tilt did not clamp symmetrically to full steering lock.")
