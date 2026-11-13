@@ -168,17 +168,19 @@ func _update_tilt_steering(accel_reading: Vector3, delta: float) -> void:
             tilt_filtered_x = tilt_center_x
             tilt_calibrated = true
         var current_angle := _get_device_tilt_angle(accel_reading)
-        tilt_filtered_x = lerpf(tilt_filtered_x, current_angle, minf(1.0, delta * 10.0))
+        # A slower filter rejects small hand tremors and makes the wheel feel
+        # planted instead of reacting sharply to every sensor fluctuation.
+        tilt_filtered_x = lerpf(tilt_filtered_x, current_angle, minf(1.0, delta * 7.0))
         var tilt_delta := (tilt_filtered_x - tilt_center_x) * tilt_direction_sign
-        # Symmetric 2-degree dead zone and progressive steering to full lock
-        # at 35 degrees; both signs use the same curve and filter.
-        var dead_zone := 2.0
+        # Use a wider symmetric dead zone and a gentler angle curve. The car
+        # needs a deliberate phone tilt before it starts changing lanes.
+        var dead_zone := 4.0
         if absf(tilt_delta) <= dead_zone:
             tilt_delta = 0.0
         else:
             tilt_delta = signf(tilt_delta) * (absf(tilt_delta) - dead_zone)
-        var target_tilt := clampf(tilt_delta / 33.0, -1.0, 1.0)
-        tilt_steer = move_toward(tilt_steer, target_tilt, delta * 10.0)
+        var target_tilt := clampf(tilt_delta / 41.0, -1.0, 1.0)
+        tilt_steer = move_toward(tilt_steer, target_tilt, delta * 5.5)
     else:
         tilt_steer = move_toward(tilt_steer, 0.0, delta * 5.0)
 
@@ -186,10 +188,10 @@ func _update_tilt_steering(accel_reading: Vector3, delta: float) -> void:
 func _apply_player_steering(delta: float) -> void:
     steer = tilt_steer
     previous_car_frame_x = car.position.x
-    # Stronger lateral response lets a normal phone tilt move between lanes
-    # in a controlled, predictable time instead of barely nudging the car.
-    car.position.x = clampf(car.position.x + steer * GameState.steering_sensitivity * delta * (5.2 + speed / 35.0), -4.0, 4.0)
-    car.rotation.z = lerpf(car.rotation.z, -steer * 0.11, minf(1.0, delta * 7.0))
+    # Reduced lateral speed prevents a small tilt from throwing the car across
+    # lanes. Larger deliberate tilts still provide enough authority to avoid traffic.
+    car.position.x = clampf(car.position.x + steer * GameState.steering_sensitivity * delta * (3.0 + speed / 90.0), -4.0, 4.0)
+    car.rotation.z = lerpf(car.rotation.z, -steer * 0.08, minf(1.0, delta * 5.0))
 
 func _process(delta: float) -> void:
     if game_over or game_paused:
