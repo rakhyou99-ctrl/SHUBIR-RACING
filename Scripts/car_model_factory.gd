@@ -5,9 +5,14 @@ extends RefCounted
 const MODEL_PATH := "res://Assets/Cars/spectral_gt_rs_game_ready.glb"
 
 static func create_car(paint: Color, owner_text: String, model_y_offset: float = 0.0) -> Node3D:
+    # Avoid noisy ResourceLoader errors when the optional licensed GLB has not
+    # yet been added to the repository; callers intentionally use the fallback.
+    if not ResourceLoader.exists(MODEL_PATH):
+        push_warning("SHUBIR RACING car model missing; using procedural fallback: " + MODEL_PATH)
+        return null
     var packed_model := load(MODEL_PATH) as PackedScene
     if packed_model == null:
-        push_warning("SHUBIR RACING car model missing: " + MODEL_PATH)
+        push_warning("SHUBIR RACING car model could not be imported: " + MODEL_PATH)
         return null
 
     var car_root := Node3D.new()
