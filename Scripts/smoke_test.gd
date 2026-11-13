@@ -587,38 +587,39 @@ func _run_smoke_tests() -> void:
                 return
             print("Raw multi-touch checks passed: two fingers, drag between pedals, and independent release.")
 
-            # Deterministic accelerometer tests validate calibration, dead zone,
-            # opposite steering responses, and sensor-loss recentering.
+            # Deterministic accelerometer tests cover both common Android
+            # natural orientations, symmetric left/right angles, dead zone,
+            # steering limits, and sensor-loss recentering.
             instance.set("tilt_calibrated", false)
             instance.set("tilt_steer", 0.0)
             instance.call("_update_tilt_steering", Vector3(0.0, 9.8, 0.0), 0.1)
-            if not instance.get("tilt_calibrated") or absf(float(instance.get("tilt_center_x")) - 9.8) > 0.01:
-                push_error("Tilt steering did not calibrate its neutral accelerometer baseline.")
+            if not instance.get("tilt_calibrated") or int(instance.get("tilt_horizontal_axis")) != 0 or absf(float(instance.get("tilt_center_x"))) > 0.01:
+                push_error("Portrait-natural tilt calibration did not identify the horizontal X sensor axis.")
                 root.remove_child(instance)
                 instance.free()
                 quit(1)
                 return
-            instance.call("_update_tilt_steering", Vector3(0.0, 10.2, 0.0), 0.1)
+            instance.call("_update_tilt_steering", Vector3(0.17, 9.8, 0.0), 0.5)
             if absf(float(instance.get("tilt_steer"))) > 0.01:
-                push_error("Tilt steering dead zone allowed unwanted drift.")
+                push_error("Two-degree tilt dead zone allowed unwanted drift.")
                 root.remove_child(instance)
                 instance.free()
                 quit(1)
                 return
-            instance.call("_update_tilt_steering", Vector3(0.0, 12.0, 0.0), 0.5)
+            instance.call("_update_tilt_steering", Vector3(2.54, 9.46, 0.0), 0.5)
             var positive_tilt := float(instance.get("tilt_steer"))
             if positive_tilt <= 0.0:
-                push_error("Positive relative phone tilt did not produce positive steering.")
+                push_error("Positive relative phone roll did not produce positive steering.")
                 root.remove_child(instance)
                 instance.free()
                 quit(1)
                 return
             instance.set("tilt_steer", 0.0)
-            instance.set("tilt_filtered_x", 9.8)
-            instance.call("_update_tilt_steering", Vector3(0.0, 7.6, 0.0), 0.5)
+            instance.set("tilt_filtered_x", 0.0)
+            instance.call("_update_tilt_steering", Vector3(-2.54, 9.46, 0.0), 0.5)
             var negative_tilt := float(instance.get("tilt_steer"))
-            if negative_tilt >= 0.0:
-                push_error("Negative relative phone tilt did not produce opposite steering.")
+            if negative_tilt >= 0.0 or absf(absf(positive_tilt) - absf(negative_tilt)) > 0.08:
+                push_error("Left/right tilt response was not symmetric.")
                 root.remove_child(instance)
                 instance.free()
                 quit(1)
@@ -631,29 +632,48 @@ func _run_smoke_tests() -> void:
                 instance.free()
                 quit(1)
                 return
-            print("Tilt steering logic checks passed: calibration, dead zone, left/right response, and sensor fallback.")
+            # Landscape-natural tablets use the other X/Y mapping. Verify
+            # that calibration selects Y as horizontal when gravity is on X.
+            instance.set("tilt_calibrated", false)
+            instance.set("tilt_steer", 0.0)
+            instance.call("_update_tilt_steering", Vector3(9.8, 0.0, 0.0), 0.1)
+            if int(instance.get("tilt_horizontal_axis")) != 1:
+                push_error("Landscape-natural tilt calibration did not identify the horizontal Y sensor axis.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            instance.call("_update_tilt_steering", Vector3(9.46, 2.54, 0.0), 0.5)
+            var landscape_right := float(instance.get("tilt_steer"))
+            instance.set("tilt_steer", 0.0)
+            instance.set("tilt_filtered_x", 0.0)
+            instance.call("_update_tilt_steering", Vector3(9.46, -2.54, 0.0), 0.5)
+            var landscape_left := float(instance.get("tilt_steer"))
+            if landscape_right <= 0.0 or landscape_left >= 0.0 or absf(absf(landscape_right) - absf(landscape_left)) > 0.08:
+                push_error("Landscape-natural sensor axes did not produce balanced opposite steering.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Tilt angle checks passed: both Android sensor-axis layouts, symmetric left/right, dead zone, and sensor fallback.")
 
-            # Large sensor offsets must saturate at full steering rather than
-            # exceeding the normalized control range.
+            # Extreme roll must clamp symmetrically at full steering lock.
+            instance.set("tilt_calibrated", false)
             instance.set("tilt_steer", 0.0)
-            instance.set("tilt_filtered_x", 9.8)
-            instance.call("_update_tilt_steering", Vector3(0.0, 30.0, 0.0), 0.5)
-            if absf(float(instance.get("tilt_steer")) - 1.0) > 0.001:
-                push_error("Large positive phone tilt did not clamp to full steering.")
+            instance.call("_update_tilt_steering", Vector3(0.0, 9.8, 0.0), 0.1)
+            instance.call("_update_tilt_steering", Vector3(9.8, 0.0, 0.0), 0.5)
+            var full_right := float(instance.get("tilt_steer"))
+            instance.set("tilt_steer", 0.0)
+            instance.set("tilt_filtered_x", 0.0)
+            instance.call("_update_tilt_steering", Vector3(-9.8, 0.0, 0.0), 0.5)
+            var full_left := float(instance.get("tilt_steer"))
+            if full_right < 0.99 or full_left > -0.99:
+                push_error("Extreme phone tilt did not clamp symmetrically to full steering lock.")
                 root.remove_child(instance)
                 instance.free()
                 quit(1)
                 return
-            instance.set("tilt_steer", 0.0)
-            instance.set("tilt_filtered_x", 9.8)
-            instance.call("_update_tilt_steering", Vector3(0.0, -10.0, 0.0), 0.5)
-            if absf(float(instance.get("tilt_steer")) + 1.0) > 0.001:
-                push_error("Large negative phone tilt did not clamp to full opposite steering.")
-                root.remove_child(instance)
-                instance.free()
-                quit(1)
-                return
-            print("Tilt steering limit checks passed: extreme sensor offsets clamp to both full steering directions.")
+            print("Tilt steering limits passed: full left and right lock are symmetric.")
 
             # Confirm the Settings sensitivity multiplier changes actual car movement.
             var steering_game_state: Node = root.get_node("GameState")
