@@ -1499,8 +1499,9 @@ func _add_hold_button(label_text: String, pos: Vector2, btn_size: Vector2, actio
     var pressed_style := base_style.duplicate() as StyleBoxFlat
     pressed_style.bg_color = pressed_style.bg_color.darkened(0.18)
     b.add_theme_stylebox_override("pressed", pressed_style)
-    b.button_down.connect(func(): _set_touch(action, true))
-    b.button_up.connect(func(): _set_touch(action, false))
+    # Touchscreen holds are read centrally from InputEventScreenTouch/Drag.
+    # Do not also toggle these flags from Button.button_down/up: with multiple
+    # fingers, one Button release can otherwise cancel another finger's hold.
     ui_layer.add_child(b)
     return b
 
@@ -1510,7 +1511,8 @@ func _layout_race_ui() -> void:
 
 func _layout_race_ui_for_size(viewport_size: Vector2) -> void:
     var scale_factor := minf(viewport_size.x / 1280.0, viewport_size.y / 720.0)
-    scale_factor = clampf(scale_factor, 0.55, 1.15)
+    # Keep pedals comfortably tappable on compact landscape phones.
+    scale_factor = clampf(scale_factor, 0.70, 1.15)
     var w := viewport_size.x
     var h := viewport_size.y
 
