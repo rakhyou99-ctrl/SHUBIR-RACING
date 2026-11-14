@@ -1236,12 +1236,22 @@ func _run_smoke_tests() -> void:
             var boost_audio: AudioStreamPlayer = fresh_race.get("nitro_player")
             var brake_audio: AudioStreamPlayer = fresh_race.get("brake_player")
             var near_miss_audio: AudioStreamPlayer = fresh_race.get("near_miss_player")
-            if engine_audio == null or boost_audio == null or brake_audio == null or near_miss_audio == null or not engine_audio.playing:
+            var crash_audio: AudioStreamPlayer = fresh_race.get("crash_player")
+            var horn_audio: AudioStreamPlayer = fresh_race.get("horn_player")
+            if engine_audio == null or boost_audio == null or brake_audio == null or near_miss_audio == null or crash_audio == null or horn_audio == null or not engine_audio.playing:
                 push_error("Race audio players were not initialized or the engine loop was not started.")
                 fresh_race.queue_free()
                 await process_frame
                 quit(1)
                 return
+            for audio_player in [engine_audio, boost_audio, brake_audio, near_miss_audio, crash_audio, horn_audio]:
+                if audio_player.bus != "Master":
+                    push_error("Game audio must use the Master bus so Android media volume keys control it.")
+                    fresh_race.queue_free()
+                    await process_frame
+                    quit(1)
+                    return
+            print("Android media volume routing passed: all game audio uses the Master bus.")
             # Keep the one-shot brake effect active so Pause tests an in-flight effect,
             # not only idle AudioStreamPlayer instances.
             brake_audio.play()
