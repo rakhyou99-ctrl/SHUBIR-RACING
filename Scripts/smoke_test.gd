@@ -139,13 +139,38 @@ func _run_smoke_tests() -> void:
                     if preview_child is DirectionalLight3D:
                         showroom_key_light = preview_child
                         break
-            if showroom_key_light == null or showroom_key_light.shadow_enabled:
-                push_error("Garage mobile lighting must disable the realtime directional shadow map.")
+            if showroom_key_light == null or not showroom_key_light.shadow_enabled:
+                push_error("Garage showroom must enable a directional shadow for realistic vehicle grounding.")
                 root.remove_child(instance)
                 instance.free()
                 quit(1)
                 return
-            print("Garage render efficiency passed: showroom directional shadow map is disabled.")
+            print("Garage visual quality passed: directional showroom shadows are enabled.")
+            var factory = load("res://Scripts/car_model_factory.gd")
+            var blue_model: Node3D = factory.create_car(Color("#1677E8"), "SUBHOJIT", 0.0, 0)
+            var red_model: Node3D = factory.create_car(Color("#D83232"), "BIRAJ", 0.0, 1)
+            if blue_model == null or red_model == null or blue_model.name == red_model.name:
+                push_error("Garage must load two distinct vehicle models, not one model with two paint colors.")
+                if is_instance_valid(blue_model):
+                    blue_model.free()
+                if is_instance_valid(red_model):
+                    red_model.free()
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            if red_model.find_children("WheelPivot_*", "Node3D", true, false).size() != 4:
+                push_error("Performance sedan is missing its four independent wheel rigs.")
+                blue_model.free()
+                red_model.free()
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Garage model separation passed: Spectral GT RS and Performance Sedan use distinct model roots and four sedan wheel rigs.")
+            blue_model.free()
+            red_model.free()
+
             var red_card: Control = garage_instance.get("red_card")
             var red_select: Button = null
             if red_card != null:
