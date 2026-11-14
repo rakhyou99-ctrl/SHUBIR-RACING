@@ -1,6 +1,6 @@
 extends RefCounted
-## Shared vehicle builder for Race and Garage. Car 0 uses the detailed imported
-## Spectral GT RS; car 1 is a separate smooth-surface performance sedan.
+## Shared vehicle builder for Race and Garage. Car 0 is a Ferrari-inspired
+## supercar; car 1 is a separate smooth-surface performance sedan.
 
 const MODEL_PATH := "res://Assets/Cars/spectral_gt_rs_game_ready.glb"
 
