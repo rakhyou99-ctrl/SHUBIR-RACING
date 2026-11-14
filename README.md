@@ -5,6 +5,7 @@ SHUBIR RACING is an offline, landscape-oriented endless highway racing game buil
 ## Implemented
 - Main menu with Play, Garage / Select Car, Settings, Exit Game, and personal-best distance.
 - 3D garage showroom with two original selectable cars, 360-degree drag rotation, and idle display rotation.
+- Imported GLB wheel rig with independent steering pivots and RPM/speed-based wheel spin; brake calipers remain fixed.
 - Blue SUBHOJIT and red BIRAJ car liveries, with custom body details and no third-party brand logos.
 - Endless multi-lane highway with lane markings, guardrails, roadside scenery, lights, speed signs, and overhead gantries.
 - Traffic vehicles with varied paint, speeds, and subtle lane movement.
