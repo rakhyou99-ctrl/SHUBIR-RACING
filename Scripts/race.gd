@@ -340,12 +340,12 @@ func _process(delta: float) -> void:
 func _animate_imported_wheels(delta: float) -> void:
     if wheel_steering_pivots.is_empty() and wheel_spin_pivots.is_empty():
         return
-    # The model's wheel radius is approximately 0.37 game units after import.
+    # The GLB wheel axle maps from source Y to Godot X; its radius is about 0.31 game units after import.
     # Convert the displayed km/h value to a smooth visual spin rate.
     var spin_angle := speed * delta * 0.75
     for spin_pivot in wheel_spin_pivots:
         if is_instance_valid(spin_pivot):
-            spin_pivot.rotate_object_local(Vector3(0.0, 0.0, 1.0), spin_angle)
+            spin_pivot.rotate_object_local(Vector3(1.0, 0.0, 0.0), spin_angle)
     for steering_pivot in wheel_steering_pivots:
         if not is_instance_valid(steering_pivot):
             continue
