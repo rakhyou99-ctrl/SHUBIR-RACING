@@ -801,7 +801,7 @@ func _sports_body_mesh(parent: Node3D, tint: Color, center_y: float) -> MeshInst
 func _make_car() -> void:
     var body_color := Color("#1677E8") if GameState.selected_car == 0 else Color("#D83232")
     var brand_text := "SUBHOJIT" if GameState.selected_car == 0 else "BIRAJ"
-    car = CarModelFactory.create_car(body_color, brand_text, -0.36)
+    car = CarModelFactory.create_car(body_color, brand_text, -0.36, GameState.selected_car)
     if car == null:
         _make_procedural_car()
         return
