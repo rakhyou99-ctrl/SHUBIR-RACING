@@ -326,8 +326,11 @@ func _process(delta: float) -> void:
     if is_instance_valid(engine_player):
         var throttle_ratio := 1.0 if accel else 0.0
         var target_engine_pitch := 0.68 + speed_ratio * 0.66 + throttle_ratio * 0.18 + (0.08 if boosting else 0.0)
-        var engine_load := maxf(speed_ratio * 0.75, throttle_ratio * 0.55)
-        var target_engine_volume := lerpf(-14.0, -3.0, engine_load) + (1.0 if boosting else 0.0)
+        # Raise the default engine mix so the car is clearly audible on first launch.
+        # Throttle adds a strong, immediate load lift; the generated loop has headroom
+        # below digital full scale, so this gain increase stays clear rather than clipping.
+        var engine_load := maxf(speed_ratio * 0.90, throttle_ratio * 0.90)
+        var target_engine_volume := lerpf(-6.0, 1.0, engine_load) + (1.5 if boosting else 0.0)
         engine_player.pitch_scale = lerpf(engine_player.pitch_scale, target_engine_pitch, minf(1.0, delta * 3.8))
         engine_player.volume_db = lerpf(engine_player.volume_db, target_engine_volume, minf(1.0, delta * 4.5))
 
