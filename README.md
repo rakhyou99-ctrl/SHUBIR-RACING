@@ -5,6 +5,7 @@ SHUBIR RACING is an offline, landscape-oriented endless highway racing game buil
 ## Implemented
 - Main menu with Play, Garage / Select Car, Settings, Exit Game, and personal-best distance.
 - 3D garage showroom with two original selectable cars, 360-degree drag rotation, and idle display rotation.
+- Imported GLB wheel rig with independent steering pivots and RPM/speed-based wheel spin; brake calipers remain fixed.
 - Blue SUBHOJIT and red BIRAJ car liveries, with custom body details and no third-party brand logos.
 - Endless multi-lane highway with lane markings, guardrails, roadside scenery, lights, speed signs, and overhead gantries.
 - Traffic vehicles with varied paint, speeds, and subtle lane movement.
@@ -14,7 +15,7 @@ SHUBIR RACING is an offline, landscape-oriented endless highway racing game buil
 - Phone-tilt steering; touch accelerator, brake, and separate Boost controls.
 - Multi-touch input handling for simultaneous driving controls.
 - Boost charge, recharge, exhaust flame effects, speed-responsive chase camera, and braking lights.
-- Engine, brake, boost, and crash sound effects.
+- Continuous idle-to-throttle engine loop with RPM/load-responsive pitch and volume, plus horn, brake, boost, near-miss, and crash sound effects.
 - Settings for steering sensitivity and master volume; selected car and settings persist locally.
 - Pause/resume handling, including app-background and Android Back requests.
 - Responsive landscape UI and orange accent theme: `#FF7518`.
@@ -23,7 +24,7 @@ SHUBIR RACING is an offline, landscape-oriented endless highway racing game buil
 - Tilt the phone left or right to steer.
 - Hold the accelerator to increase speed.
 - Hold the brake to slow down.
-- Hold Accelerator and Boost together to activate Boost.
+- Left side: hold BOOST; right side: hold HORN or ACCELERATOR; left bottom: BRAKE. Hold ACCELERATOR and BOOST together to activate Boost.
 - Use Pause or the Android Back action to open the pause menu.
 
 ## Build and verification status

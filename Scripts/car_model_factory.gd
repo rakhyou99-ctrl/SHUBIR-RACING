@@ -32,8 +32,57 @@ static func create_car(paint: Color, owner_text: String, model_y_offset: float =
     car_root.add_child(imported_root)
 
     _apply_body_paint(imported_root, paint)
+    _build_wheel_rig(imported_root)
     _add_owner_decals(car_root, owner_text)
     return car_root
+
+
+static func _build_wheel_rig(imported_root: Node3D) -> void:
+    # The source GLB uses Y-up coordinates, with the wheel axle along local Z.
+    # Keep brake calipers fixed while tires, discs, rims and spokes spin together.
+    var wheel_specs := [
+        {"id": "Front_Left", "center": Vector3(1.37, 0.53, 1.015), "front": true},
+        {"id": "Front_Right", "center": Vector3(1.37, 0.53, -1.015), "front": true},
+        {"id": "Rear_Left", "center": Vector3(-1.48, 0.53, 1.015), "front": false},
+        {"id": "Rear_Right", "center": Vector3(-1.48, 0.53, -1.015), "front": false}
+    ]
+    for spec in wheel_specs:
+        var wheel_id := String(spec["id"])
+        var steering_pivot := Node3D.new()
+        steering_pivot.name = "WheelPivot_" + wheel_id
+        steering_pivot.position = spec["center"]
+        steering_pivot.set_meta("front_axle", bool(spec["front"]))
+        imported_root.add_child(steering_pivot)
+
+        var spin_pivot := Node3D.new()
+        spin_pivot.name = "WheelSpin_" + wheel_id
+        steering_pivot.add_child(spin_pivot)
+
+        var prefix := wheel_id.to_lower() + "_"
+        var wheel_parts := imported_root.find_children("*", "MeshInstance3D", true, false)
+        for candidate in wheel_parts:
+            var part := candidate as MeshInstance3D
+            if part == null or part.get_parent() != imported_root:
+                continue
+            var part_name := String(part.name).to_lower()
+            if not part_name.begins_with(prefix) or not _is_rotating_wheel_part(part_name):
+                continue
+            var pivot_transform := steering_pivot.transform * spin_pivot.transform
+            var relative_transform := pivot_transform.affine_inverse() * part.transform
+            part.reparent(spin_pivot, false)
+            part.transform = relative_transform
+
+
+static func _is_rotating_wheel_part(part_name: String) -> bool:
+    return (
+        part_name.contains("tire")
+        or part_name.contains("sidewall")
+        or part_name.contains("brake_disc")
+        or part_name.contains("brake_hat")
+        or part_name.contains("rim")
+        or part_name.contains("spoke")
+        or part_name.contains("hub")
+    )
 
 
 static func _apply_body_paint(node: Node, paint: Color) -> void:
