@@ -412,6 +412,7 @@ func _make_engine_audio() -> void:
     engine_stream.data = samples
 
     engine_player = AudioStreamPlayer.new()
+    engine_player.bus = "Master"
     engine_player.stream = engine_stream
     engine_player.pitch_scale = 0.68
     engine_player.volume_db = -14.0
@@ -421,26 +422,31 @@ func _make_engine_audio() -> void:
 
 func _make_effect_audio() -> void:
     nitro_player = AudioStreamPlayer.new()
+    nitro_player.bus = "Master"
     nitro_player.stream = _create_effect_stream(true)
     nitro_player.volume_db = -3.0
     add_child(nitro_player)
 
     crash_player = AudioStreamPlayer.new()
+    crash_player.bus = "Master"
     crash_player.stream = _create_effect_stream(false)
     crash_player.volume_db = -1.0
     add_child(crash_player)
 
     brake_player = AudioStreamPlayer.new()
+    brake_player.bus = "Master"
     brake_player.stream = _create_brake_stream()
     brake_player.volume_db = -7.0
     add_child(brake_player)
 
     near_miss_player = AudioStreamPlayer.new()
+    near_miss_player.bus = "Master"
     near_miss_player.stream = _create_near_miss_stream()
     near_miss_player.volume_db = -8.0
     add_child(near_miss_player)
 
     horn_player = AudioStreamPlayer.new()
+    horn_player.bus = "Master"
     horn_player.stream = _create_horn_stream()
     horn_player.volume_db = -2.0
     add_child(horn_player)
