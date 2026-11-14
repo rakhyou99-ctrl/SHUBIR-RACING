@@ -29,11 +29,14 @@ var boost_meter_bg: ColorRect
 var boost_meter_fill: ColorRect
 var brake_button: Button
 var boost_button: Button
+var horn_button: Button
 var accel_button: Button
 var pause_button: Button
 var touch_accel := false
 var touch_brake := false
 var touch_nitro := false
+var touch_horn := false
+var was_honking := false
 var touch_points: Dictionary = {}
 var game_over := false
 var game_paused := false
@@ -44,6 +47,7 @@ var nitro_player: AudioStreamPlayer
 var crash_player: AudioStreamPlayer
 var brake_player: AudioStreamPlayer
 var near_miss_player: AudioStreamPlayer
+var horn_player: AudioStreamPlayer
 var chase_camera: Camera3D
 var brake_lights: Array[MeshInstance3D] = []
 # Share immutable box materials by color to reduce duplicated GPU resources.
@@ -71,7 +75,7 @@ var tilt_direction_sign := 1.0
 func _exit_tree() -> void:
     # Stop playback and detach generated streams before releasing audio players.
     # Clearing stream references lets Godot release the WAV and its playback object.
-    for audio_player in [engine_player, nitro_player, crash_player, brake_player, near_miss_player]:
+    for audio_player in [engine_player, nitro_player, crash_player, brake_player, near_miss_player, horn_player]:
         if is_instance_valid(audio_player):
             audio_player.stop()
             audio_player.stream = null
@@ -104,24 +108,28 @@ func _input(event: InputEvent) -> void:
 
 
 func _refresh_multitouch_controls() -> void:
-    if not is_instance_valid(accel_button) or not is_instance_valid(brake_button) or not is_instance_valid(boost_button):
+    if not is_instance_valid(accel_button) or not is_instance_valid(brake_button) or not is_instance_valid(boost_button) or not is_instance_valid(horn_button):
         touch_accel = false
         touch_brake = false
         touch_nitro = false
+        touch_horn = false
         return
     if touch_points.is_empty():
         touch_accel = false
         touch_brake = false
         touch_nitro = false
+        touch_horn = false
         return
     var accel_held := false
     var brake_held := false
     var boost_held := false
+    var horn_held := false
     # The pedal layout is stable during a race; resolve each rectangle once per
     # touch event instead of recalculating it for every finger.
     var accel_rect := accel_button.get_global_rect()
     var brake_rect := brake_button.get_global_rect()
     var boost_rect := boost_button.get_global_rect()
+    var horn_rect := horn_button.get_global_rect()
     for point in touch_points.values():
         if accel_rect.has_point(point):
             accel_held = true
@@ -129,9 +137,12 @@ func _refresh_multitouch_controls() -> void:
             brake_held = true
         if boost_rect.has_point(point):
             boost_held = true
+        if horn_rect.has_point(point):
+            horn_held = true
     touch_accel = accel_held
     touch_brake = brake_held
     touch_nitro = boost_held
+    touch_horn = horn_held
 
 
 func _ready() -> void:
@@ -214,6 +225,15 @@ func _process(delta: float) -> void:
 
     var accel := Input.is_action_pressed("ui_up") or touch_accel
     var braking := Input.is_action_pressed("ui_down") or touch_brake
+    var honking := touch_horn
+    if honking and not was_honking and is_instance_valid(horn_player):
+        horn_player.play()
+    was_honking = honking
+    if is_instance_valid(engine_player):
+        if accel and not engine_player.playing:
+            engine_player.play()
+        elif not accel and engine_player.playing:
+            engine_player.stop()
     # A brake press or an empty boost tank cancels the current hold.
     # The player must release BOOST before it can activate again.
     if not touch_nitro:
@@ -302,7 +322,7 @@ func _process(delta: float) -> void:
     # Engine tone and loudness rise naturally with road speed and Boost.
     if is_instance_valid(engine_player):
         engine_player.pitch_scale = 0.72 + speed_ratio * 0.82 + (0.08 if boosting else 0.0)
-        engine_player.volume_db = lerpf(-16.0, -4.5, speed_ratio) + (1.0 if boosting else 0.0)
+        engine_player.volume_db = lerpf(-7.0, -1.0, speed_ratio) + (1.0 if boosting else 0.0)
 
     # Smooth chase-camera response: widen the view and pull back slightly at speed.
     if is_instance_valid(chase_camera):
@@ -322,7 +342,7 @@ func _make_engine_audio() -> void:
         var t := float(i) / float(sample_rate)
         var wave := sin(TAU * 72.0 * t) * 0.52 + sin(TAU * 144.0 * t) * 0.20 + sin(TAU * 216.0 * t) * 0.08
         var envelope := 0.72 + 0.12 * sin(TAU * 2.0 * t)
-        var sample := int(clampf(wave * envelope, -1.0, 1.0) * 5200.0)
+        var sample := int(clampf(wave * envelope, -1.0, 1.0) * 9800.0)
         samples.encode_s16(i * 2, sample)
 
     var engine_stream := AudioStreamWAV.new()
@@ -336,9 +356,9 @@ func _make_engine_audio() -> void:
 
     engine_player = AudioStreamPlayer.new()
     engine_player.stream = engine_stream
-    engine_player.volume_db = -5.0
+    engine_player.volume_db = -7.0
     add_child(engine_player)
-    engine_player.play()
+    # Engine loop starts when accelerator is pressed.
 
 
 func _make_effect_audio() -> void:
@@ -361,6 +381,34 @@ func _make_effect_audio() -> void:
     near_miss_player.stream = _create_near_miss_stream()
     near_miss_player.volume_db = -8.0
     add_child(near_miss_player)
+
+    horn_player = AudioStreamPlayer.new()
+    horn_player.stream = _create_horn_stream()
+    horn_player.volume_db = -2.0
+    add_child(horn_player)
+
+func _create_horn_stream() -> AudioStreamWAV:
+    # Short, bright dual-tone car horn generated locally; no external asset needed.
+    var sample_rate := 22050
+    var sample_count := 8820
+    var samples := PackedByteArray()
+    samples.resize(sample_count * 2)
+    for i in range(sample_count):
+        var t := float(i) / float(sample_rate)
+        var fade_in := minf(1.0, float(i) / 260.0)
+        var fade_out := minf(1.0, float(sample_count - i) / 1100.0)
+        var envelope := fade_in * fade_out
+        var wave := sin(TAU * 440.0 * t) * 0.52 + sin(TAU * 554.37 * t) * 0.42
+        wave += sin(TAU * 880.0 * t) * 0.12
+        var sample := int(clampf(wave * envelope, -1.0, 1.0) * 12500.0)
+        samples.encode_s16(i * 2, sample)
+    var stream := AudioStreamWAV.new()
+    stream.format = AudioStreamWAV.FORMAT_16_BITS
+    stream.mix_rate = sample_rate
+    stream.stereo = false
+    stream.data = samples
+    return stream
+
 
 func _create_near_miss_stream() -> AudioStreamWAV:
     # A short, soft two-note reward chime keeps near-miss feedback distinct from Boost and crash audio.
@@ -1183,6 +1231,8 @@ func _show_pause_menu() -> void:
     touch_accel = false
     touch_brake = false
     touch_nitro = false
+    touch_horn = false
+    was_honking = false
     touch_points.clear()
     was_boosting = false
     was_braking = false
@@ -1197,6 +1247,8 @@ func _show_pause_menu() -> void:
         brake_player.stream_paused = true
     if is_instance_valid(near_miss_player):
         near_miss_player.stream_paused = true
+    if is_instance_valid(horn_player):
+        horn_player.stream_paused = true
 
     var panel := ColorRect.new()
     panel.name = "PauseOverlay"
@@ -1253,6 +1305,8 @@ func _show_pause_menu() -> void:
             brake_player.stream_paused = false
         if is_instance_valid(near_miss_player):
             near_miss_player.stream_paused = false
+        if is_instance_valid(horn_player):
+            horn_player.stream_paused = false
         panel.queue_free()
     )
     content.add_child(resume)
@@ -1297,6 +1351,8 @@ func _finish_race() -> void:
         near_miss_player.stop()
     if is_instance_valid(crash_player):
         crash_player.play()
+    if is_instance_valid(horn_player):
+        horn_player.stop()
     # Brief camera impact shake makes a collision feel immediate before the results overlay.
     if is_instance_valid(chase_camera):
         var camera_home := chase_camera.position
@@ -1505,7 +1561,8 @@ func _make_ui() -> void:
 
     # Landscape controls are repositioned for the actual phone viewport.
     brake_button = _add_hold_button("BRAKE", Vector2(35, 535), Vector2(155, 145), "brake")
-    boost_button = _add_hold_button("BOOST", Vector2(1100, 405), Vector2(145, 105), "nitro")
+    boost_button = _add_hold_button("BOOST", Vector2(35, 405), Vector2(145, 105), "nitro")
+    horn_button = _add_hold_button("HORN", Vector2(1100, 405), Vector2(145, 105), "horn")
     accel_button = _add_hold_button("ACCELERATOR", Vector2(1070, 535), Vector2(180, 145), "accel")
 
     pause_button = Button.new()
@@ -1525,16 +1582,16 @@ func _add_hold_button(label_text: String, pos: Vector2, btn_size: Vector2, actio
     b.position = pos
     b.size = btn_size
     b.add_theme_font_size_override("font_size", 19 if action != "nitro" else 18)
-    var label_color := Color("#D83B35") if action == "brake" else (Color("#21B65B") if action == "accel" else Color.WHITE)
+    var label_color := Color("#D83B35") if action == "brake" else (Color("#21B65B") if action == "accel" else (Color("#FFD34E") if action == "horn" else Color.WHITE))
     b.add_theme_color_override("font_color", label_color)
     b.add_theme_color_override("font_hover_color", label_color.lightened(0.18))
     b.add_theme_color_override("font_pressed_color", Color.WHITE)
     b.focus_mode = Control.FOCUS_NONE
 
     var base_style := StyleBoxFlat.new()
-    if action == "nitro":
-        base_style.bg_color = Color("#102B3C")
-        base_style.border_color = Color("#19CFFF")
+    if action == "nitro" or action == "horn":
+        base_style.bg_color = Color("#102B3C") if action == "nitro" else Color("#3B2812")
+        base_style.border_color = Color("#19CFFF") if action == "nitro" else Color("#FFB347")
         base_style.set_border_width_all(4)
         base_style.set_corner_radius_all(22)
         base_style.content_margin_top = 10.0
@@ -1553,7 +1610,7 @@ func _add_hold_button(label_text: String, pos: Vector2, btn_size: Vector2, actio
         base_style.content_margin_bottom = 8.0
     b.add_theme_stylebox_override("normal", base_style)
 
-    if action != "nitro":
+    if action != "nitro" and action != "horn":
         # Five dark rubber grip ribs and small metal fasteners create a pedal-like face.
         for rib_index in range(5):
             var rib := ColorRect.new()
@@ -1620,7 +1677,9 @@ func _layout_race_ui_for_size(viewport_size: Vector2) -> void:
     brake_button.scale = Vector2.ONE * scale_factor
     brake_button.position = Vector2(28.0 * scale_factor, h - 172.0 * scale_factor)
     boost_button.scale = Vector2.ONE * scale_factor
-    boost_button.position = Vector2(w - 176.0 * scale_factor, h - 292.0 * scale_factor)
+    boost_button.position = Vector2(28.0 * scale_factor, h - 292.0 * scale_factor)
+    horn_button.scale = Vector2.ONE * scale_factor
+    horn_button.position = Vector2(w - 176.0 * scale_factor, h - 292.0 * scale_factor)
     accel_button.scale = Vector2.ONE * scale_factor
     accel_button.position = Vector2(w - 210.0 * scale_factor, h - 172.0 * scale_factor)
     pause_button.scale = Vector2.ONE * scale_factor
@@ -1630,6 +1689,7 @@ func _set_touch(action: String, value: bool) -> void:
     match action:
         "brake": touch_brake = value
         "nitro": touch_nitro = value
+        "horn": touch_horn = value
         "accel": touch_accel = value
 
 func _move_road(delta: float) -> void:
