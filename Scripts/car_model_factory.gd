@@ -24,9 +24,9 @@ static func create_car(paint: Color, owner_text: String, model_y_offset: float =
         car_root.free()
         return null
 
-    # The source asset is Y-up with its nose facing +X. Rotate it so the
-    # vehicle faces Godot's -Z driving direction and scale it to game units.
-    imported_root.rotation.y = PI * 0.5
+    # The GLB is Z-up: X is the car length, Y is width, and Z is height.
+    # Map source X/Y/Z to Godot Z/X/Y so the nose (-X) faces forward (-Z).
+    imported_root.basis = Basis(Vector3(0, 0, 1), Vector3(1, 0, 0), Vector3(0, 1, 0))
     imported_root.scale = Vector3.ONE * 0.72
     imported_root.position.y = model_y_offset
     car_root.add_child(imported_root)
@@ -38,34 +38,32 @@ static func create_car(paint: Color, owner_text: String, model_y_offset: float =
 
 
 static func _build_wheel_rig(imported_root: Node3D) -> void:
-    # The source GLB uses Y-up coordinates, with the wheel axle along local Z.
-    # Keep brake calipers fixed while tires, discs, rims and spokes spin together.
+    # The GLB stores four wheel assemblies as contiguous named mesh groups.
+    # Their source-space centres are read from the actual GLB vertex bounds.
     var wheel_specs := [
-        {"id": "Front_Left", "center": Vector3(1.37, 0.53, 1.015), "front": true},
-        {"id": "Front_Right", "center": Vector3(1.37, 0.53, -1.015), "front": true},
-        {"id": "Rear_Left", "center": Vector3(-1.48, 0.53, 1.015), "front": false},
-        {"id": "Rear_Right", "center": Vector3(-1.48, 0.53, -1.015), "front": false}
+        {"id": "Front_Left", "prefix": "part_030_", "center": Vector3(-1.42, 0.91, 0.48), "front": true},
+        {"id": "Front_Right", "prefix": "part_015_", "center": Vector3(-1.42, -0.91, 0.48), "front": true},
+        {"id": "Rear_Left", "prefix": "part_060_", "center": Vector3(1.38, 0.91, 0.48), "front": false},
+        {"id": "Rear_Right", "prefix": "part_045_", "center": Vector3(1.38, -0.91, 0.48), "front": false}
     ]
     for spec in wheel_specs:
-        var wheel_id := String(spec["id"])
         var steering_pivot := Node3D.new()
-        steering_pivot.name = "WheelPivot_" + wheel_id
+        steering_pivot.name = "WheelPivot_" + String(spec["id"])
         steering_pivot.position = spec["center"]
         steering_pivot.set_meta("front_axle", bool(spec["front"]))
         imported_root.add_child(steering_pivot)
 
         var spin_pivot := Node3D.new()
-        spin_pivot.name = "WheelSpin_" + wheel_id
+        spin_pivot.name = "WheelSpin_" + String(spec["id"])
         steering_pivot.add_child(spin_pivot)
 
-        var prefix := wheel_id.to_lower() + "_"
         var wheel_parts := imported_root.find_children("*", "MeshInstance3D", true, false)
         for candidate in wheel_parts:
             var part := candidate as MeshInstance3D
             if part == null or part.get_parent() != imported_root:
                 continue
             var part_name := String(part.name).to_lower()
-            if not part_name.begins_with(prefix) or not _is_rotating_wheel_part(part_name):
+            if not part_name.begins_with(String(spec["prefix"])) or not _is_rotating_wheel_part(part_name):
                 continue
             var pivot_transform := steering_pivot.transform * spin_pivot.transform
             var relative_transform := pivot_transform.affine_inverse() * part.transform
@@ -89,12 +87,8 @@ static func _apply_body_paint(node: Node, paint: Color) -> void:
     if node is MeshInstance3D:
         var part_name := String(node.name).to_lower()
         var is_painted_panel := (
-            part_name == "body_shell_hero"
-            or part_name == "cabin_roof_shell"
-            or part_name.begins_with("front_fender_lip")
-            or part_name.begins_with("rear_fender_lip")
-            or part_name.begins_with("door_skin")
-            or part_name == "hood_center_panel"
+            part_name.begins_with("part_000_")
+            or part_name.begins_with("part_008_")
         )
         if is_painted_panel:
             var paint_material := StandardMaterial3D.new()
