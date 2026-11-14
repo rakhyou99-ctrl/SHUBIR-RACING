@@ -1,6 +1,8 @@
 name: Build Android Debug APK
 
 on:
+  push:
+    branches: [feature/realistic-car-audio]
   workflow_dispatch:
 
 permissions:
