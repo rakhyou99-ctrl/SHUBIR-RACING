@@ -3,6 +3,10 @@ config_version=5
 [application]
 config/name="SHUBIR RACING"
 config/icon="res://Assets/icon.png"
+boot_splash/bg_color=Color(0.025, 0.035, 0.055, 1)
+boot_splash/image="res://Assets/icon.png"
+boot_splash/show_image=true
+boot_splash/use_filter=true
 run/main_scene="res://Scenes/main_menu.tscn"
 
 [autoload]
