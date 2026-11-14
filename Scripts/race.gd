@@ -229,11 +229,8 @@ func _process(delta: float) -> void:
     if honking and not was_honking and is_instance_valid(horn_player):
         horn_player.play()
     was_honking = honking
-    if is_instance_valid(engine_player):
-        if accel and not engine_player.playing:
-            engine_player.play()
-        elif not accel and engine_player.playing:
-            engine_player.stop()
+    # Keep the engine running at idle; throttle changes RPM and load rather than
+    # hard-starting/stopping the sound every time the accelerator is tapped.
     # A brake press or an empty boost tank cancels the current hold.
     # The player must release BOOST before it can activate again.
     if not touch_nitro:
@@ -319,10 +316,15 @@ func _process(delta: float) -> void:
         boost_meter_fill.color = Color("#FFB347")
     boost_meter_fill.size.x = 190.0 * (nitro_left / 3.0)
     var speed_ratio := clampf(speed / 190.0, 0.0, 1.0)
-    # Engine tone and loudness rise naturally with road speed and Boost.
+    # RPM responds to both vehicle speed and throttle load. Smooth the changes
+    # so gear-like rises/falls do not sound like abrupt digital pitch steps.
     if is_instance_valid(engine_player):
-        engine_player.pitch_scale = 0.72 + speed_ratio * 0.82 + (0.08 if boosting else 0.0)
-        engine_player.volume_db = lerpf(-7.0, -1.0, speed_ratio) + (1.0 if boosting else 0.0)
+        var throttle_ratio := 1.0 if accel else 0.0
+        var target_engine_pitch := 0.68 + speed_ratio * 0.66 + throttle_ratio * 0.18 + (0.08 if boosting else 0.0)
+        var engine_load := maxf(speed_ratio * 0.75, throttle_ratio * 0.55)
+        var target_engine_volume := lerpf(-14.0, -3.0, engine_load) + (1.0 if boosting else 0.0)
+        engine_player.pitch_scale = lerpf(engine_player.pitch_scale, target_engine_pitch, minf(1.0, delta * 3.8))
+        engine_player.volume_db = lerpf(engine_player.volume_db, target_engine_volume, minf(1.0, delta * 4.5))
 
     # Smooth chase-camera response: widen the view and pull back slightly at speed.
     if is_instance_valid(chase_camera):
@@ -333,16 +335,25 @@ func _process(delta: float) -> void:
 
 
 func _make_engine_audio() -> void:
-    # Generate a small seamless engine hum locally so the game needs no network audio assets.
-    var sample_rate := 16000
-    var sample_count := 8000
+    # Build a seamless combustion-style engine loop locally. The harmonic stack
+    # gives the loop a fuller exhaust character than a single sine-wave hum;
+    # playback pitch and gain are driven by RPM/load in _process().
+    var sample_rate := 22050
+    var sample_count := 11025 # 0.5 s; all source oscillators complete whole cycles.
     var samples := PackedByteArray()
     samples.resize(sample_count * 2)
     for i in range(sample_count):
         var t := float(i) / float(sample_rate)
-        var wave := sin(TAU * 72.0 * t) * 0.52 + sin(TAU * 144.0 * t) * 0.20 + sin(TAU * 216.0 * t) * 0.08
-        var envelope := 0.72 + 0.12 * sin(TAU * 2.0 * t)
-        var sample := int(clampf(wave * envelope, -1.0, 1.0) * 9800.0)
+        var phase := TAU * 60.0 * t
+        var combustion := sin(phase) * 0.40
+        combustion += sin(phase * 2.0) * 0.24
+        combustion += sin(phase * 3.0) * 0.16
+        combustion += sin(phase * 4.0) * 0.09
+        combustion += sin(phase * 6.0) * 0.055
+        combustion += sin(phase * 8.0) * 0.03
+        var mechanical := sin(TAU * 720.0 * t) * 0.035 + sin(TAU * 1440.0 * t) * 0.02
+        var firing_pulse := 0.92 + 0.08 * sin(TAU * 4.0 * t)
+        var sample := int(clampf((combustion * firing_pulse + mechanical), -1.0, 1.0) * 11200.0)
         samples.encode_s16(i * 2, sample)
 
     var engine_stream := AudioStreamWAV.new()
@@ -356,9 +367,10 @@ func _make_engine_audio() -> void:
 
     engine_player = AudioStreamPlayer.new()
     engine_player.stream = engine_stream
-    engine_player.volume_db = -7.0
+    engine_player.pitch_scale = 0.68
+    engine_player.volume_db = -14.0
     add_child(engine_player)
-    # Engine loop starts when accelerator is pressed.
+    engine_player.play() # A running engine idles before the player accelerates.
 
 
 func _make_effect_audio() -> void:
