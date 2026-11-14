@@ -5,6 +5,8 @@ extends RefCounted
 const MODEL_PATH := "res://Assets/Cars/spectral_gt_rs_game_ready.glb"
 
 static func create_car(paint: Color, owner_text: String, model_y_offset: float = 0.0, model_id: int = 0) -> Node3D:
+    if model_id == 0:
+        return _create_ferrari_style_supercar(paint, owner_text, model_y_offset)
     if model_id == 1:
         return _create_performance_sedan(paint, owner_text, model_y_offset)
     if not ResourceLoader.exists(MODEL_PATH):
@@ -31,6 +33,109 @@ static func create_car(paint: Color, owner_text: String, model_y_offset: float =
     _build_imported_wheel_rig(imported_root)
     _add_owner_decals(car_root, owner_text)
     return car_root
+
+
+static func _create_ferrari_style_supercar(paint: Color, owner_text: String, y_offset: float) -> Node3D:
+    # Original Ferrari-inspired mid-engine supercar silhouette; no copied badges
+    # or manufacturer marks. Shared by the garage preview and race scene.
+    var root := Node3D.new()
+    root.name = "SHUBIR_Ferrari_Style_Supercar"
+    root.position.y = y_offset
+
+    var body := StandardMaterial3D.new()
+    body.albedo_color = paint
+    body.metallic = 0.72
+    body.roughness = 0.16
+    body.clearcoat_enabled = true
+    body.clearcoat = 1.0
+    body.clearcoat_roughness = 0.08
+
+    # Low nose, broad front fenders, tight waist and muscular rear haunches.
+    _add_loft_shell(root, "Supercar_Main_Body", [
+        [-2.22, 0.52, 0.52, 0.16],
+        [-2.08, 0.78, 0.53, 0.23],
+        [-1.78, 0.91, 0.55, 0.27],
+        [-1.35, 0.94, 0.57, 0.29],
+        [-0.78, 0.88, 0.57, 0.28],
+        [-0.10, 0.86, 0.56, 0.27],
+        [0.62, 0.94, 0.57, 0.30],
+        [1.25, 1.02, 0.58, 0.33],
+        [1.78, 0.94, 0.56, 0.29],
+        [2.08, 0.72, 0.52, 0.20],
+        [2.18, 0.48, 0.49, 0.14]
+    ], body, 56)
+
+    var glass := StandardMaterial3D.new()
+    glass.albedo_color = Color("#101E2B")
+    glass.metallic = 0.62
+    glass.roughness = 0.10
+    glass.clearcoat_enabled = true
+    glass.clearcoat = 1.0
+    _add_loft_shell(root, "Panoramic_Cockpit_Glass", [
+        [-1.28, 0.58, 0.72, 0.12],
+        [-0.94, 0.67, 0.91, 0.25],
+        [-0.48, 0.69, 1.08, 0.31],
+        [0.18, 0.68, 1.10, 0.31],
+        [0.78, 0.66, 0.98, 0.26],
+        [1.18, 0.59, 0.76, 0.13]
+    ], glass, 48)
+
+    # Sculpted front splitter and rear diffuser.
+    _add_box_part(root, "Front_Carbon_Splitter", Vector3(0, 0.22, -2.18), Vector3(1.88, 0.075, 0.28), Color("#090F16"), 0.76, 0.24)
+    _add_box_part(root, "Rear_Diffuser", Vector3(0, 0.20, 2.08), Vector3(1.76, 0.13, 0.30), Color("#0B1118"), 0.72, 0.28)
+    for fin_x in [-0.62, -0.22, 0.22, 0.62]:
+        _add_box_part(root, "Diffuser_Fin", Vector3(fin_x, 0.16, 2.14), Vector3(0.045, 0.15, 0.24), Color("#687581"), 0.78, 0.30)
+
+    # Side skirts, mirrors and deep mid-engine air intakes.
+    for side in [-1.0, 1.0]:
+        _add_box_part(root, "Carbon_Side_Skirt", Vector3(side * 0.91, 0.29, 0.05), Vector3(0.10, 0.15, 2.55), Color("#111820"), 0.72, 0.30)
+        _add_box_part(root, "Side_Air_Intake", Vector3(side * 0.925, 0.58, 0.92), Vector3(0.045, 0.28, 0.62), Color("#080E15"), 0.38, 0.34)
+        _add_box_part(root, "Intake_Upper_Lip", Vector3(side * 0.95, 0.74, 0.92), Vector3(0.06, 0.035, 0.66), paint.lightened(0.12), 0.72, 0.18)
+        _add_box_part(root, "Mirror_Stem", Vector3(side * 0.82, 0.91, -0.73), Vector3(0.10, 0.12, 0.20), Color("#151D27"), 0.7, 0.2)
+        _add_ellipsoid_part(root, "Mirror_Cap", Vector3(side * 0.94, 0.96, -0.73), Vector3(0.17, 0.075, 0.22), body)
+        _add_emissive_bar(root, "Front_LED_Headlamp", Vector3(side * 0.65, 0.64, -2.04), Vector3(0.48, 0.045, 0.035), Color("#EAF5FF"), 2.0)
+        _add_emissive_bar(root, "Rear_LED_Tail_Lamp", Vector3(side * 0.67, 0.62, 2.10), Vector3(0.42, 0.055, 0.035), Color("#FF263F"), 1.8)
+        _add_box_part(root, "Front_Bumper_Intake", Vector3(side * 0.48, 0.39, -2.12), Vector3(0.48, 0.18, 0.035), Color("#090F16"), 0.25, 0.42)
+
+    _add_box_part(root, "Front_Central_Intake", Vector3(0, 0.37, -2.13), Vector3(0.54, 0.18, 0.035), Color("#080D13"), 0.28, 0.42)
+    _add_box_part(root, "Rear_Deck_Lip", Vector3(0, 0.76, 1.76), Vector3(1.32, 0.045, 0.13), paint.lightened(0.10), 0.68, 0.16)
+
+    # Large staggered forged alloys with independent steering and spin pivots.
+    for spec in [
+        {"name": "Front_Left", "x": -0.94, "z": -1.30, "front": true},
+        {"name": "Front_Right", "x": 0.94, "z": -1.30, "front": true},
+        {"name": "Rear_Left", "x": -0.99, "z": 1.30, "front": false},
+        {"name": "Rear_Right", "x": 0.99, "z": 1.30, "front": false}
+    ]:
+        _add_sedan_wheel(root, spec)
+
+    var badge := Label3D.new()
+    badge.name = "Owner_Decal"
+    badge.text = owner_text
+    badge.position = Vector3(0, 0.91, -1.40)
+    badge.rotation_degrees.x = -90.0
+    badge.font_size = 22
+    badge.pixel_size = 0.0014
+    badge.modulate = Color.WHITE
+    badge.outline_size = 5
+    badge.outline_modulate = Color("#101820")
+    root.add_child(badge)
+    return root
+
+
+static func _add_ellipsoid_part(parent: Node3D, part_name: String, position: Vector3, radii: Vector3, material: Material) -> void:
+    var instance := MeshInstance3D.new()
+    var sphere := SphereMesh.new()
+    sphere.radius = 1.0
+    sphere.height = 2.0
+    sphere.radial_segments = 32
+    sphere.rings = 16
+    instance.name = part_name
+    instance.mesh = sphere
+    instance.position = position
+    instance.scale = radii
+    instance.material_override = material
+    parent.add_child(instance)
 
 
 static func _create_performance_sedan(paint: Color, owner_text: String, y_offset: float) -> Node3D:
