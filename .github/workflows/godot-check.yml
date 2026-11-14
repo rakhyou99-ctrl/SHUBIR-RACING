@@ -2,7 +2,7 @@ name: Godot project check
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/realistic-car-audio]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -38,6 +38,12 @@ jobs:
           ruby -e 'data = File.binread("Assets/icon.png"); abort "Assets/icon.png is not a PNG" unless data.start_with?([137, 80, 78, 71, 13, 10, 26, 10].pack("C*")); width, height = data.byteslice(16, 8).unpack("N2"); puts "Launcher icon: #{width}x#{height}"; abort "Launcher icon must be at least 192x192" if width < 192 || height < 192'
           grep -Fq 'config/name="SHUBIR RACING"' project.godot
           grep -Fq 'run/main_scene="res://Scenes/main_menu.tscn"' project.godot
+          grep -Fq 'rotate_object_local(Vector3(0.0, 1.0, 0.0), spin_angle)' Scripts/race.gd
+          grep -Fq 'steering_pivot.rotation.z = lerpf' Scripts/race.gd
+          grep -Fq 'part_015_' Scripts/car_model_factory.gd
+          grep -Fq 'part_030_' Scripts/car_model_factory.gd
+          grep -Fq 'part_045_' Scripts/car_model_factory.gd
+          grep -Fq 'part_060_' Scripts/car_model_factory.gd
           grep -Fq 'renderer/rendering_method.mobile="gl_compatibility"' project.godot
           for required_file in Scenes/main_menu.tscn Scenes/garage.tscn Scenes/settings.tscn Scenes/race.tscn Scripts/main_menu.gd Scripts/garage.gd Scripts/settings.gd Scripts/race.gd Scripts/game_state.gd; do
             test -s "$required_file" || { echo "Missing required game file: $required_file"; exit 1; }
