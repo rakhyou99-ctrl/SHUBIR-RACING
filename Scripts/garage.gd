@@ -84,6 +84,7 @@ func _build_garage() -> void:
 
     preview_viewport = SubViewport.new()
     preview_viewport.size = Vector2i(800, 500)
+    preview_viewport.msaa_3d = Viewport.MSAA_2X
     # Render the showroom only while its SubViewport is visible in the UI.
     # This avoids spending GPU time on an off-screen preview without affecting
     # the 360-degree rotation while the Garage is open.
@@ -98,7 +99,8 @@ func _build_garage() -> void:
     environment.background_color = Color("#111D2E")
     environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
     environment.ambient_light_color = Color("#A9C3E8")
-    environment.ambient_light_energy = 0.65
+    environment.ambient_light_energy = 0.58
+    environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
     world.environment = environment
     preview_root.add_child(world)
 
@@ -107,7 +109,8 @@ func _build_garage() -> void:
     key_light.light_energy = 1.75
     # The showroom uses layered fill lighting; skip a realtime shadow map on
     # mobile GPUs while keeping the car's shape readable from every angle.
-    key_light.shadow_enabled = false
+    key_light.shadow_enabled = true
+    key_light.directional_shadow_max_distance = 18.0
     preview_root.add_child(key_light)
     var fill_light := OmniLight3D.new()
     fill_light.position = Vector3(-3, 3, 2)
@@ -149,8 +152,8 @@ func _build_garage() -> void:
 
     preview_camera = Camera3D.new()
     # Bring the vehicle closer and use a tighter showroom lens by default.
-    preview_camera.position = Vector3(3.2, 2.0, -5.2)
-    preview_camera.fov = 43.0
+    preview_camera.position = Vector3(3.5, 2.15, -6.0)
+    preview_camera.fov = 40.0
     preview_camera.near = 0.1
     preview_camera.far = 100.0
     preview_root.add_child(preview_camera)
@@ -164,8 +167,8 @@ func _build_garage() -> void:
     floor.position.y = -0.04
     var floor_mat := StandardMaterial3D.new()
     floor_mat.albedo_color = Color("#17263A")
-    floor_mat.metallic = 0.22
-    floor_mat.roughness = 0.38
+    floor_mat.metallic = 0.34
+    floor_mat.roughness = 0.24
     floor.material_override = floor_mat
     preview_root.add_child(floor)
 
