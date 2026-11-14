@@ -49,6 +49,8 @@ var brake_player: AudioStreamPlayer
 var near_miss_player: AudioStreamPlayer
 var horn_player: AudioStreamPlayer
 var chase_camera: Camera3D
+var camera_view_button: Button
+var camera_view_mode := 1 # 0 = close, 1 = medium, 2 = far.
 var brake_lights: Array[MeshInstance3D] = []
 var wheel_steering_pivots: Array[Node3D] = []
 var wheel_spin_pivots: Array[Node3D] = []
@@ -329,12 +331,35 @@ func _process(delta: float) -> void:
         engine_player.pitch_scale = lerpf(engine_player.pitch_scale, target_engine_pitch, minf(1.0, delta * 3.8))
         engine_player.volume_db = lerpf(engine_player.volume_db, target_engine_volume, minf(1.0, delta * 4.5))
 
-    # Smooth chase-camera response: widen the view and pull back slightly at speed.
+    # Three selectable racing camera distances; speed adds a subtle pull-back.
     if is_instance_valid(chase_camera):
-        chase_camera.fov = lerpf(chase_camera.fov, 70.0 + speed_ratio * 12.0, minf(1.0, delta * 2.4))
-        chase_camera.position.y = lerpf(chase_camera.position.y, 5.2 + speed_ratio * 0.45, minf(1.0, delta * 2.0))
-        chase_camera.position.z = lerpf(chase_camera.position.z, 10.5 + speed_ratio * 1.15, minf(1.0, delta * 2.0))
+        var camera_targets := _get_camera_view_targets()
+        chase_camera.fov = lerpf(chase_camera.fov, camera_targets.x + speed_ratio * 4.0, minf(1.0, delta * 2.4))
+        chase_camera.position.y = lerpf(chase_camera.position.y, camera_targets.y + speed_ratio * 0.30, minf(1.0, delta * 2.0))
+        chase_camera.position.z = lerpf(chase_camera.position.z, camera_targets.z + speed_ratio * 0.75, minf(1.0, delta * 2.0))
         chase_camera.rotation_degrees.z = lerpf(chase_camera.rotation_degrees.z, -steer * 1.4, minf(1.0, delta * 3.0))
+
+
+func _get_camera_view_targets() -> Vector3:
+    # x = FOV, y = camera height, z = distance behind the car.
+    match camera_view_mode:
+        0:
+            return Vector3(64.0, 4.5, 8.0) # Close: larger car in frame.
+        2:
+            return Vector3(76.0, 6.5, 14.0) # Far: more road and traffic visible.
+        _:
+            return Vector3(70.0, 5.2, 10.5) # Medium: balanced default.
+
+
+func _cycle_camera_view() -> void:
+    camera_view_mode = (camera_view_mode + 1) % 3
+    if is_instance_valid(camera_view_button):
+        var names := ["CLOSE", "MEDIUM", "FAR"]
+        camera_view_button.text = "CAM: " + names[camera_view_mode]
+    if is_instance_valid(chase_camera):
+        var targets := _get_camera_view_targets()
+        chase_camera.fov = targets.x
+        chase_camera.position = Vector3(0.0, targets.y, targets.z)
 
 
 func _animate_imported_wheels(delta: float) -> void:
@@ -371,9 +396,10 @@ func _make_engine_audio() -> void:
         combustion += sin(phase * 4.0) * 0.09
         combustion += sin(phase * 6.0) * 0.055
         combustion += sin(phase * 8.0) * 0.03
-        var mechanical := sin(TAU * 720.0 * t) * 0.035 + sin(TAU * 1440.0 * t) * 0.02
-        var firing_pulse := 0.92 + 0.08 * sin(TAU * 4.0 * t)
-        var sample := int(clampf((combustion * firing_pulse + mechanical), -1.0, 1.0) * 11200.0)
+        # Avoid the high-frequency mechanical/pulse layer: it produced a
+        # repetitive tick-tick sound over the engine. Keep the smoother exhaust
+        # harmonics so the engine still has body without the artificial ticking.
+        var sample := int(clampf(combustion, -1.0, 1.0) * 11200.0)
         samples.encode_s16(i * 2, sample)
 
     var engine_stream := AudioStreamWAV.new()
@@ -1632,6 +1658,16 @@ func _make_ui() -> void:
     pause_button.add_theme_font_size_override("font_size", 17)
     pause_button.pressed.connect(_show_pause_menu)
     ui_layer.add_child(pause_button)
+
+    camera_view_button = Button.new()
+    camera_view_button.text = "CAM: MEDIUM"
+    camera_view_button.size = Vector2(150, 44)
+    camera_view_button.focus_mode = Control.FOCUS_NONE
+    _style_overlay_button(camera_view_button, false)
+    camera_view_button.add_theme_font_size_override("font_size", 15)
+    camera_view_button.pressed.connect(_cycle_camera_view)
+    ui_layer.add_child(camera_view_button)
+
     get_viewport().size_changed.connect(_layout_race_ui)
     _layout_race_ui()
 
@@ -1743,6 +1779,8 @@ func _layout_race_ui_for_size(viewport_size: Vector2) -> void:
     accel_button.position = Vector2(w - 210.0 * scale_factor, h - 172.0 * scale_factor)
     pause_button.scale = Vector2.ONE * scale_factor
     pause_button.position = Vector2(w - 158.0 * scale_factor, 16.0 * scale_factor)
+    camera_view_button.scale = Vector2.ONE * scale_factor
+    camera_view_button.position = Vector2(w - 174.0 * scale_factor, 70.0 * scale_factor)
 
 func _set_touch(action: String, value: bool) -> void:
     match action:
