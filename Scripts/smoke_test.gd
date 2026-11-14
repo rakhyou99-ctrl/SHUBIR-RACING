@@ -149,7 +149,7 @@ func _run_smoke_tests() -> void:
             var factory = load("res://Scripts/car_model_factory.gd")
             var blue_model: Node3D = factory.create_car(Color("#1677E8"), "SUBHOJIT", 0.0, 0)
             var red_model: Node3D = factory.create_car(Color("#D83232"), "BIRAJ", 0.0, 1)
-            if blue_model == null or red_model == null or blue_model.name == red_model.name:
+            if blue_model == null or red_model == null or blue_model.name != "SHUBIR_Ferrari_Style_Supercar" or blue_model.name == red_model.name:
                 push_error("Garage must load two distinct vehicle models, not one model with two paint colors.")
                 if is_instance_valid(blue_model):
                     blue_model.free()
@@ -167,7 +167,7 @@ func _run_smoke_tests() -> void:
                 instance.free()
                 quit(1)
                 return
-            print("Garage model separation passed: Spectral GT RS and Performance Sedan use distinct model roots and four sedan wheel rigs.")
+            print("Garage model separation passed: Ferrari-style supercar and Performance Sedan use distinct model roots and four sedan wheel rigs.")
             blue_model.free()
             red_model.free()
 
