@@ -65,6 +65,25 @@ jobs:
           grep -Fq 'GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=' .github/workflows/android-apk.yml
           echo "Landscape, accelerometer, Android package/ABI, SDK, signing, and final-release APK gate verified"
 
+      - name: Validate imported sports car GLB asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s Assets/Cars/spectral_gt_rs_game_ready.glb
+          ruby -rjson -e '
+            data = File.binread("Assets/Cars/spectral_gt_rs_game_ready.glb")
+            abort "Invalid GLB magic" unless data.byteslice(0, 4) == "glTF"
+            magic, version, length = data.byteslice(0, 12).unpack("a4V2")
+            abort "Unsupported GLB version: #{version}" unless version == 2
+            abort "GLB length mismatch: header=#{length}, actual=#{data.bytesize}" unless length == data.bytesize
+            chunk_length, chunk_type = data.byteslice(12, 8).unpack("V2")
+            abort "Missing GLB JSON chunk" unless chunk_type == 0x4E4F534A
+            document = JSON.parse(data.byteslice(20, chunk_length).force_encoding("UTF-8").strip)
+            abort "GLB asset version is not 2.0" unless document.dig("asset", "version") == "2.0"
+            abort "GLB has no meshes" if document.fetch("meshes", []).empty?
+            abort "GLB has no scene nodes" if document.fetch("nodes", []).empty?
+            puts "GLB v#{version}: #{document["meshes"].length} meshes, #{document["nodes"].length} nodes"
+          '
       - name: Import project and check scripts
         shell: bash
         run: |
