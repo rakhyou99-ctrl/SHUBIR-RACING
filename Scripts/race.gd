@@ -796,6 +796,26 @@ func _make_car() -> void:
             brake_light.material_override = brake_material
             brake_lights.append(brake_light)
 
+    # Add two dedicated rear brake lamps. The imported GLB's tail-light mesh
+    # naming is not guaranteed across exports, so gameplay feedback must not
+    # depend on a particular source node name being present.
+    for lamp_x in [-0.52, 0.52]:
+        var brake_lamp := MeshInstance3D.new()
+        brake_lamp.name = "Player_Brake_Lamp_%s" % ("Left" if lamp_x < 0.0 else "Right")
+        var lamp_mesh := BoxMesh.new()
+        lamp_mesh.size = Vector3(0.34, 0.095, 0.045)
+        brake_lamp.mesh = lamp_mesh
+        brake_lamp.position = Vector3(lamp_x, 0.57, 1.53)
+        var lamp_material := StandardMaterial3D.new()
+        lamp_material.albedo_color = Color("#E53935")
+        lamp_material.emission_enabled = true
+        lamp_material.emission = Color("#E53935")
+        lamp_material.emission_energy_multiplier = 1.0
+        lamp_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+        brake_lamp.material_override = lamp_material
+        car.add_child(brake_lamp)
+        brake_lights.append(brake_lamp)
+
     chase_camera = Camera3D.new()
     chase_camera.position = Vector3(0, 5.2, 10.5)
     chase_camera.rotation_degrees = Vector3(-20, 0, 0)
