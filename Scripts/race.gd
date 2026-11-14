@@ -50,6 +50,8 @@ var near_miss_player: AudioStreamPlayer
 var horn_player: AudioStreamPlayer
 var chase_camera: Camera3D
 var brake_lights: Array[MeshInstance3D] = []
+var wheel_steering_pivots: Array[Node3D] = []
+var wheel_spin_pivots: Array[Node3D] = []
 # Share immutable box materials by color to reduce duplicated GPU resources.
 var box_material_cache: Dictionary = {}
 var box_mesh_cache: Dictionary = {}
@@ -278,6 +280,7 @@ func _process(delta: float) -> void:
         nitro_fx.scale.z = 0.85 + 0.25 * sin(Time.get_ticks_msec() * 0.035) if boosting else 1.0
 
     _apply_player_steering(delta)
+    _animate_imported_wheels(delta)
     distance += speed * delta / 3600.0
     var next_stage := clampi(1 + int(distance / 0.5), 1, 10)
     if next_stage > race_stage:
@@ -332,6 +335,23 @@ func _process(delta: float) -> void:
         chase_camera.position.y = lerpf(chase_camera.position.y, 5.2 + speed_ratio * 0.45, minf(1.0, delta * 2.0))
         chase_camera.position.z = lerpf(chase_camera.position.z, 10.5 + speed_ratio * 1.15, minf(1.0, delta * 2.0))
         chase_camera.rotation_degrees.z = lerpf(chase_camera.rotation_degrees.z, -steer * 1.4, minf(1.0, delta * 3.0))
+
+
+func _animate_imported_wheels(delta: float) -> void:
+    if wheel_steering_pivots.is_empty() and wheel_spin_pivots.is_empty():
+        return
+    # The model's wheel radius is approximately 0.37 game units after import.
+    # Convert the displayed km/h value to a smooth visual spin rate.
+    var spin_angle := speed * delta * 0.75
+    for spin_pivot in wheel_spin_pivots:
+        if is_instance_valid(spin_pivot):
+            spin_pivot.rotate_object_local(Vector3(0.0, 0.0, 1.0), spin_angle)
+    for steering_pivot in wheel_steering_pivots:
+        if not is_instance_valid(steering_pivot):
+            continue
+        if bool(steering_pivot.get_meta("front_axle", false)):
+            var target_angle := -steer * 0.34
+            steering_pivot.rotation.y = lerpf(steering_pivot.rotation.y, target_angle, minf(1.0, delta * 8.0))
 
 
 func _make_engine_audio() -> void:
@@ -756,6 +776,13 @@ func _make_car() -> void:
 
     car.position = Vector3(0, 0.45, 3)
     add_child(car)
+
+    wheel_steering_pivots.clear()
+    wheel_spin_pivots.clear()
+    for candidate in car.find_children("WheelPivot_*", "Node3D", true, false):
+        wheel_steering_pivots.append(candidate as Node3D)
+    for candidate in car.find_children("WheelSpin_*", "Node3D", true, false):
+        wheel_spin_pivots.append(candidate as Node3D)
 
     # Reuse the imported model's real rear light bars for brake-light feedback.
     for candidate in car.find_children("*", "MeshInstance3D", true, false):
