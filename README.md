@@ -14,7 +14,7 @@ SHUBIR RACING is an offline, landscape-oriented endless highway racing game buil
 - Progressive 10-stage difficulty with a +500 score reward for each 0.5 km stage milestone (including multiple milestones crossed in one update).
 - Phone-tilt steering; touch accelerator, brake, and separate Boost controls.
 - Multi-touch input handling for simultaneous driving controls.
-- Boost charge, recharge, exhaust flame effects, speed-responsive chase camera, and braking lights.
+- Boost charge, recharge, exhaust flame effects, speed-responsive chase camera with selectable close / medium / far racing views, and braking lights.
 - Continuous idle-to-throttle engine loop with RPM/load-responsive pitch and volume, plus horn, brake, boost, near-miss, and crash sound effects.
 - Settings for steering sensitivity and master volume; selected car and settings persist locally.
 - Pause/resume handling, including app-background and Android Back requests.
@@ -25,6 +25,7 @@ SHUBIR RACING is an offline, landscape-oriented endless highway racing game buil
 - Hold the accelerator to increase speed.
 - Hold the brake to slow down.
 - Left side: hold BOOST; right side: hold HORN or ACCELERATOR; left bottom: BRAKE. Hold ACCELERATOR and BOOST together to activate Boost.
+- Tap the CAM button to cycle CLOSE / MEDIUM / FAR chase-camera distances.
 - Use Pause or the Android Back action to open the pause menu.
 
 ## Build and verification status
