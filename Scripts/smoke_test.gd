@@ -59,7 +59,7 @@ func _run_smoke_tests() -> void:
             current_scene = instance
         # Verify the live race scene has its core gameplay nodes and controls.
         if scene_path.ends_with("/race.tscn"):
-            for property_name in ["car", "chase_camera", "engine_player", "brake_button", "boost_button", "accel_button"]:
+            for property_name in ["car", "chase_camera", "camera_view_button", "engine_player", "brake_button", "boost_button", "accel_button"]:
                 if instance.get(property_name) == null:
                     push_error("Race scene is missing required runtime node: " + property_name)
                     root.remove_child(instance)
@@ -77,6 +77,26 @@ func _run_smoke_tests() -> void:
                 instance.free()
                 quit(1)
                 return
+            var close_view: Vector3 = instance.call("_get_camera_view_targets")
+            if absf(close_view.x - 70.0) > 0.01:
+                push_error("Race camera did not start in the medium view.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            instance.call("_cycle_camera_view")
+            var far_view: Vector3 = instance.call("_get_camera_view_targets")
+            instance.call("_cycle_camera_view")
+            var close_view_again: Vector3 = instance.call("_get_camera_view_targets")
+            instance.call("_cycle_camera_view")
+            var medium_view: Vector3 = instance.call("_get_camera_view_targets")
+            if far_view.z <= medium_view.z or medium_view.z <= close_view_again.z or instance.get("camera_view_button").text != "CAM: MEDIUM":
+                push_error("Three racing camera distances or the camera cycle button are incorrect.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Three racing camera views passed: close, medium, and far cycle correctly.")
             print("Race render efficiency passed: directional sun shadow map is disabled.")
             if instance.get("traffic_cars").size() < 3 or instance.get("road_segments").size() < 3:
                 push_error("Race scene did not create enough traffic or road segments.")
