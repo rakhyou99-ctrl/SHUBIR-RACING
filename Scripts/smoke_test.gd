@@ -211,6 +211,76 @@ func _run_smoke_tests() -> void:
             await process_frame
             print("Garage responsive bounds passed: 640x360, 800x360, and 2340x1080.")
 
+            # Exercise real showroom input handlers: one-finger drag rotates
+            # the vehicle; two-finger distance changes the camera FOV.
+            var preview_car: Node3D = garage_instance.get("preview_car")
+            var preview_camera: Camera3D = garage_instance.get("preview_camera")
+            if preview_car == null or preview_camera == null:
+                push_error("Garage preview car or camera is missing.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            var rotation_before := preview_car.rotation.y
+            var touch_down := InputEventScreenTouch.new()
+            touch_down.index = 0
+            touch_down.position = Vector2(120, 160)
+            touch_down.pressed = true
+            garage_instance.call("_on_preview_input", touch_down)
+            var touch_drag := InputEventScreenDrag.new()
+            touch_drag.index = 0
+            touch_drag.position = Vector2(190, 160)
+            touch_drag.relative = Vector2(70, 0)
+            garage_instance.call("_on_preview_input", touch_drag)
+            var touch_up := InputEventScreenTouch.new()
+            touch_up.index = 0
+            touch_up.position = Vector2(190, 160)
+            touch_up.pressed = false
+            garage_instance.call("_on_preview_input", touch_up)
+            if absf(wrapf(preview_car.rotation.y - rotation_before, -PI, PI)) < 0.5:
+                push_error("Garage one-finger drag did not rotate the preview car.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            var fov_before := preview_camera.fov
+            var pinch_first := InputEventScreenTouch.new()
+            pinch_first.index = 0
+            pinch_first.position = Vector2(100, 100)
+            pinch_first.pressed = true
+            garage_instance.call("_on_preview_input", pinch_first)
+            var pinch_second := InputEventScreenTouch.new()
+            pinch_second.index = 1
+            pinch_second.position = Vector2(200, 100)
+            pinch_second.pressed = true
+            garage_instance.call("_on_preview_input", pinch_second)
+            var pinch_drag := InputEventScreenDrag.new()
+            pinch_drag.index = 1
+            pinch_drag.position = Vector2(250, 100)
+            pinch_drag.relative = Vector2(50, 0)
+            garage_instance.call("_on_preview_input", pinch_drag)
+            if preview_camera.fov >= fov_before:
+                push_error("Garage two-finger pinch-out did not zoom in.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            garage_instance.call("_change_preview_zoom", 100.0)
+            if preview_camera.fov < 61.9 or preview_camera.fov > 62.0:
+                push_error("Garage zoom-out exceeded its camera FOV limit.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            garage_instance.call("_change_preview_zoom", -100.0)
+            if preview_camera.fov < 27.9 or preview_camera.fov > 28.0:
+                push_error("Garage zoom-in exceeded its camera FOV limit.")
+                root.remove_child(instance)
+                instance.free()
+                quit(1)
+                return
+            print("Garage touch controls passed: 360-degree drag, pinch zoom, and camera FOV limits.")
+
         # Exercise the race loop for several seconds, not just scene construction.
         var frames_to_run := 180 if scene_path.ends_with("/race.tscn") else 5
         for frame in range(frames_to_run):
